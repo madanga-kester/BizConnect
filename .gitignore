@@ -1,0 +1,23 @@
+﻿# Secrets / config
+.env
+.env.*
+!.env.example
+appsettings.json
+appsettings.*.json
+!appsettings.Example.json
+secrets.json
+*.pfx
+*.key
+
+# .NET
+bin/
+obj/
+.vs/
+*.user
+
+# Node / frontend
+node_modules/
+dist/
+build/
+
+.expo/

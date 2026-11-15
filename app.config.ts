@@ -1,0 +1,174 @@
+// Load environment variables with proper priority (system > .env)
+import "./scripts/load-env.js";
+import type { ExpoConfig } from "expo/config";
+
+// Bundle ID format: space.manus.<project_name_dots>.<timestamp>
+// e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
+// Bundle ID can only contain letters, numbers, and dots
+// Android requires each dot-separated segment to start with a letter
+const rawBundleId = "space.manus.bizconnect.t091153525322984";
+const bundleId =
+  rawBundleId
+    .replace(/[-_]/g, ".") // Replace hyphens/underscores with dots
+    .replace(/[^a-zA-Z0-9.]/g, "") // Remove invalid chars
+    .replace(/\.+/g, ".") // Collapse consecutive dots
+    .replace(/^\.+|\.+$/g, "") // Trim leading/trailing dots
+    .toLowerCase()
+    .split(".")
+    .map((segment) => {
+      // Android requires each segment to start with a letter
+      // Prefix with 'x' if segment starts with a digit
+      return /^[a-zA-Z]/.test(segment) ? segment : "x" + segment;
+    })
+    .join(".") || "space.manus.app";
+// Extract timestamp from bundle ID and prefix with "manus" for deep link scheme
+// e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
+const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
+const schemeFromBundleId = `manus${timestamp}`;
+
+// Standalone Android Google Maps tiles require a key restricted to the app ID and signing
+// certificate. Expo Go map usage does not require this project-specific plugin configuration.
+// Keep the key out of source and omit the plugin until a restricted build-time value is supplied.
+const optionalMapPlugin: NonNullable<ExpoConfig["plugins"]> = process.env.GOOGLE_MAPS_API_KEY
+  ? [["react-native-maps", { androidGoogleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY }]]
+  : [];
+
+const env = {
+  // App branding - update these values directly (do not use env vars)
+  appName: "BizConnect",
+  appSlug: "bizconnect",
+  // Durable public project-branding asset, independent of native launcher metadata.
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663995362399/ygwtkHxSBjeacWfv.png",
+  scheme: schemeFromBundleId,
+  iosBundleId: bundleId,
+  androidPackage: bundleId,
+};
+
+// Expo serializes this browser-safe subset into native and web bundles. The server-only
+// MANUS_API_KEY and MANUS_JWT_SECRET must never enter this object.
+const publicRuntime = {
+  oauthPortalUrl:
+    process.env.MANUS_OAUTH_PORTAL_URL ??
+    process.env.VITE_OAUTH_PORTAL_URL ??
+    process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL ??
+    "",
+  oauthServerUrl:
+    process.env.MANUS_OAUTH_API_URL ??
+    process.env.OAUTH_SERVER_URL ??
+    process.env.EXPO_PUBLIC_OAUTH_SERVER_URL ??
+    "",
+  appId:
+    process.env.MANUS_PROJECT_ID ??
+    process.env.VITE_APP_ID ??
+    process.env.EXPO_PUBLIC_APP_ID ??
+    "",
+  ...((process.env.EAS_PROJECT_ID ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID)
+    ? { eas: { projectId: process.env.EAS_PROJECT_ID ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID } }
+    : {}),
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? "",
+  apiMode: process.env.EXPO_PUBLIC_API_MODE === "api" ? "api" : "mock-local",
+  apiVersionPrefix: process.env.EXPO_PUBLIC_API_VERSION_PREFIX ?? "/api/v1",
+  ...(process.env.EXPO_PUBLIC_AUTH_REFRESH_PATH?.startsWith("/")
+    ? { authRefreshPath: process.env.EXPO_PUBLIC_AUTH_REFRESH_PATH }
+    : {}),
+};
+
+const config: ExpoConfig = {
+  name: env.appName,
+  slug: env.appSlug,
+  version: "1.0.0",
+  extra: publicRuntime,
+  orientation: "portrait",
+  icon: "./assets/images/icon.png",
+  scheme: env.scheme,
+  userInterfaceStyle: "automatic",
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: env.iosBundleId,
+    "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+  },
+  android: {
+    adaptiveIcon: {
+      backgroundColor: "#102A43",
+      foregroundImage: "./assets/images/android-icon-foreground.png",
+      backgroundImage: "./assets/images/android-icon-background.png",
+      monochromeImage: "./assets/images/android-icon-monochrome.png",
+    },
+    predictiveBackGestureEnabled: false,
+    package: env.androidPackage,
+    permissions: ["POST_NOTIFICATIONS"],
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: [
+          {
+            scheme: env.scheme,
+            host: "*",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
+  },
+  web: {
+    bundler: "metro",
+    output: "static",
+    favicon: "./assets/images/favicon.png",
+  },
+  plugins: [
+    "expo-asset",
+    "expo-font",
+    "expo-image",
+    "expo-router",
+    "expo-secure-store",
+    "expo-notifications",
+    "expo-status-bar",
+    "expo-web-browser",
+    ...optionalMapPlugin,
+    ["expo-image-picker", { photosPermission: "Allow BizConnect to select photos and videos for your local demo posts.", cameraPermission: "Allow BizConnect to take a photo for your local demo profile or post." }],
+    ["expo-location", { locationWhenInUsePermission: "Allow BizConnect to use your approximate area for nearby business discovery. Precise location is not shown on your profile." }],
+    [
+      "expo-audio",
+      {
+        microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",
+      },
+    ],
+    [
+      "expo-video",
+      {
+        supportsBackgroundPlayback: true,
+        supportsPictureInPicture: true,
+      },
+    ],
+    [
+      "expo-splash-screen",
+      {
+        image: "./assets/images/splash-icon.png",
+        imageWidth: 200,
+        resizeMode: "contain",
+        backgroundColor: "#102A43",
+        dark: {
+          backgroundColor: "#102A43",
+        },
+      },
+    ],
+    [
+      "expo-build-properties",
+      {
+        android: {
+          buildArchs: ["armeabi-v7a", "arm64-v8a"],
+          minSdkVersion: 24,
+        },
+      },
+    ],
+  ],
+  experiments: {
+    typedRoutes: true,
+    reactCompiler: true,
+  },
+};
+
+export default config;

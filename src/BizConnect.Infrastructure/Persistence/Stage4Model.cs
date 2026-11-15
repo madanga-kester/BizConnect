@@ -1,0 +1,28 @@
+using BizConnect.Domain.Businesses;
+using Microsoft.EntityFrameworkCore;
+
+namespace BizConnect.Infrastructure.Persistence;
+
+internal static class Stage4Model
+{
+    public static void Configure(ModelBuilder b)
+    {
+        b.Entity<Post>(e =>
+        {
+            e.ToTable("posts", t => { t.HasCheckConstraint("CK_posts_kind", "\"Kind\" IN ('text','image','video','product','announcement')"); t.HasCheckConstraint("CK_posts_audience", "\"Audience\" IN ('public','followers','private')"); t.HasCheckConstraint("CK_posts_text_length", "char_length(\"Text\") <= 5000"); });
+            e.HasKey(x => x.Id); e.Property(x => x.Kind).HasMaxLength(20); e.Property(x => x.Audience).HasMaxLength(16); e.Property(x => x.Text).HasMaxLength(5000); e.Property(x => x.Location).HasMaxLength(200); e.Property(x => x.AllowComments).HasDefaultValue(true); e.Property(x => x.ProductJson).HasColumnType("jsonb");
+            e.HasIndex(x => new { x.CreatedAtUtc, x.Id }); e.HasIndex(x => new { x.AuthorUserId, x.CreatedAtUtc, x.Id }); e.HasIndex(x => new { x.BusinessId, x.CreatedAtUtc, x.Id }); e.HasIndex(x => new { x.Audience, x.Discoverable, x.CreatedAtUtc, x.Id });
+            e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.AuthorUserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Business>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.Restrict);
+        });
+        b.Entity<PostMediaReference>(e => { e.ToTable("post_media_references", t => t.HasCheckConstraint("CK_post_media_sort", "\"SortOrder\" >= 0")); e.HasKey(x => x.Id); e.Property(x => x.MediaType).HasMaxLength(16); e.Property(x => x.Url).HasMaxLength(2048); e.Property(x => x.AltText).HasMaxLength(500); e.HasIndex(x => new { x.PostId, x.SortOrder }).IsUnique(); e.HasOne<Post>().WithMany(x => x.Media).HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade); });
+        b.Entity<PostLike>(e => { e.ToTable("post_likes"); e.HasKey(x => new { x.PostId, x.UserId }); e.HasIndex(x => new { x.PostId, x.CreatedAtUtc }); e.HasOne<Post>().WithMany().HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict); });
+        b.Entity<SocialComment>(e => { e.ToTable("comments", t => t.HasCheckConstraint("CK_comments_not_self_parent", "\"ParentCommentId\" IS NULL OR \"ParentCommentId\" <> \"Id\"")); e.HasKey(x => x.Id); e.Property(x => x.Text).HasMaxLength(2000); e.HasIndex(x => new { x.PostId, x.CreatedAtUtc, x.Id }); e.HasIndex(x => new { x.ParentCommentId, x.CreatedAtUtc, x.Id }); e.HasOne<Post>().WithMany().HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.AuthorUserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<SocialComment>().WithMany().HasForeignKey(x => x.ParentCommentId).OnDelete(DeleteBehavior.Cascade); });
+        b.Entity<SocialPoll>(e => { e.ToTable("polls"); e.HasKey(x => x.Id); e.Property(x => x.Question).HasMaxLength(500); e.HasIndex(x => x.PostId).IsUnique(); e.HasOne<Post>().WithMany().HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade); });
+        b.Entity<PollOption>(e => { e.ToTable("poll_options"); e.HasKey(x => x.Id); e.Property(x => x.Text).HasMaxLength(200); e.HasIndex(x => new { x.PollId, x.SortOrder }).IsUnique(); e.HasAlternateKey(x => new { x.PollId, x.Id }); e.HasOne<SocialPoll>().WithMany(x => x.Options).HasForeignKey(x => x.PollId).OnDelete(DeleteBehavior.Cascade); });
+        b.Entity<PollVote>(e => { e.ToTable("poll_votes"); e.HasKey(x => new { x.PollId, x.UserId }); e.HasIndex(x => new { x.PollId, x.OptionId }); e.HasOne<SocialPoll>().WithMany().HasForeignKey(x => x.PollId).OnDelete(DeleteBehavior.Cascade); e.HasOne<PollOption>().WithMany().HasForeignKey(x => new { x.PollId, x.OptionId }).HasPrincipalKey(x => new { x.PollId, x.Id }).OnDelete(DeleteBehavior.Cascade); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict); });
+        b.Entity<UserFollow>(e => { e.ToTable("user_follows", t => t.HasCheckConstraint("CK_user_follows_not_self", "\"FollowerUserId\" <> \"FollowedUserId\"")); e.HasKey(x => new { x.FollowerUserId, x.FollowedUserId }); e.HasIndex(x => new { x.FollowedUserId, x.CreatedAtUtc }); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.FollowerUserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.FollowedUserId).OnDelete(DeleteBehavior.Restrict); });
+        b.Entity<BusinessFollow>(e => { e.ToTable("business_follows"); e.HasKey(x => new { x.UserId, x.BusinessId }); e.HasIndex(x => new { x.BusinessId, x.CreatedAtUtc }); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Business>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.Cascade); });
+        b.Entity<UserBlock>(e => { e.ToTable("user_blocks", t => t.HasCheckConstraint("CK_user_blocks_not_self", "\"BlockerUserId\" <> \"BlockedUserId\"")); e.HasKey(x => new { x.BlockerUserId, x.BlockedUserId }); e.HasIndex(x => new { x.BlockedUserId, x.BlockerUserId }); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.BlockerUserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.BlockedUserId).OnDelete(DeleteBehavior.Restrict); });
+        b.Entity<HiddenPost>(e => { e.ToTable("hidden_posts"); e.HasKey(x => new { x.UserId, x.PostId }); e.HasIndex(x => new { x.PostId, x.UserId }); e.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Post>().WithMany().HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade); });
+    }
+}
