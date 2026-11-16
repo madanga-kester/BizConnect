@@ -8,7 +8,7 @@ import { t } from "@/i18n/translations";
 import { useThemeContext } from "@/lib/theme-provider";
 import { colors } from "@/theme/tokens";
 import type { AppearanceMode } from "@/types/domain";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
 
 function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("BizConnect", message); }
 
@@ -41,9 +41,15 @@ function AppearanceSelector({ appearance, language, onChange, disabled }: { appe
 
 export default function SettingsScreen() {
   const app = useAppStore();
+    const services = useBizConnectServices();
   const serviceMode = useBizConnectServiceMode();
   const { setColorScheme } = useThemeContext();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+    const signOut = async () => {
+    const result = await services.auth.logout();
+    await app.setAuthenticated(false);
+    feedback(result.ok ? "You are signed out." : "The server may not have received logout, but this device cleared its session. Please sign in again if needed.");
+  };
   const language = app.settings.language;
   const selectAppearance = (appearance: AppearanceMode) => {
     setColorScheme(appearance);
@@ -67,7 +73,7 @@ export default function SettingsScreen() {
     <ActionTile title="Edit personal profile" icon="person-outline" onPress={() => router.push("/edit-profile")} />
     <ActionTile title="Privacy & message permissions" icon="shield-checkmark-outline" onPress={() => router.push("/privacy")} />
     <ActionTile title="Notifications" icon="notifications-outline" onPress={() => router.push("/notifications")} />
-    <ActionTile title="Security & password" detail="Demo session · real password tools require an API" icon="key-outline" onPress={() => router.push("/auth/reset-password")} />
+    <ActionTile title="Security & password" detail="Request a code to change your password" icon="key-outline" onPress={() => router.push("/auth/forgot-password")} />
     <SectionTitle title="Language & access" />
     <View style={styles.actionTile}>
       <View style={{ flex: 1 }}>
@@ -89,8 +95,8 @@ export default function SettingsScreen() {
     <ActionTile title="Delete account" detail="Remove this local demo profile and stored state" icon="trash-outline" onPress={() => router.push("/delete-account")} />
     <ActionTile title="Help centre & guidelines" icon="help-circle-outline" onPress={() => router.push("/help")} />
     <ActionTile title="About BizConnect" detail="Version 1.0 · frontend demo" icon="information-circle-outline" onPress={() => router.push("/about")} />
-    <Button title="Sign out of local demo" icon="log-out-outline" variant="outline" onPress={() => setLogoutConfirm(true)} />
-    <Text style={styles.caption}>Sign-out clears the demo session marker, not seed data or saved items. No server session exists.</Text>
-    <ConfirmModal visible={logoutConfirm} title="Sign out?" detail="You can browse public businesses while signed out. Interactions that require authentication will ask you to sign in again." confirmLabel="Sign out" onCancel={() => setLogoutConfirm(false)} onConfirm={() => { setLogoutConfirm(false); void app.setAuthenticated(false); feedback("You are signed out of the local demo."); }} />
+    <Button title="Sign out" icon="log-out-outline" variant="outline" onPress={() => setLogoutConfirm(true)} />
+    <Text style={styles.caption}>Signing out ends your session on the server and on this device.</Text>
+    <ConfirmModal visible={logoutConfirm} title="Sign out?" detail="You can browse public businesses while signed out. Interactions that require authentication will ask you to sign in again." confirmLabel="Sign out" onCancel={() => setLogoutConfirm(false)} onConfirm={() => { setLogoutConfirm(false); void signOut(); }} />
   </Page>;
 }

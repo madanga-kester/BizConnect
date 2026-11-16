@@ -5,10 +5,7 @@ import { Alert, Platform, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Field, Page, TopBar } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import {
-  useBizConnectServices,
-  useBizConnectServiceMode,
-} from "@/lib/services/service-provider";
+import { useBizConnectServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 
 function feedback(message: string) {
@@ -19,7 +16,6 @@ function feedback(message: string) {
 export default function LoginScreen() {
   const app = useAppStore();
   const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +26,7 @@ export default function LoginScreen() {
       return feedback("Enter your email, phone or username and password.");
     }
 
-    if (apiMode && Platform.OS === "web") {
+    if (Platform.OS === "web") {
       return feedback(
         "Browser sign-in is not currently available. Please sign in using the BizConnect mobile application."
       );
@@ -39,21 +35,15 @@ export default function LoginScreen() {
     setBusy(true);
 
     try {
-      if (apiMode) {
-        const result = await services.auth.login({
-          identifier: email.trim(),
-          password,
-        });
+      const result = await services.auth.login({
+        identifier: email.trim(),
+        password,
+      });
 
-        if (!result.ok) return feedback(result.error.message);
+      if (!result.ok) return feedback(result.error.message);
 
-        await app.setApiUser(result.data.user);
-        router.replace("/auth/account" as unknown as Href);
-        return;
-      }
-
-      await app.setAuthenticated(true);
-      router.replace("/(tabs)");
+      await app.setApiUser(result.data.user);
+      router.replace("/auth/account" as unknown as Href);
     } catch {
       feedback("Unable to sign in. Please try again.");
     } finally {
@@ -186,13 +176,7 @@ export default function LoginScreen() {
 
           <View style={{ alignItems: "flex-end", marginTop: -5 }}>
             <Text
-              onPress={() =>
-                apiMode
-                  ? feedback(
-                      "Password recovery is not yet connected to this sign-in screen."
-                    )
-                  : router.push("/auth/forgot-password")
-              }
+              onPress={() => router.push("/auth/forgot-password")}
               style={{
                 color: colors.emerald,
                 fontSize: 13,

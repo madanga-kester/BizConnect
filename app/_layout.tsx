@@ -21,7 +21,7 @@ import { AppStoreProvider, useAppStore } from "@/hooks/use-app-store";
 import { BizConnectServicesProvider } from "@/lib/services/service-provider";
 import { Page, ScreenSkeleton } from "@/components/biz-ui";
 import { normalizeAppearance } from "@/utils/theme-preference";
-import { resolveOnboardingRedirect } from "@/utils/auth-policy";
+
 import { NotificationSyncProvider } from "@/components/notification-sync";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -39,11 +39,10 @@ function GuardedStack() {
   const pathname = usePathname();
   useEffect(() => {
     if (!app.hasHydrated) return;
-    const onboardingRedirect = resolveOnboardingRedirect(pathname, app.onboardingStage);
-    if (onboardingRedirect) { router.replace(onboardingRedirect); return; }
+
     if (PRIVATE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) && !app.isAuthenticated) { router.replace("/auth/login"); return; }
-    if (app.isAuthenticated && ["/auth/login", "/auth/register", "/auth/otp", "/auth/profile-setup"].includes(pathname)) router.replace("/(tabs)");
-  }, [app.hasHydrated, app.isAuthenticated, app.onboardingStage, pathname, router]);
+    if (app.isAuthenticated && ["/auth/login", "/auth/register"].includes(pathname)) router.replace("/(tabs)");
+  }, [app.hasHydrated, app.isAuthenticated, pathname, router]);
   return <Stack screenOptions={{ headerShown: false }}><Stack.Screen name="(tabs)" /><Stack.Screen name="oauth/callback" /></Stack>;
 }
 

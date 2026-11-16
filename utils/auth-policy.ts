@@ -25,11 +25,4 @@ export function isProtectedRoute(segments: readonly string[]): boolean {
   return Boolean(pageSegment && PROTECTED_ROOT_SEGMENTS.has(pageSegment));
 }
 
-export type DemoOnboardingStage = "idle" | "awaiting_otp" | "profile_setup";
 
-export function resolveOnboardingRedirect(pathname: string, stage: DemoOnboardingStage): "/auth/profile-setup" | "/auth/register" | undefined {
-  if (pathname === "/auth/otp" && stage === "profile_setup") return "/auth/profile-setup";
-  if (pathname === "/auth/otp" && stage === "idle") return "/auth/register";
-  if (pathname === "/auth/profile-setup" && stage !== "profile_setup") return "/auth/register";
-  return undefined;
-}

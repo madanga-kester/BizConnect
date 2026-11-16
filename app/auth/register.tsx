@@ -19,11 +19,8 @@ import {
   TopBar,
   styles,
 } from "@/components/biz-ui";
-import { useAppStore } from "@/hooks/use-app-store";
-import {
-  useBizConnectServices,
-  useBizConnectServiceMode,
-} from "@/lib/services/service-provider";
+
+import { useBizConnectServices } from "@/lib/services/service-provider";
 import { COUNTY_TOWNS, KENYAN_COUNTIES } from "@/utils/kenya";
 import { MAX_INTERESTS, validateRegistration } from "@/utils/form-validation";
 import { colors } from "@/theme/tokens";
@@ -210,9 +207,7 @@ function registerFallbackMessage(error: { code: string; message: string }) {
 }
 
 export default function RegisterScreen() {
-  const app = useAppStore();
   const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
 
   const [step, setStep] = useState<Step>(1);
 
@@ -377,75 +372,59 @@ export default function RegisterScreen() {
     setBusy(true);
 
     try {
-      if (apiMode) {
-
-        const created = await services.auth.register({
-          name: name.trim(),
-          username: username.replace(/^@/, "").trim(),
-          email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
-          password,
-          county,
-          town,
-          interests,
-        });
-
-        if (!created.ok) {
-          const known = REGISTER_API_ERRORS[created.error.code];
-          if (known) {
-            const next: FieldErrors = {};
-            next[known.field] = known.message;
-            setFieldErrors(next);
-            setStep(known.step);
-            feedback(known.message);
-            return;
-          }
-          feedback(registerFallbackMessage(created.error));
-          return;
-        }
-        const contactEmail = email.trim();
-
-        if (!contactEmail) {
-          feedback("Your account has been created. Please sign in.");
-          router.replace("/auth/login");
-          return;
-        }
-
-        const challenge = await services.auth.requestVerificationCode({
-          identifier: contactEmail,
-          purpose: "registration",
-        });
-
-        if (!challenge.ok) {
-          feedback(
-            "Your account was created, but we could not send a verification code. You can sign in and verify later."
-          );
-          router.replace("/auth/login");
-          return;
-        }
-
-        router.replace({
-          pathname: "/auth/confirm-email",
-          params: {
-            identifier: contactEmail,
-            challengeId: challenge.data.challengeId,
-          },
-        } as any);
-        return;
-      }
-
-      await app.beginDemoRegistration({
+      const created = await services.auth.register({
         name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
         username: username.replace(/^@/, "").trim(),
-        bio: "Getting started on BizConnect",
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        password,
         county,
         town,
         interests,
       });
 
-      router.push("/auth/otp");
+      if (!created.ok) {
+        const known = REGISTER_API_ERRORS[created.error.code];
+        if (known) {
+          const next: FieldErrors = {};
+          next[known.field] = known.message;
+          setFieldErrors(next);
+          setStep(known.step);
+          feedback(known.message);
+          return;
+        }
+        feedback(registerFallbackMessage(created.error));
+        return;
+      }
+
+      const contactEmail = email.trim();
+
+      if (!contactEmail) {
+        feedback("Your account has been created. Please sign in.");
+        router.replace("/auth/login");
+        return;
+      }
+
+      const challenge = await services.auth.requestVerificationCode({
+        identifier: contactEmail,
+        purpose: "registration",
+      });
+
+      if (!challenge.ok) {
+        feedback(
+          "Your account was created, but we could not send a verification code. You can sign in and verify later."
+        );
+        router.replace("/auth/login");
+        return;
+      }
+
+      router.replace({
+        pathname: "/auth/confirm-email",
+        params: {
+          identifier: contactEmail,
+          challengeId: challenge.data.challengeId,
+        },
+      } as any);
     } catch (error) {
       if (__DEV__) console.error("Registration failed", error);
       feedback("Unable to create your account. Please try again.");

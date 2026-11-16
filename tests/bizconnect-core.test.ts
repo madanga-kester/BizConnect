@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BUSINESSES, CURRENT_USER, PEOPLE, POSTS } from "@/data/seed";
 import { createLocalSessionManager, isSessionExpiryValid } from "@/lib/auth/local-session";
-import { validateDemoOtp, validateLogin, validateRegistration } from "@/utils/form-validation";
-import { isProtectedRoute, resolveOnboardingRedirect } from "@/utils/auth-policy";
+import { validateLogin, validateRegistration } from "@/utils/form-validation";
+import { isProtectedRoute } from "@/utils/auth-policy";
 import { filterAndSortBusinesses } from "@/utils/discovery-filters";
 import { createOwnedBusinessRecord, resolveManagedBusinessIdentity, updateBusinessRecord } from "@/utils/business-state";
 import { evaluateMessagePermission, filterVisibleBusinesses, filterVisiblePosts, profileRestriction, toggleBlockRelationships } from "@/utils/privacy-policy";
@@ -11,7 +11,7 @@ import { classifyMediaSelectionFailure, mediaSelectionFeedback } from "@/utils/m
 import { addCommentRecord, addReplyRecord, appendLocalMessage, appendReport, createConversationRecord, findActiveDuplicateReport, saveDraftRecord, toggleId } from "@/utils/social-state";
 import type { Conversation, DraftPost, Post } from "@/types/domain";
 
-const goodRegistration = { name: "Amani Wanjiku", username: "amani.builds", email: "amani@example.ke", phone: "+254 712 345 678", password: "LocalDemo123", confirmPassword: "LocalDemo123", interests: ["Food"] };
+const goodRegistration = { name: "Amani Wanjiku", username: "amani.builds", email: "amani@example.ke", phone: "+254 712 345 678", password: "LocalDemo123!", confirmPassword: "LocalDemo123!", interests: ["Food"] };
 
 function memoryStorage() {
   let stored: string | null = null;
@@ -29,19 +29,18 @@ describe("BizConnect demo authentication", () => {
     expect(Object.keys(invalid.errors)).toEqual(expect.arrayContaining(["username", "email", "phone", "password", "confirmPassword", "interests"]));
   });
 
-  it("validates login, accepts only the clearly labelled demo OTP, and guards private routes", () => {
+  it("accepts an email or a phone number and requires at least one", () => {
+    expect(validateRegistration({ ...goodRegistration, phone: "" }).valid).toBe(true);
+    expect(validateRegistration({ ...goodRegistration, email: "" }).valid).toBe(true);
+    expect(validateRegistration({ ...goodRegistration, email: "", phone: "" }).valid).toBe(false);
+  });
+
+  it("validates login and guards private routes", () => {
     expect(validateLogin("amani@example.ke", "123456").valid).toBe(true);
     expect(validateLogin("", "123").valid).toBe(false);
-    expect(validateDemoOtp("123456").valid).toBe(true);
-    expect(validateDemoOtp("654321").valid).toBe(false);
-    expect(validateDemoOtp("12345").valid).toBe(false);
     expect(isProtectedRoute(["messages", "abc"])).toBe(true);
     expect(isProtectedRoute(["(tabs)", "discover"])).toBe(false);
     expect(isProtectedRoute(["business", "[id]"])).toBe(false);
-    expect(resolveOnboardingRedirect("/auth/otp", "profile_setup")).toBe("/auth/profile-setup");
-    expect(resolveOnboardingRedirect("/auth/otp", "idle")).toBe("/auth/register");
-    expect(resolveOnboardingRedirect("/auth/otp", "awaiting_otp")).toBeUndefined();
-    expect(resolveOnboardingRedirect("/auth/profile-setup", "awaiting_otp")).toBe("/auth/register");
   });
 
   it("restores only an unexpired local session and clears it on logout", async () => {

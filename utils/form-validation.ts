@@ -27,8 +27,11 @@ export function validateRegistration(input: RegistrationInput): ValidationResult
   const username = input.username.trim().replace(/^@/, "");
   if (input.name.trim().length < 2) errors.name = "Enter your full name.";
   if (!/^[a-zA-Z0-9_.]{3,30}$/.test(username)) errors.username = "Use 3–30 letters, numbers, dots or underscores.";
-  if (!isValidEmail(input.email)) errors.email = "Enter a valid email address.";
-  if (!isValidKenyanPhone(input.phone)) errors.phone = "Enter a valid Kenyan phone number.";
+  const email = input.email.trim();
+  const phone = input.phone.trim();
+  if (!email && !phone) errors.email = "Enter an email address or a phone number.";
+  if (email && !isValidEmail(email)) errors.email = "Enter a valid email address.";
+  if (phone && !isValidKenyanPhone(phone)) errors.phone = "Enter a valid Kenyan phone number.";
   if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/.test(input.password)) errors.password = "Use at least 12 characters with an uppercase letter, a lowercase letter, a number and a special character.";
   if (input.confirmPassword !== input.password) errors.confirmPassword = "Passwords do not match.";
   if (input.interests.length === 0) errors.interests = "Choose at least one interest.";
@@ -43,10 +46,4 @@ export function validateLogin(emailOrUsername: string, password: string): Valida
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
-/** The local onboarding code is a UI-only demo check; it does not represent an SMS or identity verification. */
-export function validateDemoOtp(value: string): ValidationResult {
-  const errors: ValidationErrors = {};
-  if (!/^\d{6}$/.test(value)) errors.password = "Enter a six-digit code.";
-  else if (value !== "123456") errors.password = "For this local demo, enter 123456. No SMS was sent.";
-  return { valid: Object.keys(errors).length === 0, errors };
-}
+

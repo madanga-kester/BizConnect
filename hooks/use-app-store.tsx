@@ -1,14 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Platform } from "react-native";
+
 import { BUSINESSES, CURRENT_USER, NOTIFICATIONS, PEOPLE, POSTS, STORIES } from "@/data/seed";
-import { createLocalSessionManager } from "@/lib/auth/local-session";
+import { PlatformSessionStorage } from "@/lib/api/secure-session";
 import type { AppSettings, Business, BusinessEvent, BusinessOffer, ChatMessage, CommunityOpportunity, Conversation, NotificationItem, Post, StoryHighlight, TeamRole, UserProfile } from "@/types/domain";
 import type { EnhancedSocialStory, EnhancedStoryHighlight, LocalStoryResponse, PersistedComposerDraft, ScheduledDemoPost } from "@/types/create-studio";
 import { OWNER_ADMIN_ROLES } from "@/utils/business-permissions";
 import { createOwnedBusinessRecord, resolveAccessibleBusinessIdentity, resolveManagedBusinessIdentity, updateBusinessRecord } from "@/utils/business-state";
-import { validateDemoOtp } from "@/utils/form-validation";
+
 import { evaluateMessagePermission, isPostVisible, toggleBlockRelationships, type PostVisibilityContext } from "@/utils/privacy-policy";
 import { addCommentRecord, addReplyRecord, appendLocalMessage, appendReport, createConversationRecord, saveDraftRecord, toggleId, type ModerationReport } from "@/utils/social-state";
 import { newLocalId } from "@/utils/ids";
@@ -16,7 +16,6 @@ import { DEFAULT_APP_SETTINGS, hydrateAppSettings, isAppearanceOnlyUpdate, seria
 import { canViewSocialStory } from "@/utils/social-story-privacy";
 
 const STORAGE_KEY = "bizconnect-demo-state-v1";
-const SESSION_KEY = "bizconnect-local-demo-session";
 
 type OnboardingStage = "idle" | "awaiting_otp" | "profile_setup";
 
@@ -127,10 +126,7 @@ interface AppActions {
   toggleBlock(id: string): void;
   hidePost(id: string): void;
   addReport(target: string, reason: string, details: string): void;
-  beginDemoRegistration(profile: Partial<UserProfile>): Promise<void>;
-  verifyDemoOtp(code: string): boolean;
-  completeDemoOnboarding(interests: string[]): Promise<boolean>;
-  cancelDemoRegistration(): Promise<void>;
+ 
   deleteLocalDemoData(): Promise<void>;
   setAuthenticated(value: boolean): Promise<void>;
 }
@@ -179,11 +175,9 @@ const INITIAL: Omit<AppState, "hasHydrated"> = {
 
 const cloneInitial = (): AppState => ({ ...INITIAL, businesses: BUSINESSES.map((business) => ({ ...business, team: [...business.team] })), posts: POSTS.map((post) => ({ ...post, comments: [...post.comments] })), notifications: [...NOTIFICATIONS], hasHydrated: false });
 
-const localSession = createLocalSessionManager({
-  getItem: async () => Platform.OS === "web" ? sessionStorage.getItem(SESSION_KEY) : SecureStore.getItemAsync(SESSION_KEY),
-  setItem: async (value) => { if (Platform.OS === "web") sessionStorage.setItem(SESSION_KEY, value); else await SecureStore.setItemAsync(SESSION_KEY, value); },
-  removeItem: async () => { if (Platform.OS === "web") sessionStorage.removeItem(SESSION_KEY); else await SecureStore.deleteItemAsync(SESSION_KEY); },
-});
+const apiSession = new PlatformSessionStorage();
+
+const hasApiSession = () => apiSession.read().then((session) => session !== null).catch(() => false);
 
 const AppStoreContext = createContext<(AppState & AppActions) | null>(null);
 
@@ -231,7 +225,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    Promise.all([AsyncStorage.getItem(STORAGE_KEY), localSession.isActive()]).then(([raw, authenticated]) => {
+    Promise.all([AsyncStorage.getItem(STORAGE_KEY), hasApiSession()]).then(([raw, authenticated]) => {
       if (!active) return;
       if (!raw) {
         setState((current) => ({ ...current, isAuthenticated: authenticated, hasHydrated: true }));
@@ -274,10 +268,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (!state.isAuthenticated) return;
     let active = true;
     const validate = async () => {
-      const valid = await localSession.isActive().catch(() => false);
+      const valid = await hasApiSession();
       if (active && !valid) {
-        await localSession.close().catch(() => undefined);
-        setState((current) => current.isAuthenticated ? { ...current, isAuthenticated: false, localNotice: "Your local demo session expired. Sign in again to continue." } : current);
+        setState((current) => current.isAuthenticated ? { ...current, isAuthenticated: false, localNotice: "Your session has expired. Sign in again to continue." } : current);
       }
     };
     const interval = setInterval(() => { void validate(); }, 30_000);
@@ -290,8 +283,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSession = useCallback(async (value: boolean) => {
-    if (value) await localSession.open(); else await localSession.close();
-    setState((current) => ({ ...current, isAuthenticated: value, onboardingStage: "idle", localNotice: value ? "Local demo session · no server account" : "Signed out of this local demo" }));
+    if (!value) await apiSession.clear().catch(() => undefined);
+    const signedIn = value && await hasApiSession();
+    setState((current) => ({ ...current, isAuthenticated: signedIn, onboardingStage: "idle", localNotice: signedIn ? "Signed in to the BizConnect API" : "Signed out" }));
   }, []);
 
   const actions: AppActions = useMemo(() => ({
@@ -572,7 +566,6 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       return result.changed ? { ...current, businesses: result.businesses, activeBusinessId: business.id, localNotice: "Business profile created locally; it is not published to a server" } : current;
     }),
     setApiUser: async (user) => {
-      await localSession.open();
       setState((current) => ({ ...current, user, isAuthenticated: true, onboardingStage: "idle", localNotice: "Signed in to the BizConnect API; business data is managed by the server" }));
     },
     replaceApiBusinesses: (businesses) => setState((current) => {
@@ -637,28 +630,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const result = appendReport(current.reports, report);
       return result.created ? { ...current, reports: result.reports, localNotice: "Moderation report saved locally; no review team was notified" } : { ...current, localNotice: "An active local report already exists for this item and reason" };
     }),
-    beginDemoRegistration: async (profile) => {
-      await localSession.close();
-      setState((current) => ({ ...current, user: { ...current.user, ...profile }, isAuthenticated: false, onboardingStage: "awaiting_otp", localNotice: "Registration is stored locally; this demo does not submit or verify your details" }));
-    },
-    verifyDemoOtp: (code) => {
-      if (!validateDemoOtp(code).valid || stateRef.current.onboardingStage !== "awaiting_otp") return false;
-      setState((current) => current.onboardingStage === "awaiting_otp" ? { ...current, onboardingStage: "profile_setup", localNotice: "Demo code accepted locally; no SMS was sent or verified" } : current);
-      return true;
-    },
-    completeDemoOnboarding: async (interests) => {
-      if (stateRef.current.onboardingStage !== "profile_setup" || interests.length === 0) return false;
-      setState((current) => current.onboardingStage === "profile_setup" ? { ...current, user: { ...current.user, interests }, onboardingStage: "idle" } : current);
-      await setSession(true);
-      return true;
-    },
-    cancelDemoRegistration: async () => {
-      await localSession.close();
-      setState((current) => ({ ...current, user: CURRENT_USER, isAuthenticated: false, onboardingStage: "idle", localNotice: "Demo registration cancelled; pending profile details were cleared from the local session" }));
-    },
+
     deleteLocalDemoData: async () => {
       await AsyncStorage.removeItem(STORAGE_KEY);
-      await localSession.close();
+      await apiSession.clear().catch(() => undefined);
       setState({ ...cloneInitial(), isAuthenticated: false, hasHydrated: true, onboardingStage: "idle", localNotice: "Local demo profile reset; no server account was deleted" });
     },
     setAuthenticated: setSession,
