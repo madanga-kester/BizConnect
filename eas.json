@@ -1,0 +1,14 @@
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EAS_PROJECT_ID": "328e29d5-7a36-4e27-b959-29a76e2426be"
+      }
+    }
+  }
+}
