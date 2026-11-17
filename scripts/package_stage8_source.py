@@ -40,7 +40,7 @@ REQUIRED_FILES = {
     "desktop/src/data.ts",
     "desktop/src/main.tsx",
     "desktop/src/styles.css",
-    "desktop/public/manus-routes.json",
+    "desktop/public/routes.json",
     "docs/FUNCTIONALITY_CHECKLIST.md",
     "docs/VISUAL_COMPARISON_REPORT.md",
 }
@@ -48,7 +48,7 @@ REQUIRED_FILES = {
 
 def skip_file(path: Path, rel: Path) -> bool:
     name = path.name
-    if name in {".DS_Store", "Thumbs.db", ".manus-starter-init.json"}:
+    if name in {".DS_Store", "Thumbs.db"}:
         return True
     if path.suffix.lower() in SKIP_SUFFIXES or name.endswith((".zip", ".tar.gz", ".tgz")):
         return True

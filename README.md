@@ -21,7 +21,7 @@ Backend and frontend verification, plus live SignalR testing, are summarized in 
 
 ### Run locally (backend, then app)
 
-These are the exact commands used to build and verify this workspace. The .NET API and the Expo app run as separate processes; nothing in Stage 2 requires the starter's port-3000 Node listener.
+These are the exact commands used to build and verify this workspace. The .NET API and the Expo app run as separate processes.
 
 ```bash
 # 1. PostgreSQL: two distinct databases, one for development, one disposable one for tests
@@ -70,7 +70,7 @@ Demo OTP `123456` is an explicitly labelled local verification step, not an SMS 
 
 Business, founder, story, product, service, opportunity, notification and analytics fixtures are illustrative sample data. Startup costs are estimates, and story sources are labelled. A business is not verified from a local request; the badge shown on fixtures reflects only their seeded sample status. The app does not provide legal, financial or business verification advice.
 
-The fixed managed starter still includes a port-3000 Node API listener and its own starter database/authentication libraries; that scaffold is not the Mabiz Stage 2 backend and product screens do not use it. The Stage 2 service is the separate C# solution under `src/` and uses PostgreSQL. `pnpm dev` starts the template listeners for the managed Mobile Preview; this does not make product actions server-backed. `pnpm db:push` is not required for the local demo or the .NET backend.
+The Stage 2 service is the separate C# solution under `src/` and uses PostgreSQL.
 
 ## Requirements and installation
 
@@ -88,7 +88,7 @@ No environment variables are required for the local demo or Expo Go. A standalon
 pnpm dev
 ```
 
-The fixed listeners are Metro/Expo Web on port `8081` and the starter API on port `3000`. Do not change these Mobile ports. The platform supplies the current Preview and device addresses; do not hardcode them in source.
+Metro/Expo Web runs on port `8081`.
 
 To prepare an Expo Go QR preview, use the project Dashboard’s **Connect Expo** flow. The platform synchronizes `EXPO_TOKEN` into the private runtime environment; do not copy the token into chat, logs, code or a committed file. Expo Go on the phone must be signed into the same Expo account used for the project connection. Web Preview and Expo Go are distinct surfaces; a working Web Preview does not by itself prove a phone connected.
 
@@ -96,7 +96,6 @@ The local scripts can also start listeners separately:
 
 ```bash
 pnpm dev:metro   # Expo/Metro/Web Preview on 8081
-pnpm dev:server  # starter API on 3000
 ```
 
 ## Available checks and build commands
@@ -153,7 +152,7 @@ Stage 4 post/profile privacy, blocks, hidden posts, and social interactions are 
 
 Camera, photos/videos and approximate foreground location are requested only when a corresponding feature is used. The map itself shows public area-level business pins and does not require or show the viewer’s location. The “Near me” action requests foreground location only after the user taps it; county/town browsing remains available if permission is denied. Selected media remains local unless uploaded through the Stage 5 catalogue image workflow; resumable transfer is not implemented. Precise personal coordinates are not shown on a profile. Local account deletion resets the device/browser demo state only; it does not delete a remote account.
 
-The native map uses the Expo SDK 58-aligned `react-native-maps` package and is intended to be exercised in Expo Go. The browser build intentionally shows a list fallback. A standalone Android build can compile without a key, but Google Maps tiles are not release-ready until the owner supplies a correctly restricted key after permanent app identifiers and signing credentials are established. The current generated Manus identifiers remain unchanged. See [`docs/MOBILE_MAP.md`](./docs/MOBILE_MAP.md) before native release work.
+The native map uses the Expo SDK 58-aligned `react-native-maps` package and is intended to be exercised in Expo Go. The browser build intentionally shows a list fallback. A standalone Android build can compile without a key, but Google Maps tiles are not release-ready until the owner supplies a correctly restricted key after permanent app identifiers and signing credentials are established. The Android package and iOS bundle identifier are `com.mabiz.app` and the URL scheme is `mabiz`. See [`docs/MOBILE_MAP.md`](./docs/MOBILE_MAP.md) before native release work.
 
 ## API mode, Stage 7 delivery and remaining work
 

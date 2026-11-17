@@ -1,30 +1,4 @@
-// Load environment variables with proper priority (system > .env)
-import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
-
-// Bundle ID format: space.manus.<project_name_dots>.<timestamp>
-// e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
-// Bundle ID can only contain letters, numbers, and dots
-// Android requires each dot-separated segment to start with a letter
-const rawBundleId = "space.manus.Mabiz.t091153525322984";
-const bundleId =
-  rawBundleId
-    .replace(/[-_]/g, ".") // Replace hyphens/underscores with dots
-    .replace(/[^a-zA-Z0-9.]/g, "") // Remove invalid chars
-    .replace(/\.+/g, ".") // Collapse consecutive dots
-    .replace(/^\.+|\.+$/g, "") // Trim leading/trailing dots
-    .toLowerCase()
-    .split(".")
-    .map((segment) => {
-      // Android requires each segment to start with a letter
-      // Prefix with 'x' if segment starts with a digit
-      return /^[a-zA-Z]/.test(segment) ? segment : "x" + segment;
-    })
-    .join(".") || "space.manus.app";
-// Extract timestamp from bundle ID and prefix with "manus" for deep link scheme
-// e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
-const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
-const schemeFromBundleId = `manus${timestamp}`;
 
 // Standalone Android Google Maps tiles require a key restricted to the app ID and signing
 // certificate. Expo Go map usage does not require this project-specific plugin configuration.
@@ -34,34 +8,14 @@ const optionalMapPlugin: NonNullable<ExpoConfig["plugins"]> = process.env.GOOGLE
   : [];
 
 const env = {
-  // App branding - update these values directly (do not use env vars)
   appName: "Mabiz",
-  appSlug: "Mabiz",
-  // Durable public project-branding asset, independent of native launcher metadata.
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663995362399/ygwtkHxSBjeacWfv.png",
-  scheme: schemeFromBundleId,
-  iosBundleId: bundleId,
-  androidPackage: bundleId,
+  appSlug: "bizconnect",
+  scheme: "mabiz",
+  iosBundleId: "com.mabiz.app",
+  androidPackage: "com.mabiz.app",
 };
 
-// Expo serializes this browser-safe subset into native and web bundles. The server-only
-// MANUS_API_KEY and MANUS_JWT_SECRET must never enter this object.
 const publicRuntime = {
-  oauthPortalUrl:
-    process.env.MANUS_OAUTH_PORTAL_URL ??
-    process.env.VITE_OAUTH_PORTAL_URL ??
-    process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL ??
-    "",
-  oauthServerUrl:
-    process.env.MANUS_OAUTH_API_URL ??
-    process.env.OAUTH_SERVER_URL ??
-    process.env.EXPO_PUBLIC_OAUTH_SERVER_URL ??
-    "",
-  appId:
-    process.env.MANUS_PROJECT_ID ??
-    process.env.VITE_APP_ID ??
-    process.env.EXPO_PUBLIC_APP_ID ??
-    "",
   ...((process.env.EAS_PROJECT_ID ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID)
     ? { eas: { projectId: process.env.EAS_PROJECT_ID ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID } }
     : {}),

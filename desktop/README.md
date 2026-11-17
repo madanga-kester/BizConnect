@@ -29,7 +29,7 @@ Demo mode is the default and is explicitly labeled in the UI. It uses determinis
 
 ## Routes
 
-The desktop client serves `/`, `/discover`, `/businesses`, `/products-services`, `/opportunities`, `/messages`, `/notifications`, `/analytics`, `/settings`, `/auth/login`, and `/auth/register`. Navigation uses the browser History API and the route list is published at `public/manus-routes.json`.
+The desktop client serves `/`, `/discover`, `/businesses`, `/products-services`, `/opportunities`, `/messages`, `/notifications`, `/analytics`, `/settings`, `/auth/login`, and `/auth/register`. Navigation uses the browser History API and the route list is published at `public/routes.json`.
 
 ## Verification
 

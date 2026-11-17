@@ -8,10 +8,10 @@ import type {
 } from "@/types/domain";
 
 export const MEDIA = {
-  fashion: "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-2.webp",
-  coast: "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-3.webp",
-  furniture: "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-4.webp",
-  skincare: "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-5.webp",
+  fashion: "/seed-images/image-2.webp",
+  coast: "/seed-images/image-3.webp",
+  furniture: "/seed-images/image-4.webp",
+  skincare: "/seed-images/image-5.webp",
 } as const;
 
 export const CURRENT_USER: UserProfile = {

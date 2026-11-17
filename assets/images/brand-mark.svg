@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#102A43"/><g fill="none" stroke-linecap="round" stroke-width="68"><rect x="230" y="395" width="387" height="230" rx="112" transform="rotate(-34 423 510)" stroke="#19845C"/><rect x="407" y="395" width="387" height="230" rx="112" transform="rotate(34 600 510)" stroke="#F19039"/></g><path d="M512 650V405" stroke="#fff" stroke-width="28" stroke-linecap="round"/><ellipse cx="452" cy="386" rx="68" ry="46" transform="rotate(-28 452 386)" fill="#4EC093"/><ellipse cx="572" cy="386" rx="68" ry="46" transform="rotate(28 572 386)" fill="#F19039"/><circle cx="512" cy="414" r="22" fill="#fff"/><circle cx="512" cy="727" r="37" fill="#F19039"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1254" height="1254" viewBox="0 0 1254 1254">
+<defs>
+<clipPath id="top"><circle cx="627" cy="580" r="110"/></clipPath>
+<clipPath id="low"><circle cx="627" cy="830" r="110"/></clipPath>
+<rect id="gl" x="-280" y="-150" width="560" height="300" rx="150" transform="translate(460,622) rotate(45)"/>
+<rect id="ol" x="-280" y="-150" width="560" height="300" rx="150" transform="translate(794,622) rotate(-45)"/>
+</defs>
+<rect width="1254" height="1254" rx="0" fill="#122946"/>
+<use xlink:href="#gl" fill="none" stroke="#00D35A" stroke-width="80"/>
+<use xlink:href="#ol" fill="none" stroke="#FF9208" stroke-width="80"/>
+<g clip-path="url(#top)" opacity="0.999">
+<use xlink:href="#gl" fill="none" stroke="#00D35A" stroke-width="80"/>
+<use xlink:href="#ol" fill="none" stroke="#122946" stroke-width="116"/>
+<use xlink:href="#ol" fill="none" stroke="#FF9208" stroke-width="80"/>
+</g>
+<g clip-path="url(#low)" opacity="0.999">
+<use xlink:href="#ol" fill="none" stroke="#FF9208" stroke-width="80"/>
+<use xlink:href="#gl" fill="none" stroke="#122946" stroke-width="116"/>
+<use xlink:href="#gl" fill="none" stroke="#00D35A" stroke-width="80"/>
+</g>
+</svg>

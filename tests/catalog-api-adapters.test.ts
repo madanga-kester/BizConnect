@@ -62,7 +62,7 @@ function publicItemDto(overrides: Record<string, unknown> = {}) {
   };
 }
 
-const DEVICE_URI_PATTERN = /file:|content:|blob:|asset:|manus-storage/i;
+const DEVICE_URI_PATTERN = /file:|content:|blob:|asset:|seed-images/i;
 
 describe("Stage 5 catalogue API adapters", () => {
   it("uses the exact management routes for products and services", async () => {
@@ -311,7 +311,7 @@ describe("Stage 5 catalogue API adapters", () => {
 
 describe("Stage 5 catalogue media helpers", () => {
   it("recognises device-only URIs and supported image types", () => {
-    for (const uri of ["file:///var/x.jpg", "content://media/1", "blob:https://app.test/x", "asset://images/x", "/manus-storage/x.jpg"]) expect(isDeviceFileUri(uri)).toBe(true);
+    for (const uri of ["file:///var/x.jpg", "content://media/1", "blob:https://app.test/x", "asset://images/x", "/seed-images/x.jpg"]) expect(isDeviceFileUri(uri)).toBe(true);
     expect(isDeviceFileUri("https://cdn.test/x.jpg")).toBe(false);
     expect(isDeviceFileUri("")).toBe(false);
     for (const type of ["image/jpeg", "image/JPG", "image/png", "image/webp"]) expect(isSupportedCatalogueImage(type)).toBe(true);

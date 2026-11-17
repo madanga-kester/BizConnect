@@ -9,7 +9,7 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useClock } from "@/hooks/use-clock";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useThemeContext } from "@/lib/theme-provider";
-import { isRunningInPreviewIframe } from "@/lib/_core/manus-runtime";
+import { isRunningInPreviewIframe } from "@/lib/embedded-preview";
 import * as Network from "expo-network";
 import { colors, createThemedStyles, radius } from "@/theme/tokens";
 import { formatKes } from "@/utils/kenya";
@@ -77,25 +77,25 @@ export function Chip({ label, selected, onPress, icon }: { label: string; select
 export function Avatar({ name, image, size = 42, ring = false }: { name: string; image?: string; size?: number; ring?: boolean }) {
   const { settings } = useAppStore();
   const initials = name.split(" ").slice(0, 2).map((x) => x[0]).join("").toUpperCase();
-  const validImage = Boolean(image && /^(https?:|file:|content:|data:|asset:|\/manus-storage\/)/i.test(image));
-  const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !image?.startsWith("/manus-storage/"));
+  const validImage = Boolean(image && /^(https?:|file:|content:|data:|asset:|\/seed-images\/)/i.test(image));
+  const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !image?.startsWith("/seed-images/"));
   return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: ring ? colors.orangeTint : colors.emeraldTint, borderWidth: ring ? 2 : 0, borderColor: colors.orange, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
     {imageUsable ? <Image source={{ uri: image }} style={{ width: size, height: size }} contentFit="cover" /> : <Text style={{ color: colors.emeraldDark, fontWeight: "800", fontSize: size * 0.31 }}>{initials}</Text>}
   </View>;
 }
 
 const NATIVE_BUSINESS_MEDIA = {
-  "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-2.webp": require("../assets/images/sample-businesses/fashion.webp"),
-  "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-3.webp": require("../assets/images/sample-businesses/coast.webp"),
-  "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-4.webp": require("../assets/images/sample-businesses/furniture.webp"),
-  "/manus-storage/async-images/W0b0Wc75y6rGaVY2EHpwKP/image-5.webp": require("../assets/images/sample-businesses/skincare.webp"),
+  "/seed-images/image-2.webp": require("../assets/images/sample-businesses/fashion.webp"),
+  "/seed-images/image-3.webp": require("../assets/images/sample-businesses/coast.webp"),
+  "/seed-images/image-4.webp": require("../assets/images/sample-businesses/furniture.webp"),
+  "/seed-images/image-5.webp": require("../assets/images/sample-businesses/skincare.webp"),
 } as const;
 
 export function MediaImage({ uri, height = 180, label }: { uri?: string; height?: number; label?: string }) {
   const { settings } = useAppStore();
-  const validImage = Boolean(uri && /^(https?:|file:|content:|data:|asset:|\/manus-storage\/)/i.test(uri));
+  const validImage = Boolean(uri && /^(https?:|file:|content:|data:|asset:|\/seed-images\/)/i.test(uri));
   const nativeSource = Platform.OS !== "web" && uri && uri in NATIVE_BUSINESS_MEDIA ? NATIVE_BUSINESS_MEDIA[uri as keyof typeof NATIVE_BUSINESS_MEDIA] : undefined;
-  const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !uri?.startsWith("/manus-storage/") || Boolean(nativeSource));
+  const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !uri?.startsWith("/seed-images/") || Boolean(nativeSource));
   return <View style={{ height, borderRadius: radius.md, backgroundColor: colors.emeraldTint, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
     {imageUsable ? <Image source={nativeSource ?? { uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" accessibilityLabel={label} /> : <><View style={styles.imageOrnament} /><Ionicons name="leaf-outline" size={31} color={colors.emeraldDark} /><Text style={styles.imageFallback}>{label ?? "Local business"}</Text></>}
   </View>;

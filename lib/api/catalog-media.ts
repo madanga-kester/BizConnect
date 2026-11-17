@@ -29,7 +29,7 @@ const DEVICE_URI_PATTERN = /^(file|content|blob|asset|ph|data):/i;
 /** True for a path that only exists on this device (or in the preview sandbox). */
 export function isDeviceFileUri(value?: string | null): boolean {
   if (!value) return false;
-  return DEVICE_URI_PATTERN.test(value) || value.startsWith("/manus-storage/");
+  return DEVICE_URI_PATTERN.test(value) || value.startsWith("/seed-images/");
 }
 
 export function isSupportedCatalogueImage(contentType?: string | null): boolean {

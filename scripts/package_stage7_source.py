@@ -35,7 +35,7 @@ REQUIRED_FILES = {
 
 def skip_file(path: Path, rel: Path) -> bool:
     name = path.name
-    if name in {".DS_Store", "Thumbs.db", ".manus-starter-init.json"}:
+    if name in {".DS_Store", "Thumbs.db"}:
         return True
     if path.suffix.lower() in SKIP_SUFFIXES or name.endswith((".zip", ".tar.gz", ".tgz")):
         return True
