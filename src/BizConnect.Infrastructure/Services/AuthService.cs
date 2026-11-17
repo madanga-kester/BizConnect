@@ -286,6 +286,10 @@ public sealed class AuthService(
         var destination = channel == "phone" ? user.PhoneNumber : user.Email;
         if (string.IsNullOrWhiteSpace(destination)) return new PasswordResetAcceptedResponse(true);
         var now = timeProvider.GetUtcNow();
+        var recentRequests = await db.PasswordResetRequests.CountAsync(x => x.UserId == user.Id && x.CreatedAtUtc > now.AddHours(-1), cancellationToken);
+        if (recentRequests >= MaximumPasswordResetRequestsPerHour) return new PasswordResetAcceptedResponse(true);
+        await db.PasswordResetRequests.Where(x => x.UserId == user.Id && x.ConsumedAtUtc == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.ConsumedAtUtc, (DateTimeOffset?)now), cancellationToken);
         var code = OpaqueTokenSecurity.CreateSixDigitCode();
         var reset = new PasswordResetRequest
         {
@@ -297,7 +301,7 @@ public sealed class AuthService(
         await db.SaveChangesAsync(cancellationToken);
         try
         {
-            await codeSender.SendAsync(channel, destination, "password-reset", $"{reset.Id:N}.{code}", cancellationToken);
+            await codeSender.SendAsync(channel, destination, "password-reset", code, cancellationToken);
         }
         catch
         {
@@ -308,26 +312,24 @@ public sealed class AuthService(
         return new PasswordResetAcceptedResponse(true);
     }
 
+        public async Task<PasswordResetCodeVerifiedResponse> VerifyPasswordResetCodeAsync(VerifyPasswordResetCodeRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        await RequireValidPasswordResetAsync(transaction, request.Identifier, request.Code, cancellationToken);
+        return new PasswordResetCodeVerifiedResponse(true);
+    }
+
     public async Task CompletePasswordResetAsync(CompletePasswordResetRequest request, CancellationToken cancellationToken)
     {
-        var parts = request.ResetToken.Split('.', 2, StringSplitOptions.TrimEntries);
-        if (parts.Length != 2 || !Guid.TryParseExact(parts[0], "N", out var resetId))
-            throw ApiException.Unprocessable("INVALID_RESET_TOKEN", "The password reset token is invalid or expired.");
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-        var reset = await db.PasswordResetRequests.SingleOrDefaultAsync(x => x.Id == resetId, cancellationToken);
-        if (reset is null || !IsChallengeValid(reset.ExpiresAtUtc, reset.ConsumedAtUtc, reset.FailedAttempts))
-            throw ApiException.Unprocessable("INVALID_RESET_TOKEN", "The password reset token is invalid or expired.");
-        if (!OpaqueTokenSecurity.VerifyHash(parts[1], reset.CodeHash, _options.ChallengePepper))
-        {
-            reset.FailedAttempts++;
-            await db.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            throw ApiException.Unprocessable("INVALID_RESET_TOKEN", "The password reset token is invalid or expired.");
-        }
-        var user = await userManager.FindByIdAsync(reset.UserId.ToString()) ?? throw ApiException.NotFound("ACCOUNT_NOT_FOUND", "The account no longer exists.");
+        var (user, reset) = await RequireValidPasswordResetAsync(transaction, request.Identifier, request.Code, cancellationToken);
+        if (await IsPasswordReusedAsync(user, request.NewPassword, cancellationToken))
+            throw ApiException.Unprocessable("PASSWORD_REUSED", $"Choose a password you have not used among your last {PasswordHistoryDepth} passwords.");
+        var previousPasswordHash = user.PasswordHash;
         var identityToken = await userManager.GeneratePasswordResetTokenAsync(user);
         var result = await userManager.ResetPasswordAsync(user, identityToken, request.NewPassword);
         if (!result.Succeeded) ThrowIdentityErrors(result, "The new password does not meet the account security policy.");
+        await RecordPasswordHistoryAsync(user.Id, previousPasswordHash, timeProvider.GetUtcNow(), cancellationToken);
 
         var now = timeProvider.GetUtcNow();
         reset.ConsumedAtUtc = now;
@@ -378,6 +380,62 @@ public sealed class AuthService(
             profile.Interests, profile.PrivateProfile, followers, following, user.EmailConfirmed, user.PhoneNumberConfirmed);
     }
 
+        private async Task<(BizConnectUser User, PasswordResetRequest Reset)> RequireValidPasswordResetAsync(
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction, string identifier, string code, CancellationToken cancellationToken)
+    {
+        var user = await FindUserByIdentifierAsync(identifier, cancellationToken);
+        PasswordResetRequest? reset = null;
+        if (user is not null)
+        {
+            var userId = user.Id;
+            reset = await db.PasswordResetRequests
+                .Where(x => x.UserId == userId && x.ConsumedAtUtc == null)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+        if (user is null || reset is null || !IsChallengeValid(reset.ExpiresAtUtc, reset.ConsumedAtUtc, reset.FailedAttempts))
+            throw ApiException.Unprocessable("INVALID_RESET_CODE", "The reset code is invalid or has expired.");
+        if (!OpaqueTokenSecurity.VerifyHash(code, reset.CodeHash, _options.ChallengePepper))
+        {
+            reset.FailedAttempts++;
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            throw ApiException.Unprocessable("INVALID_RESET_CODE", "The reset code is invalid or has expired.");
+        }
+        return (user, reset);
+    }
+    private const int MaximumPasswordResetRequestsPerHour = 5;
+        private const int PasswordHistoryDepth = 5;
+
+    private async Task<bool> IsPasswordReusedAsync(BizConnectUser user, string newPassword, CancellationToken cancellationToken)
+    {
+        if (await userManager.CheckPasswordAsync(user, newPassword)) return true;
+        var recentHashes = await db.PasswordHistoryEntries.AsNoTracking()
+            .Where(x => x.UserId == user.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(PasswordHistoryDepth - 1)
+            .Select(x => x.PasswordHash)
+            .ToListAsync(cancellationToken);
+        return recentHashes.Any(hash => userManager.PasswordHasher.VerifyHashedPassword(user, hash, newPassword) != PasswordVerificationResult.Failed);
+    }
+
+    private async Task RecordPasswordHistoryAsync(Guid userId, string? previousPasswordHash, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(previousPasswordHash)) return;
+        var stale = await db.PasswordHistoryEntries
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Skip(PasswordHistoryDepth - 2)
+            .ToListAsync(cancellationToken);
+        db.PasswordHistoryEntries.RemoveRange(stale);
+        db.PasswordHistoryEntries.Add(new PasswordHistoryEntry
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PasswordHash = previousPasswordHash,
+            CreatedAtUtc = now
+        });
+    }
     private async Task<BizConnectUser?> FindUserByIdentifierAsync(string identifier, CancellationToken cancellationToken)
     {
         var value = identifier.Trim();

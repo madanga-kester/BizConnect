@@ -27,7 +27,7 @@ export default function ForgotPasswordScreen() {
       const result = await services.auth.requestPasswordReset({ identifier: value });
       if (!result.ok) return feedback(result.error.message);
       feedback("If an account exists for that identifier, a reset code has been sent.");
-      router.push("/auth/reset-password");
+      router.push({ pathname: "/auth/reset-password", params: { identifier: value } });
     } catch {
       feedback("Unable to start password recovery. Please try again.");
     } finally {

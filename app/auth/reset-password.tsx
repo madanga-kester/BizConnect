@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, Platform, Text } from "react-native";
 import { Button, Field, Page, TopBar, styles } from "@/components/biz-ui";
@@ -14,25 +14,47 @@ function feedback(message: string) {
 
 export default function ResetPasswordScreen() {
   useThemeContext();
+  const params = useLocalSearchParams<{ identifier?: string }>();
   const app = useAppStore();
   const services = useBizConnectServices();
-  const [resetToken, setResetToken] = useState("");
+  const [step, setStep] = useState<"code" | "password">("code");
+  const [identifier, setIdentifier] = useState(params.identifier ?? "");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
 
-  const submit = async () => {
+  const verifyCode = async () => {
     if (submitting.current) return;
-    const token = resetToken.trim().replace(/[\s.]+$/, "");
-    if (!token) return feedback("Enter the reset code from your email.");
+    const who = identifier.trim();
+    if (!who) return feedback("Enter your email, phone or username.");
+    if (code.length !== 6) return feedback("Enter the 6-digit code from your email.");
+    submitting.current = true;
+    setBusy(true);
+    try {
+      const result = await services.auth.verifyPasswordResetCode({ identifier: who, code });
+      if (!result.ok) return feedback(result.error.message);
+      if (!result.data.verified) return feedback("That code is not valid.");
+      setStep("password");
+    } catch {
+      feedback("Unable to check your code. Please try again.");
+    } finally {
+      submitting.current = false;
+      setBusy(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (submitting.current) return;
     if (!isStrongPassword(password)) return feedback(PASSWORD_ERROR);
     if (password !== again) return feedback("Your passwords do not match.");
     submitting.current = true;
     setBusy(true);
     try {
       const result = await services.auth.completePasswordReset({
-        resetToken: token,
+        identifier: identifier.trim(),
+        code,
         newPassword: password,
       });
       if (!result.ok) return feedback(result.error.message);
@@ -50,39 +72,81 @@ export default function ResetPasswordScreen() {
     }
   };
 
+  if (step === "password") {
+    return (
+      <Page>
+        <TopBar title="New password" />
+        <Text style={styles.sectionHeading}>Create a new password</Text>
+        <Text style={styles.body}>
+          Your code is confirmed. Choose a password you have not used on this account before.
+        </Text>
+        <Field
+          label="New password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="At least 12 characters"
+          secureTextEntry
+        />
+        <Field
+          label="Confirm password"
+          value={again}
+          onChangeText={setAgain}
+          placeholder="Repeat your password"
+          secureTextEntry
+        />
+        <Button
+          title={busy ? "Saving..." : "Change password"}
+          icon="arrow-forward"
+          disabled={busy}
+          onPress={() => void changePassword()}
+        />
+        <Button
+          title="Use a different code"
+          variant="quiet"
+          disabled={busy}
+          onPress={() => {
+            setPassword("");
+            setAgain("");
+            setCode("");
+            setStep("code");
+          }}
+        />
+      </Page>
+    );
+  }
+
   return (
     <Page>
-      <TopBar title="Reset password" back />
-      <Text style={styles.sectionHeading}>Choose a new password</Text>
+      <TopBar title="Enter your code" back />
+      <Text style={styles.sectionHeading}>Check your email</Text>
       <Text style={styles.body}>
-        Paste the full reset code from your email, then choose a new password.
+        Enter the 6-digit code we sent you. You will choose a new password next.
       </Text>
       <Field
-        label="Reset code"
-        value={resetToken}
-        onChangeText={setResetToken}
-        placeholder="Paste the code from your email"
+        label="Email, phone or username"
+        value={identifier}
+        onChangeText={setIdentifier}
+        placeholder="Enter your email, phone or username"
         autoCapitalize="none"
       />
       <Field
-        label="New password"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="At least 12 characters"
-        secureTextEntry
-      />
-      <Field
-        label="Confirm password"
-        value={again}
-        onChangeText={setAgain}
-        placeholder="Repeat your password"
-        secureTextEntry
+        label="Reset code"
+        value={code}
+        onChangeText={(value) => setCode(value.replace(/\D/g, "").slice(0, 6))}
+        placeholder="123456"
+        keyboardType="number-pad"
       />
       <Button
-        title={busy ? "Saving..." : "Change password"}
+        title={busy ? "Checking..." : "Verify code"}
         icon="arrow-forward"
+        disabled={busy || code.length !== 6}
+        onPress={() => void verifyCode()}
+      />
+      <Button
+        title="Send me a new code"
+        variant="quiet"
         disabled={busy}
-        onPress={() => void submit()}
+        onPress={() => router.replace("/auth/forgot-password")}
       />
     </Page>
   );

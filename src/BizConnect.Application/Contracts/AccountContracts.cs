@@ -75,9 +75,18 @@ public sealed record PasswordResetRequestDto([Required, StringLength(254)] strin
 public sealed record PasswordResetAcceptedResponse(bool Accepted);
 public sealed record CompletePasswordResetRequest
 {
-    [Required, StringLength(256)] public string ResetToken { get; init; } = string.Empty;
+    [Required, StringLength(254)] public string Identifier { get; init; } = string.Empty;
+    [Required, RegularExpression("^[0-9]{6}$")] public string Code { get; init; } = string.Empty;
     [Required, StringLength(128, MinimumLength = 12)] public string NewPassword { get; init; } = string.Empty;
 }
+
+
+public sealed record VerifyPasswordResetCodeRequest
+{
+    [Required, StringLength(254)] public string Identifier { get; init; } = string.Empty;
+    [Required, RegularExpression("^[0-9]{6}$")] public string Code { get; init; } = string.Empty;
+}
+public sealed record PasswordResetCodeVerifiedResponse(bool Verified);
 
 public sealed record UserPreferencesResponse(string Locale, string TimeZone, string Theme, bool ShareLocation, bool ReducedDataUsage, bool AutoplayVideos);
 public sealed record UserPreferencesUpdateRequest

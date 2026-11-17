@@ -204,6 +204,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
       return ok({ verified, ...(verified ? { verificationToken: `local-verified:${input.challengeId}` } : {}) });
     },
     async requestPasswordReset() { return ok({ accepted: false }); },
+        async verifyPasswordResetCode() { return ok({ verified: false }); },
     async completePasswordReset() { return localOnly("Password reset delivery"); },
   };
 

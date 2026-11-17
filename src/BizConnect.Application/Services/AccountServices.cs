@@ -12,6 +12,7 @@ public interface IAuthService
     Task<VerificationResultResponse> VerifyVerificationCodeAsync(VerificationCodeConfirmRequest request, CancellationToken cancellationToken);
     Task<PasswordResetAcceptedResponse> RequestPasswordResetAsync(PasswordResetRequestDto request, CancellationToken cancellationToken);
     Task CompletePasswordResetAsync(CompletePasswordResetRequest request, CancellationToken cancellationToken);
+        Task<PasswordResetCodeVerifiedResponse> VerifyPasswordResetCodeAsync(VerifyPasswordResetCodeRequest request, CancellationToken cancellationToken);
 }
 
 public interface IUserService

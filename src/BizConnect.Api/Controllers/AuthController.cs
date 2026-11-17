@@ -90,7 +90,14 @@ public sealed class AuthController(IAuthService auth, AuthCookieService cookies)
         cookies.EnsureAllowedOrigin(Request);
         return Accepted(await auth.RequestPasswordResetAsync(request, cancellationToken));
     }
-
+    [HttpPost("password-resets/verify")]
+    [AllowAnonymous]
+    [ProducesResponseType<PasswordResetCodeVerifiedResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PasswordResetCodeVerifiedResponse>> VerifyPasswordResetCode(VerifyPasswordResetCodeRequest request, CancellationToken cancellationToken)
+    {
+        cookies.EnsureAllowedOrigin(Request);
+        return Ok(await auth.VerifyPasswordResetCodeAsync(request, cancellationToken));
+    }
     [HttpPost("password-resets/complete")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

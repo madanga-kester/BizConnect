@@ -453,6 +453,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     requestVerificationCode: (input) => post("/auth/verification-codes", input, { authenticated: false }),
     verifyVerificationCode: (input) => post("/auth/verification-codes/verify", input, { authenticated: false }),
     requestPasswordReset: (input) => post("/auth/password-resets", input, { authenticated: false }),
+        verifyPasswordResetCode: (input) => post("/auth/password-resets/verify", input, { authenticated: false }),
     completePasswordReset: (input) => post("/auth/password-resets/complete", input, { authenticated: false }),
   };
 

@@ -51,8 +51,11 @@ export interface AuthService {
   logout(): Promise<Result<void>>;
   requestVerificationCode(input: { identifier: string; purpose: "registration" | "login" }): Promise<Result<{ challengeId: string; expiresAt: string }>>;
   verifyVerificationCode(input: { challengeId: string; code: string }): Promise<Result<{ verified: boolean; verificationToken?: string }>>;
+  
   requestPasswordReset(input: { identifier: string }): Promise<Result<{ accepted: boolean }>>;
-  completePasswordReset(input: { resetToken: string; newPassword: string }): Promise<Result<void>>;
+    verifyPasswordResetCode(input: { identifier: string; code: string }): Promise<Result<{ verified: boolean }>>;
+  
+  completePasswordReset(input: { identifier: string; code: string; newPassword: string }): Promise<Result<void>>;
 }
 
 export interface ProfileUpdate {

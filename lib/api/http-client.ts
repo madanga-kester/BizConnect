@@ -77,6 +77,20 @@ function retryableStatus(status: number): boolean {
   return status === 408 || status === 425 || status === 429 || status >= 500;
 }
 
+function firstValidationMessage(errors: unknown): string | undefined {
+  if (!isRecord(errors)) return undefined;
+  for (const value of Object.values(errors)) {
+    if (Array.isArray(value)) {
+      const first = value.find((item): item is string => typeof item === "string" && item.length > 0);
+      if (first) return first;
+    } else if (typeof value === "string" && value) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+
 function responseError(status: number, payload: unknown, requestId: string): ApiError {
   const root = isRecord(payload) ? payload : {};
   const envelopeError = isRecord(root.error) ? root.error : {};
@@ -92,7 +106,9 @@ function responseError(status: number, payload: unknown, requestId: string): Api
   const code = typeof envelopeError.code === "string" ? envelopeError.code
     : typeof root.code === "string" ? root.code : defaultCode;
   const message = typeof envelopeError.message === "string" ? envelopeError.message
-    : typeof root.message === "string" ? root.message : "The request could not be completed.";
+    : typeof root.message === "string" ? root.message
+      : typeof root.detail === "string" && root.detail ? root.detail
+        : firstValidationMessage(root.errors) ?? (typeof root.title === "string" && root.title ? root.title : "The request could not be completed.");
   return {
     code,
     message,

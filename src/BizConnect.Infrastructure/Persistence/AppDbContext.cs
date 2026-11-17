@@ -26,6 +26,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<EmailVerificationChallenge> EmailVerificationChallenges => Set<EmailVerificationChallenge>();
     public DbSet<PhoneVerificationChallenge> PhoneVerificationChallenges => Set<PhoneVerificationChallenge>();
     public DbSet<PasswordResetRequest> PasswordResetRequests => Set<PasswordResetRequest>();
+        public DbSet<PasswordHistoryEntry> PasswordHistoryEntries => Set<PasswordHistoryEntry>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
     public DbSet<Business> Businesses => Set<Business>();
     public DbSet<BusinessMembership> BusinessMemberships => Set<BusinessMembership>();
@@ -155,6 +156,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(x => new { x.UserId, x.ExpiresAtUtc });
             entity.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
+        
+        builder.Entity<PasswordHistoryEntry>(entity =>
+        {
+            entity.ToTable("password_history_entries");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PasswordHash).HasMaxLength(256).IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.CreatedAtUtc });
+            entity.HasOne<BizConnectUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<UserDevice>(entity =>
         {
             entity.ToTable("user_devices");

@@ -67,6 +67,30 @@ namespace BizConnect.Infrastructure.Persistence.Migrations
                     b.ToTable("email_verification_challenges", "public");
                 });
 
+            modelBuilder.Entity("BizConnect.Domain.Accounts.PasswordHistoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.ToTable("password_history_entries", "public");
+                });
+
             modelBuilder.Entity("BizConnect.Domain.Accounts.PasswordResetRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2149,6 +2173,15 @@ namespace BizConnect.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("BizConnect.Domain.Accounts.EmailVerificationChallenge", b =>
+                {
+                    b.HasOne("BizConnect.Infrastructure.Persistence.BizConnectUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizConnect.Domain.Accounts.PasswordHistoryEntry", b =>
                 {
                     b.HasOne("BizConnect.Infrastructure.Persistence.BizConnectUser", null)
                         .WithMany()
