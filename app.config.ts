@@ -6,7 +6,7 @@ import type { ExpoConfig } from "expo/config";
 // e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
 // Bundle ID can only contain letters, numbers, and dots
 // Android requires each dot-separated segment to start with a letter
-const rawBundleId = "space.manus.bizconnect.t091153525322984";
+const rawBundleId = "space.manus.Mabiz.t091153525322984";
 const bundleId =
   rawBundleId
     .replace(/[-_]/g, ".") // Replace hyphens/underscores with dots
@@ -35,8 +35,8 @@ const optionalMapPlugin: NonNullable<ExpoConfig["plugins"]> = process.env.GOOGLE
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "BizConnect",
-  appSlug: "bizconnect",
+  appName: "Mabiz",
+  appSlug: "Mabiz",
   // Durable public project-branding asset, independent of native launcher metadata.
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663995362399/ygwtkHxSBjeacWfv.png",
   scheme: schemeFromBundleId,
@@ -128,8 +128,8 @@ const config: ExpoConfig = {
     "expo-status-bar",
     "expo-web-browser",
     ...optionalMapPlugin,
-    ["expo-image-picker", { photosPermission: "Allow BizConnect to select photos and videos for your local demo posts.", cameraPermission: "Allow BizConnect to take a photo for your local demo profile or post." }],
-    ["expo-location", { locationWhenInUsePermission: "Allow BizConnect to use your approximate area for nearby business discovery. Precise location is not shown on your profile." }],
+    ["expo-image-picker", { photosPermission: "Allow Mabiz to select photos and videos for your local demo posts.", cameraPermission: "Allow Mabiz to take a photo for your local demo profile or post." }],
+    ["expo-location", { locationWhenInUsePermission: "Allow Mabiz to use your approximate area for nearby business discovery. Precise location is not shown on your profile." }],
     [
       "expo-audio",
       {

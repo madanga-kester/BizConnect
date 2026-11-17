@@ -1,6 +1,6 @@
 # Stage 4: Social feed, posts, engagement, polls and follows
 
-Stage 4 extends the existing Stage 2/3 C# ASP.NET Core, EF Core and PostgreSQL backend. It keeps that backend authoritative for Expo and future desktop clients; API mode does not convert unrelated local-demo screens into server features. The migration is additive. **It has not been applied to `bizconnect_dev`.**
+Stage 4 extends the existing Stage 2/3 C# ASP.NET Core, EF Core and PostgreSQL backend. It keeps that backend authoritative for Expo and future desktop clients; API mode does not convert unrelated local-demo screens into server features. The migration is additive. **It has not been applied to `Mabiz_dev`.**
 
 ## Implemented API
 
@@ -57,15 +57,15 @@ Install PostgreSQL and .NET 10, configure a development database, then review th
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH"
 dotnet tool install --global dotnet-ef --version 10.0.0   # if dotnet-ef is not installed
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=bizconnect_dev;Password=REPLACE_ME'
-dotnet ef database update --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Infrastructure
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=Mabiz_dev;Password=REPLACE_ME'
+dotnet ef database update --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Infrastructure
 ```
 
-That command applies all pending migrations, including this Stage 4 migration, to the configured `ConnectionStrings__BizConnect` database. In this implementation session it was **not run against `bizconnect_dev`**; the development database was left untouched. The PostgreSQL HTTP integration fixture is isolated to `BIZCONNECT_TEST_DB` (expected database name `bizconnect_test`) and may recreate only that test database. Never set the test variable to a development connection.
+That command applies all pending migrations, including this Stage 4 migration, to the configured `ConnectionStrings__Mabiz` database. In this implementation session it was **not run against `Mabiz_dev`**; the development database was left untouched. The PostgreSQL HTTP integration fixture is isolated to `Mabiz_TEST_DB` (expected database name `Mabiz_test`) and may recreate only that test database. Never set the test variable to a development connection.
 
 ## Expo API integration
 
-The existing Expo app continues to select local demo mode by default. To opt in, configure the non-secret API origin and `EXPO_PUBLIC_API_MODE=api`; API services use the existing central `JsonApiClient`, secure session, and `BizConnectServicesProvider`. Connected screens include For You/Following, post composer/detail, personal and business profiles/posts, likes, comments/replies, polls, user/business follow actions, follower lists and hide/block controls. Server errors stay visible as errors; API mode does not fabricate mock success. The legacy local-demo store remains a separate mode.
+The existing Expo app continues to select local demo mode by default. To opt in, configure the non-secret API origin and `EXPO_PUBLIC_API_MODE=api`; API services use the existing central `JsonApiClient`, secure session, and `MabizServicesProvider`. Connected screens include For You/Following, post composer/detail, personal and business profiles/posts, likes, comments/replies, polls, user/business follow actions, follower lists and hide/block controls. Server errors stay visible as errors; API mode does not fabricate mock success. The legacy local-demo store remains a separate mode.
 
 Native API authentication should be tested with a reachable development API origin (LAN IP or tunnel as applicable). Browser account login/refresh-cookie integration is a separate limitation inherited from the existing implementation.
 
@@ -78,11 +78,11 @@ pnpm check
 pnpm test
 pnpm exec expo export --platform web
 export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH"
-dotnet build BizConnect.sln
-# Set BIZCONNECT_TEST_DB to the isolated bizconnect_test database first.
-dotnet test BizConnect.sln
+dotnet build Mabiz.sln
+# Set Mabiz_TEST_DB to the isolated Mabiz_test database first.
+dotnet test Mabiz.sln
 ```
 
-Verification on 2026-11-12: `dotnet build BizConnect.sln` succeeded; the complete xUnit/PostgreSQL suite passed **50 tests with 0 failures** against `bizconnect_test`. Frontend verification passed `pnpm check`, **98 tests across 15 files**, and `pnpm exec expo export --platform web`. The live API smoke test (startup migration application disabled, test database only) returned 200 for `/health/ready` and `/openapi/v1.json`, and 401 for unauthenticated feed/posts requests. Coverage includes privacy, business roles, moderation, engagement, polls, self-profile routes/counts and stable cursor paging. The migration remains unapplied to `bizconnect_dev`.
+Verification on 2026-11-12: `dotnet build Mabiz.sln` succeeded; the complete xUnit/PostgreSQL suite passed **50 tests with 0 failures** against `Mabiz_test`. Frontend verification passed `pnpm check`, **98 tests across 15 files**, and `pnpm exec expo export --platform web`. The live API smoke test (startup migration application disabled, test database only) returned 200 for `/health/ready` and `/openapi/v1.json`, and 401 for unauthenticated feed/posts requests. Coverage includes privacy, business roles, moderation, engagement, polls, self-profile routes/counts and stable cursor paging. The migration remains unapplied to `Mabiz_dev`.
 
 Known limits: no private-profile follow requests; no Nearby feed or personalization ranking; no comment likes, post shares, server-side saves, full current-user business-following list, media upload/storage, push, real-time messaging, checkout/payments or AI. These are not claimed as Stage 4 implementations; payments, checkout, wallet and AI remain out of scope, and Stage 5 has not begun.

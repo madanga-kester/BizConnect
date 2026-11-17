@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from "react-native";
 import { Button, EmptyState, LocalNote, Page, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import { useNotificationSync } from "@/components/notification-sync";
 import { navigateToNotification } from "@/lib/notifications/navigation";
 import { colors } from "@/theme/tokens";
@@ -20,8 +20,8 @@ function say(message: string): void { if (Platform.OS === "web") window.alert(me
 
 export default function NotificationsScreen() {
   const app = useAppStore();
-  const services = useBizConnectServices();
-  const mode = useBizConnectServiceMode();
+  const services = useMabizServices();
+  const mode = useMabizServiceMode();
   const sync = useNotificationSync();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);

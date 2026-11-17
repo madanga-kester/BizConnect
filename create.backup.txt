@@ -16,7 +16,7 @@ import {
   VideoPreview,
 } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { ApiPostComposer } from "@/components/api-social-screens";
 import { colors } from "@/theme/tokens";
 import type { ContentAudience, ContentKind, Post } from "@/types/domain";
@@ -46,7 +46,7 @@ function postDraft(id: string, snapshot: PostComposerSnapshot): PersistedCompose
 }
 
 export default function CreateScreen() {
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiPostComposer /> : <MockCreateScreen />;
 }
 

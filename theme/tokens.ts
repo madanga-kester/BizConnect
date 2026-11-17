@@ -55,8 +55,8 @@ export function getTabBarColors(scheme: ColorScheme): { backgroundColor: string;
 let activeColorScheme: ColorScheme = "light";
 const activePalette = () => activeColorScheme === "dark" ? darkColors : lightColors;
 
-/** Updates app-scoped BizConnect tokens without changing the device appearance. */
-export function setBizConnectColorScheme(scheme: ColorScheme): void {
+/** Updates app-scoped Mabiz tokens without changing the device appearance. */
+export function setMabizColorScheme(scheme: ColorScheme): void {
   activeColorScheme = scheme;
 }
 

@@ -4,14 +4,14 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Avatar, Button, MediaImage, VideoPreview, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import type { Post } from "@/types/domain";
 
 const errorText = (error: { message: string; code?: string }) => `${error.message}${error.code ? ` (${error.code})` : ""}`;
 
 export function ApiPostCard({ post }: { post: Post }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [liked, setLiked] = useState(Boolean(post.viewerHasLiked));
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -20,7 +20,7 @@ export function ApiPostCard({ post }: { post: Post }) {
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
   const [poll, setPoll] = useState(post.poll);
-  const personName = post.authorId === app.user.id ? app.user.name : post.authorName ?? "BizConnect member";
+  const personName = post.authorId === app.user.id ? app.user.name : post.authorName ?? "Mabiz member";
   const name = post.identityKind === "business" ? post.identityName ?? "Business" : personName;
   const canBlock = post.identityKind === "personal" && post.authorId !== app.user.id;
   const openDetail = () => router.push({ pathname: "/post/[id]", params: { id: post.id } });

@@ -45,8 +45,8 @@ export default function SearchScreen() {
   const submit = () => { if (query.trim()) app.recordSearch(query.trim()); };
 
   return <Page>
-    <TopBar title="Search BizConnect" back />
-    <View style={styles.inputWrap}><Ionicons name="search" size={19} color={colors.muted} /><TextInput value={query} onChangeText={setQuery} onSubmitEditing={submit} autoFocus placeholder="People, businesses, products…" placeholderTextColor={colors.muted} style={{ flex: 1, padding: 10, color: colors.ink }} returnKeyType="search" accessibilityLabel="Search BizConnect" /><Pressable accessibilityRole="button" onPress={submit}><Text style={styles.link}>Search</Text></Pressable></View>
+    <TopBar title="Search Mabiz" back />
+    <View style={styles.inputWrap}><Ionicons name="search" size={19} color={colors.muted} /><TextInput value={query} onChangeText={setQuery} onSubmitEditing={submit} autoFocus placeholder="People, businesses, products…" placeholderTextColor={colors.muted} style={{ flex: 1, padding: 10, color: colors.ink }} returnKeyType="search" accessibilityLabel="Search Mabiz" /><Pressable accessibilityRole="button" onPress={submit}><Text style={styles.link}>Search</Text></Pressable></View>
     {!normalized ? <>
       <SectionTitle title="Try searching for" />
       {SUGGESTIONS.map((suggestion) => <Pressable key={suggestion} accessibilityRole="button" onPress={() => { setQuery(suggestion); app.recordSearch(suggestion); }} style={styles.actionTile}><Ionicons name="trending-up-outline" size={18} color={colors.muted} /><Text style={[styles.body, { flex: 1 }]}>{suggestion}</Text><Ionicons name="arrow-up-outline" size={16} color={colors.muted} /></Pressable>)}

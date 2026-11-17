@@ -9,7 +9,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PREFIX = "bizconnect_stage7_source"
+PREFIX = "Mabiz_stage7_source"
 SKIP_DIRS = {
     ".git", ".expo", ".pnpm-store", "node_modules", "dist", "web-build", "coverage",
     "TestResults", "test-results", "playwright-report", ".cache", "bin", "obj", "App_Data",
@@ -24,9 +24,9 @@ REQUIRED_FILES = {
     "app/(tabs)/notifications.tsx",
     "components/notification-sync.tsx",
     "lib/api/push-registration.ts",
-    "src/BizConnect.Infrastructure/Persistence/Migrations/20261113035329_Stage7Notifications.cs",
-    "tests/BizConnect.IntegrationTests/Stage7NotificationApiTests.cs",
-    "tests/BizConnect.UnitTests/Stage7PushProviderTests.cs",
+    "src/Mabiz.Infrastructure/Persistence/Migrations/20261113035329_Stage7Notifications.cs",
+    "tests/Mabiz.IntegrationTests/Stage7NotificationApiTests.cs",
+    "tests/Mabiz.UnitTests/Stage7PushProviderTests.cs",
     "scripts/stage6_signalr_smoke.mjs",
     "docs/STAGE7_NOTIFICATIONS.md",
     "STAGE7_IMPLEMENTATION_REPORT.md",
@@ -48,7 +48,7 @@ def skip_file(path: Path, rel: Path) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=ROOT.parent / "bizconnect_stage7_source.zip")
+    parser.add_argument("--output", type=Path, default=ROOT.parent / "Mabiz_stage7_source.zip")
     args = parser.parse_args()
     output = args.output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)

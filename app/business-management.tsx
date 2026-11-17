@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import { Text, View } from "react-native";
 import { ActionTile, Button, ConfirmModal, EmptyState, LocalNote, Page, SectionTitle, Stat, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { BUSINESS_CONTENT_ROLES, getBusinessRole, hasBusinessRole } from "@/utils/business-permissions";
 
 export default function BusinessManagementScreen() {
   const app = useAppStore();
-  const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const services = useMabizServices();
+  const apiMode = useMabizServiceMode() === "api";
   const [remoteBusiness, setRemoteBusiness] = useState<typeof app.businesses[number] | undefined>();
   const [loading, setLoading] = useState(apiMode);
   const [error, setError] = useState("");
@@ -43,7 +43,7 @@ export default function BusinessManagementScreen() {
   useEffect(() => { void load(); }, [load]);
 
   if (!app.isAuthenticated) return <Page><TopBar title="Business dashboard" back /><EmptyState title="Sign in to manage a business" detail="Business tools require an authenticated owner or team account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
-  if (apiMode && loading) return <Page><TopBar title="Business dashboard" back /><Text style={styles.body}>Loading business permissions from BizConnect…</Text></Page>;
+  if (apiMode && loading) return <Page><TopBar title="Business dashboard" back /><Text style={styles.body}>Loading business permissions from Mabiz…</Text></Page>;
   if (!business) return <Page><TopBar title="Business dashboard" back /><EmptyState title={apiMode ? "Business unavailable" : "Choose a business first"} detail={error || "Create or switch to one of your business identities."} action="Open businesses" onAction={() => router.push("/(tabs)/profile")} />{apiMode && error ? <Button title="Retry" variant="outline" onPress={() => void load()} /> : null}</Page>;
 
   const role = business.currentUserRole ?? getBusinessRole(business, app.user.id);
@@ -66,7 +66,7 @@ export default function BusinessManagementScreen() {
 
   return <Page>
     <TopBar title="Business dashboard" back />
-    <LocalNote text={apiMode ? `BizConnect API · ${business.name} · ${role}. The server enforces permissions.` : `Local business dashboard · ${business.name} · ${role}`} />
+    <LocalNote text={apiMode ? `Mabiz API · ${business.name} · ${role}. The server enforces permissions.` : `Local business dashboard · ${business.name} · ${role}`} />
     {error ? <View style={[styles.card, { padding: 12 }]}><Text style={styles.body}>{error}</Text><Button title="Retry" variant="outline" small onPress={() => void load()} /></View> : null}
     <View style={{ backgroundColor: colors.navy, borderRadius: 21, padding: 17, gap: 8 }}><Text style={{ color: colors.orange, fontSize: 11, fontWeight: "800" }}>BUSINESS OVERVIEW</Text><Text style={{ color: colors.white, fontSize: 23, fontWeight: "800" }}>{business.name}</Text><Text style={{ color: "#D9E2E9" }}>{business.category} · {business.town} · {business.status ?? "active"}</Text><Text style={{ color: "#D9E2E9" }}>{business.visibility ?? "public"} profile · {business.businessType ?? "hybrid"}</Text><Button title="View public profile" variant="soft" icon="eye-outline" onPress={() => router.push({ pathname: "/business/[id]", params: { id: business.id } })} /></View>
     {!apiMode && canEdit ? <>

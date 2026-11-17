@@ -46,9 +46,9 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
 
 export function TopBar({ title, back, right, subtitle, brandNameOnly = false }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean }) {
   return <View style={styles.topbar}>
-    {back ? <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.iconButton}><Ionicons name="arrow-back" size={22} color={colors.ink} /></Pressable> : brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="BizConnect logo" /></View>}
+    {back ? <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.iconButton}><Ionicons name="arrow-back" size={22} color={colors.ink} /></Pressable> : brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
     <View style={{ flex: 1 }}>
-      {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : <Text style={styles.topTitle}>{title ?? "BizConnect"}</Text>}
+      {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : <Text style={styles.topTitle}>{title ?? "Mabiz"}</Text>}
       {subtitle ? <Text style={styles.caption}>{subtitle}</Text> : null}
     </View>
     {right}
@@ -136,7 +136,7 @@ export function PostCard({ post }: { post: Post }) {
   const requireAuth = useRequireAuth();
   const biz = store.businesses.find((b) => b.id === post.identityId);
   const person = post.identityKind === "business" ? undefined : (post.authorId === store.user.id ? store.user : PEOPLE.find((item) => item.id === post.authorId));
-  const name = biz?.name ?? person?.name ?? "BizConnect member";
+  const name = biz?.name ?? person?.name ?? "Mabiz member";
   const liked = store.likedPosts.includes(post.id);
   const saved = store.savedPosts.includes(post.id);
   const poll = post.poll;
@@ -145,7 +145,7 @@ export function PostCard({ post }: { post: Post }) {
   const pollSelections = poll?.votes.reduce((total, vote) => total + vote.optionIds.length, 0) ?? 0;
   const pollDenominator = poll?.multipleChoice ? pollSelections : pollRespondents;
   const pollEnded = Boolean(poll && now > 0 && new Date(poll.endsAt).getTime() <= now);
-  const onShare = async () => { try { await Share.share({ message: `${post.caption}\n\nShared from BizConnect` }); } catch {} };
+  const onShare = async () => { try { await Share.share({ message: `${post.caption}\n\nShared from Mabiz` }); } catch {} };
   return <View style={styles.card}>
     <View style={[styles.row, { padding: 14, paddingBottom: 10 }]}><Avatar name={name} image={biz?.logo ?? person?.avatar} size={42} /><View style={{ flex: 1 }}><View style={{ flexDirection: "row", alignItems: "center", gap: 5, flexWrap: "wrap" }}><Text style={styles.cardTitle}>{name}</Text><VerifiedBadge verified={biz?.verified ?? false} /></View><Text style={styles.caption}>{person ? `@${person.username} · ` : ""}{post.location} · {new Intl.DateTimeFormat("en-KE", { hour: "numeric", minute: "2-digit" }).format(new Date(post.createdAt))}</Text></View>{biz ? <Button title={store.followedBusinesses.includes(biz.id) ? "Following" : "Follow"} small variant={store.followedBusinesses.includes(biz.id) ? "soft" : "outline"} onPress={() => requireAuth(() => store.toggleBusinessFollow(biz.id))} /> : null}<Pressable accessibilityLabel="More post actions" onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}><Ionicons name="ellipsis-horizontal" color={colors.muted} size={21} /></Pressable></View>
     <Text style={[styles.body, { paddingHorizontal: 14, paddingBottom: post.media ? 12 : 4, lineHeight: 21 }]}>{post.caption}</Text>

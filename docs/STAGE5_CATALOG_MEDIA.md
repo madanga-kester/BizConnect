@@ -1,6 +1,6 @@
 # Stage 5: Products, services, catalogue management, image uploads and storage
 
-Stage 5 extends the existing Stage 2/3/4 C# ASP.NET Core, EF Core and PostgreSQL backend with the business catalogue (products and services), ordered image galleries, real image byte uploads and configurable local or S3-compatible object storage. It keeps that backend authoritative for Expo and any future desktop client. The migration is additive. **It has not been applied to `bizconnect_dev`.**
+Stage 5 extends the existing Stage 2/3/4 C# ASP.NET Core, EF Core and PostgreSQL backend with the business catalogue (products and services), ordered image galleries, real image byte uploads and configurable local or S3-compatible object storage. It keeps that backend authoritative for Expo and any future desktop client. The migration is additive. **It has not been applied to `Mabiz_dev`.**
 
 ## Implemented API
 All routes are under `/api/v1`. Management routes require an authenticated bearer token and an active Owner, Admin or Editor membership in the business. Discovery routes are anonymous. List routes use bounded `page`/`pageSize` offsets (page size 1–100) and return `items`, `total`, `page` and `pageSize`.
@@ -91,12 +91,12 @@ Gallery size (12 images, each once), `serviceAreas` (20 entries) and `attributes
 FK columns are named exactly as EF conventions expect, so Stage 5 model configuration extends `AppDbContext.OnModelCreating` through `Stage5Model.Configure` (mirroring the Stage 4 split) instead of touching existing mappings. Gallery rows are written set-based — previous rows are cleared with `ExecuteDeleteAsync` and replacements are added through the `DbSet` — because reordering reuses the same `(item, sort order)` values and a second `SaveChanges` would re-apply the parent update against a stale concurrency token.
 
 ## Migration and database safety
-Integration tests point at `PostgresApiFactory`, which reads `BIZCONNECT_TEST_DB`, refuses to run unless the connection string names `bizconnect_test`, drops and recreates that database, and applies every migration from scratch. The Stage 5 fixture additionally pins `Storage__Provider=local`, a per-run temp `Storage__Local__RootPath` and a 1 MiB upload cap, so test bytes never land in the repository and the size guard is exercised cheaply. `bizconnect_dev` is never written by this task; applying `20261112182203_Stage5Catalog` there is a deliberate later step:
+Integration tests point at `PostgresApiFactory`, which reads `Mabiz_TEST_DB`, refuses to run unless the connection string names `Mabiz_test`, drops and recreates that database, and applies every migration from scratch. The Stage 5 fixture additionally pins `Storage__Provider=local`, a per-run temp `Storage__Local__RootPath` and a 1 MiB upload cap, so test bytes never land in the repository and the size guard is exercised cheaply. `Mabiz_dev` is never written by this task; applying `20261112182203_Stage5Catalog` there is a deliberate later step:
 
 ```bash
 # Development database only, once Stage 5 is accepted for that environment.
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=<user>;Password=<password>'
-dotnet ef database update --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Api
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=<user>;Password=<password>'
+dotnet ef database update --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Api
 ```
 
 ## Expo API integration
@@ -113,10 +113,10 @@ Backend, executed in this workspace:
 
 | Check | Result |
 | --- | --- |
-| `dotnet build BizConnect.sln` | succeeded, 0 errors, 4 warnings (all pre-existing `xUnit2031` in `Stage3BusinessApiTests.cs`) |
-| `dotnet test BizConnect.sln` | **90 passed, 0 failed** - 62 unit and 28 integration, against the isolated `bizconnect_test` database (Stage 4 baseline was 50: 36 unit and 14 integration) |
-| Migration | `20261112182203_Stage5Catalog` applied from scratch by the test fixture; not applied to `bizconnect_dev` |
-| Live API smoke via `scripts/stage5_smoke.py` (42 checks, startup migrations disabled, `bizconnect_test` only) | all 42 passed, exit 0: `/health/live` and `/health/ready` 200; `/openapi/v1.json` 200 with 69 documented paths including every Stage 5 route; anonymous catalogue discovery 200; anonymous catalogue management, media metadata and media delete 401 with `UNAUTHORIZED`; multipart PNG upload 201 reporting `contentType` from the signature with width and height parsed and no storage key in the body; gallery create 201 with sort orders 0-2, reorder 200 preserving new order and alt texts; publish 200 then anonymous discovery, public detail and image proxy 200 with the digest as ETag; delete of an attached asset 409 `MEDIA_IN_USE`, detach then delete 204; duplicate SKU 409; product carrying a service field 422; non-image upload 422 |
+| `dotnet build Mabiz.sln` | succeeded, 0 errors, 4 warnings (all pre-existing `xUnit2031` in `Stage3BusinessApiTests.cs`) |
+| `dotnet test Mabiz.sln` | **90 passed, 0 failed** - 62 unit and 28 integration, against the isolated `Mabiz_test` database (Stage 4 baseline was 50: 36 unit and 14 integration) |
+| Migration | `20261112182203_Stage5Catalog` applied from scratch by the test fixture; not applied to `Mabiz_dev` |
+| Live API smoke via `scripts/stage5_smoke.py` (42 checks, startup migrations disabled, `Mabiz_test` only) | all 42 passed, exit 0: `/health/live` and `/health/ready` 200; `/openapi/v1.json` 200 with 69 documented paths including every Stage 5 route; anonymous catalogue discovery 200; anonymous catalogue management, media metadata and media delete 401 with `UNAUTHORIZED`; multipart PNG upload 201 reporting `contentType` from the signature with width and height parsed and no storage key in the body; gallery create 201 with sort orders 0-2, reorder 200 preserving new order and alt texts; publish 200 then anonymous discovery, public detail and image proxy 200 with the digest as ETag; delete of an attached asset 409 `MEDIA_IN_USE`, detach then delete 204; duplicate SKU 409; product carrying a service field 422; non-image upload 422 |
 
 Frontend, executed in this workspace: `pnpm check` (`tsc --noEmit`) clean; `pnpm test` **114 passed in 16 files** (Stage 4 baseline 98 in 15, so the previous suites still pass and `tests/catalog-api-adapters.test.ts` adds the Stage 5 coverage: methods and paths, offset `page`/`pageSize` query, DTO to domain mapping including null price, null sku and null visit type, gallery ordering with absolute image URLs, absence of device URIs in outgoing payloads, unchanged API error passthrough, and mock mode staying local); `npx expo export --platform web` exited 0 with the catalogue routes in the bundle.
 

@@ -3,17 +3,17 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Platform, Text, View } from "react-native";
 import { Button, Field, LocalNote, Page, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import type { UserProfile } from "@/types/domain";
 import { colors } from "@/theme/tokens";
 
 function feedback(message: string) {
   if (Platform.OS === "web") window.alert(message);
-  else Alert.alert("BizConnect account", message);
+  else Alert.alert("Mabiz account", message);
 }
 
 export default function Stage2AccountScreen() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
@@ -81,7 +81,7 @@ export default function Stage2AccountScreen() {
         <Field label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
         <Field label="Biography" value={bio} onChangeText={setBio} multiline placeholder="What would you like people to know?" />
         <Button title={busy ? "Saving…" : "Save server profile"} disabled={busy || loading} onPress={() => void save()} />
-        <Button title="Continue to BizConnect" variant="soft" onPress={() => router.replace("/(tabs)")} />
+        <Button title="Continue to Mabiz" variant="soft" onPress={() => router.replace("/(tabs)")} />
       </> : null}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Local demo remains separate</Text>

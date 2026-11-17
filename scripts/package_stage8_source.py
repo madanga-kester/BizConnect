@@ -9,7 +9,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PREFIX = "bizconnect_stage8_source"
+PREFIX = "Mabiz_stage8_source"
 SKIP_DIRS = {
     ".git", ".expo", ".pnpm-store", "node_modules", "dist", "web-build", "coverage",
     "TestResults", "test-results", "playwright-report", ".cache", "bin", "obj", "App_Data", "desktop-dist",
@@ -24,9 +24,9 @@ REQUIRED_FILES = {
     "app/(tabs)/notifications.tsx",
     "components/notification-sync.tsx",
     "lib/api/push-registration.ts",
-    "src/BizConnect.Infrastructure/Persistence/Migrations/20261113100000_Stage8BusinessGrowth.cs",
+    "src/Mabiz.Infrastructure/Persistence/Migrations/20261113100000_Stage8BusinessGrowth.cs",
     "app/business-growth.tsx",
-    "src/BizConnect.Infrastructure/Persistence/Stage8Model.cs",
+    "src/Mabiz.Infrastructure/Persistence/Stage8Model.cs",
     "docs/STAGE8_BUSINESS_GROWTH.md",
     "docs/STAGE8_BUSINESS_GROWTH.md",
     "STAGE8_IMPLEMENTATION_REPORT.md",
@@ -61,7 +61,7 @@ def skip_file(path: Path, rel: Path) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=ROOT.parent / "bizconnect_stage8_source.zip")
+    parser.add_argument("--output", type=Path, default=ROOT.parent / "Mabiz_stage8_source.zip")
     args = parser.parse_args()
     output = args.output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)

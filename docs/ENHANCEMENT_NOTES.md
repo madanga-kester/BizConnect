@@ -15,8 +15,8 @@
 
 ## Theme and motion
 
-- `theme` is persisted as `bizconnect-theme` and reflected as `data-theme="dark"` on the document root.
-- Reduced motion is persisted as `bizconnect-reduced-motion` and also honors the CSS `prefers-reduced-motion` baseline already used by the app's motion layer.
+- `theme` is persisted as `Mabiz-theme` and reflected as `data-theme="dark"` on the document root.
+- Reduced motion is persisted as `Mabiz-reduced-motion` and also honors the CSS `prefers-reduced-motion` baseline already used by the app's motion layer.
 - Motion includes page entrance, hero accent float, card hover lift, button microinteraction, popover/modal transitions and progress presentation. The reduced-motion attribute disables these transitions.
 
 ## Scope guardrails

@@ -1,21 +1,21 @@
 # Stage 5 implementation report
 
-Prepared 2026-11-12. Every number below was produced by running the command shown, in this workspace, against the tree inside `bizconnect_stage5_source.zip`. Nothing here is inferred from the handoff document.
+Prepared 2026-11-12. Every number below was produced by running the command shown, in this workspace, against the tree inside `Mabiz_stage5_source.zip`. Nothing here is inferred from the handoff document.
 
 ## 1. What the uploaded archive actually contained
 
-The supplied `bizconnect_stage4_source.zip` is a **Stage 4 baseline**. Each Stage 5 artifact that the handoff described as already implemented was checked for directly and was absent:
+The supplied `Mabiz_stage4_source.zip` is a **Stage 4 baseline**. Each Stage 5 artifact that the handoff described as already implemented was checked for directly and was absent:
 
 | Claim in the handoff | Search in the uploaded tree | Result |
 | --- | --- | --- |
-| Migration `20261112182203_Stage5Catalog` | `src/BizConnect.Infrastructure/Persistence/Migrations/` | Absent; latest was `20261112173415_Stage4SocialContent` |
+| Migration `20261112182203_Stage5Catalog` | `src/Mabiz.Infrastructure/Persistence/Migrations/` | Absent; latest was `20261112173415_Stage4SocialContent` |
 | `docs/STAGE5_CATALOG_MEDIA.md` | `docs/` | Absent |
 | Catalogue and media entities, services, controllers | whole `src/` tree, keyword search for catalogue/media/storage | Absent |
-| Local and S3-compatible storage providers | `src/BizConnect.Infrastructure/` | Absent; no `Storage` folder, no object-storage package reference |
+| Local and S3-compatible storage providers | `src/Mabiz.Infrastructure/` | Absent; no `Storage` folder, no object-storage package reference |
 | `Storage` configuration section | `appsettings.json`, `.env.backend.example` | Absent |
 | Stage 5 tests | `tests/` | Absent |
 
-The referenced earlier workspace (`bizconnect_stage2`) no longer exists in this environment, so there was nothing to recover. Stage 5 was therefore **implemented from scratch**, using the handoff as the specification, and the report below describes what was actually built and verified.
+The referenced earlier workspace (`Mabiz_stage2`) no longer exists in this environment, so there was nothing to recover. Stage 5 was therefore **implemented from scratch**, using the handoff as the specification, and the report below describes what was actually built and verified.
 
 Baseline evidence before any change: `dotnet build` succeeded with 0 errors and 4 pre-existing `xUnit2031` warnings in `Stage3BusinessApiTests.cs`; `dotnet test` passed **50 tests** (36 unit, 14 integration).
 
@@ -42,15 +42,15 @@ Frontend, on the existing Expo/React Native/TypeScript app, without disturbing d
 
 | Command | Result |
 | --- | ---|
-| `dotnet build BizConnect.sln` | **0 errors**. A full recompile reports exactly 4 warnings, all of them the pre-existing `xUnit2031` analyser warnings in `Stage3BusinessApiTests.cs` that the Stage 4 baseline already produced; Stage 5 adds no new warning |
-| `dotnet test BizConnect.sln` | **90 passed, 0 failed** - `BizConnect.UnitTests` 62, `BizConnect.IntegrationTests` 28. Re-verified after the warning cleanup above |
+| `dotnet build Mabiz.sln` | **0 errors**. A full recompile reports exactly 4 warnings, all of them the pre-existing `xUnit2031` analyser warnings in `Stage3BusinessApiTests.cs` that the Stage 4 baseline already produced; Stage 5 adds no new warning |
+| `dotnet test Mabiz.sln` | **90 passed, 0 failed** - `Mabiz.UnitTests` 62, `Mabiz.IntegrationTests` 28. Re-verified after the warning cleanup above |
 | New Stage 5 tests | 26 unit cases in `Stage5CatalogUnitTests.cs`, 14 integration facts in `Stage5CatalogApiTests.cs` |
-| Live API smoke, 42 checks against `bizconnect_test` with startup migrations disabled | **42 passed, 0 failed**, exit 0; reproducible with `python3 scripts/stage5_smoke.py` (override with `BIZCONNECT_API_BASE`) |
+| Live API smoke, 42 checks against `Mabiz_test` with startup migrations disabled | **42 passed, 0 failed**, exit 0; reproducible with `python3 scripts/stage5_smoke.py` (override with `Mabiz_API_BASE`) |
 | `pnpm check` (`tsc --noEmit`) | clean, exit 0 |
 | `pnpm test` | **114 passed in 16 files** (Stage 4 baseline was 98 in 15) |
 | `npx expo export --platform web` | exit 0, catalogue routes present in the bundle |
-| `psql -d bizconnect_test` | `catalog_item_media`, `catalog_items`, `media_assets` present; 4 migrations in `__EFMigrationsHistory` |
-| `psql -d bizconnect_dev` | **0 tables** - never connected to, never migrated, never written |
+| `psql -d Mabiz_test` | `catalog_item_media`, `catalog_items`, `media_assets` present; 4 migrations in `__EFMigrationsHistory` |
+| `psql -d Mabiz_dev` | **0 tables** - never connected to, never migrated, never written |
 
 Representative live status codes from the smoke run: `/health/live` and `/health/ready` 200; `/openapi/v1.json` 200 with 69 documented paths; anonymous catalogue management, media metadata and media delete 401 `UNAUTHORIZED`; anonymous draft image read 404; multipart PNG upload 201 with `contentType` from the signature and no storage key in the body; gallery create 201 with sort orders 0-2; reorder 200 preserving new order and alt texts; publish 200, then anonymous discovery, public detail and image proxy 200 with the digest as ETag; delete of an attached asset 409 `MEDIA_IN_USE`, detach then delete 204; duplicate SKU 409; product carrying a service field 422; non-image upload 422 `MEDIA_TYPE_NOT_SUPPORTED`.
 
@@ -72,13 +72,13 @@ Each of these was observed as a failing test or a wrong status code, not theoris
 
 ```bash
 # backend
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=...;Password=...'
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=...;Password=...'
 export Jwt__SigningKey='...' Auth__ChallengePepper='...'
-dotnet run --project src/BizConnect.Api
+dotnet run --project src/Mabiz.Api
 
 # integration tests (isolated, disposable database only)
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=...;Password=...'
-dotnet test BizConnect.sln
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=...;Password=...'
+dotnet test Mabiz.sln
 
 # frontend
 pnpm install && pnpm check && pnpm test
@@ -89,4 +89,4 @@ Storage is configured through the nested `Storage` section (`Storage__Provider`,
 
 ## 6. Known limits and remaining work
 
-The S3 provider has been verified for configuration validation, key safety and provider selection, but **not** exercised against a live S3, MinIO, Wasabi or R2 endpoint. Images are stored verbatim: no re-encoding, resizing, thumbnails, EXIF or GPS stripping, content scanning or CDN. The Stage 4 presigned media ticket contract remains unimplemented, so large resumable uploads are still future work. Business logos and covers are still plain URL fields rather than uploaded media. Applying `20261112182203_Stage5Catalog` to `bizconnect_dev` is deliberately left as an operator step. Messaging, push, reports, verification, checkout, cart, wallet, payments and AI are outside Stage 5, and Stage 6 has not been started.
+The S3 provider has been verified for configuration validation, key safety and provider selection, but **not** exercised against a live S3, MinIO, Wasabi or R2 endpoint. Images are stored verbatim: no re-encoding, resizing, thumbnails, EXIF or GPS stripping, content scanning or CDN. The Stage 4 presigned media ticket contract remains unimplemented, so large resumable uploads are still future work. Business logos and covers are still plain URL fields rather than uploaded media. Applying `20261112182203_Stage5Catalog` to `Mabiz_dev` is deliberately left as an operator step. Messaging, push, reports, verification, checkout, cart, wallet, payments and AI are outside Stage 5, and Stage 6 has not been started.

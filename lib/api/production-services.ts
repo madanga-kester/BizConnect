@@ -9,7 +9,7 @@ import { JsonApiClient, type HttpRequestOptions } from "@/lib/api/http-client";
 import type { ApiError, PageRequest, QueryParams, Result } from "@/lib/api/contracts";
 import type {
   AuthSession,
-  BizConnectServices,
+  MabizServices,
   BusinessCreateInput,
   BusinessApiRole,
   BusinessActivityRecord,
@@ -108,7 +108,7 @@ function mapApiPost(value: ApiPostDto): Post {
   };
 }
 function mapApiComment(value: ApiCommentDto): SocialApiComment {
-  return { id: value.id, postId: value.postId, parentCommentId: value.parentCommentId, userId: value.authorUserId, userName: value.authorName ?? "BizConnect member", userAvatar: value.authorAvatar ?? undefined,
+  return { id: value.id, postId: value.postId, parentCommentId: value.parentCommentId, userId: value.authorUserId, userName: value.authorName ?? "Mabiz member", userAvatar: value.authorAvatar ?? undefined,
     text: value.text, createdAt: value.createdAt, updatedAt: value.updatedAt, replyCount: value.replyCount, replies: [] };
 }
 
@@ -166,7 +166,7 @@ function mapFollowState(value: FollowStateDto): FollowState {
 }
 function mapFollowProfile(value: FollowProfileDto): UserProfile {
   const county: UserProfile["county"] = "Nairobi";
-  return { id: value.userId, username: value.username ?? "member", name: value.name ?? "BizConnect member", ...(value.avatar ? { avatar: value.avatar } : {}),
+  return { id: value.userId, username: value.username ?? "member", name: value.name ?? "Mabiz member", ...(value.avatar ? { avatar: value.avatar } : {}),
     bio: "", county, town: "", interests: [], privateProfile: false, followers: 0, following: 0 };
 }
 function apiPostBody(input: Partial<PostCreateInput>): Record<string, unknown> {
@@ -189,9 +189,9 @@ interface ApiOpportunityDto { id: string; businessId: string; createdByUserId: s
 interface ApiOpportunityPageDto { items: ApiOpportunityDto[]; total: number; page: number; pageSize: number; }
 interface ApiAnalyticsDto { businessId: string; from: string; to: string; totalEvents: number; metrics: { eventType: string; count: number }[]; profileViews: number; enquiries: number; reviews: number; averageRating: number; }
 function growthBounds(range: "7d" | "30d" | "90d"): { from: string; to: string } { const to = new Date(); const from = new Date(to.getTime() - Number(range.slice(0, -1)) * 86400000); return { from: from.toISOString(), to: to.toISOString() }; }
-function mapGrowthReview(value: ApiReviewDto): BusinessReview { return { id: value.id, businessId: value.businessId, authorName: value.reviewerName ?? "BizConnect member", rating: value.rating, body: value.comment, createdAt: value.createdAt }; }
+function mapGrowthReview(value: ApiReviewDto): BusinessReview { return { id: value.id, businessId: value.businessId, authorName: value.reviewerName ?? "Mabiz member", rating: value.rating, body: value.comment, createdAt: value.createdAt }; }
 function mapGrowthMilestone(value: ApiMilestoneDto): Milestone { return { id: value.id, businessId: value.businessId, title: value.title, description: value.description ?? "", date: value.achievedAt.slice(0, 10), kind: "custom" }; }
-function mapGrowthOpportunity(value: ApiOpportunityDto): Opportunity { const amount = value.budget ?? 0; return { id: value.id, title: value.title, industry: value.category, county: "Kenya-wide", startupCostMin: amount, startupCostMax: amount, costIsEstimate: true, requirements: [], equipment: [], skills: [], opportunity: value.description, advice: value.isExpired ? "This opportunity has expired." : "Contact the publisher through BizConnect messaging.", sourceLabel: "Community estimate" }; }
+function mapGrowthOpportunity(value: ApiOpportunityDto): Opportunity { const amount = value.budget ?? 0; return { id: value.id, title: value.title, industry: value.category, county: "Kenya-wide", startupCostMin: amount, startupCostMax: amount, costIsEstimate: true, requirements: [], equipment: [], skills: [], opportunity: value.description, advice: value.isExpired ? "This opportunity has expired." : "Contact the publisher through Mabiz messaging.", sourceLabel: "Community estimate" }; }
 interface ApiBusinessProfile {
   id: string; ownerId: string; slug: string; name: string; businessType: "products" | "services" | "hybrid";
   category: string; subcategory: string; description: string; about: string; founder: string; founderId: string;
@@ -403,7 +403,7 @@ export interface ApiServicesOptions {
  * Production-mode HTTP adapters. These map the frontend contracts to proposed API routes;
  * configuring them does not create a backend or make an endpoint exist.
  */
-export function createApiServices(options: ApiServicesOptions = {}): BizConnectServices {
+export function createApiServices(options: ApiServicesOptions = {}): MabizServices {
   const config = options.config ?? apiConfig;
   const tokens = options.tokenProvider ?? new SecureSessionTokenProvider(options.sessionStorage, options.onSessionExpired);
   const client = options.client ?? new JsonApiClient(tokens, fetch, config.timeoutMs, config);
@@ -422,7 +422,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
   const put = <T>(path: string, body?: unknown, opts?: HttpRequestOptions) => client.put<T>(path, body, opts);
   const del = <T>(path: string, opts?: HttpRequestOptions) => client.delete<T>(path, opts);
 
-  const auth: BizConnectServices["auth"] = {
+  const auth: MabizServices["auth"] = {
     register: (input: RegistrationRequest) => post("/auth/register", input, { authenticated: false }),
     async login(input) {
       const result = await post<AuthSession>("/auth/login", input, { authenticated: false });
@@ -457,7 +457,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     completePasswordReset: (input) => post("/auth/password-resets/complete", input, { authenticated: false }),
   };
 
-  const users: BizConnectServices["users"] = {
+  const users: MabizServices["users"] = {
     getProfile: (userId) => get(userId === "me" ? "/users/me" : resource("users", userId)),
     updateMyProfile: (input: ProfileUpdate) => patch("/users/me", input),
     listFollowers: async (userId, page) => offsetPageResult(await get<ApiPage<FollowProfileDto>>(resource("users", userId, "followers"), { query: offsetPageQuery(page) }), mapFollowProfile),
@@ -472,7 +472,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     cancelFollowRequest: (requestId) => del(resource("follow-requests", requestId)),
   };
 
-  const businesses: BizConnectServices["businesses"] = {
+  const businesses: MabizServices["businesses"] = {
     async list(filters: BusinessFilters) {
       const paging = backendPage(filters);
       const result = await get<ApiPage<ApiBusinessProfile>>("/businesses", { query: { ...paging } });
@@ -498,7 +498,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     removeMember: (businessId, userId) => del(resource("businesses", businessId, "members", userId)),
   };
 
-  const memberships: BizConnectServices["memberships"] = {
+  const memberships: MabizServices["memberships"] = {
     async list(businessId, request) {
       const paging = backendPage(request);
       const result = await get<ApiPage<ApiBusinessMember>>(resource("businesses", businessId, "members"), { query: paging });
@@ -536,10 +536,10 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     cancelOwnershipTransfer: (businessId, transferId) => post<void>(resource("businesses", businessId, "ownership-transfers", transferId, "cancel"), {}),
   };
 
-  const reviews: BizConnectServices["reviews"] = {
+  const reviews: MabizServices["reviews"] = {
     list: async (businessId, page) => { const paging = backendPage(page); const result = await get<ApiReviewPageDto>(resource("businesses", businessId, "reviews"), { query: paging }); return mapResult(result, (response) => toPage(response.items.map(mapGrowthReview), response.total, response.page, response.pageSize)); },
   };
-  const growth: BizConnectServices["growth"] = {
+  const growth: MabizServices["growth"] = {
     async getSummary(businessId, range = "30d") {
       const bounds = growthBounds(range);
       const [summary, reviewPage, milestonesPage, opportunitiesPage, analytics] = await Promise.all([
@@ -562,7 +562,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     async listMilestones(businessId, page) { const result = await get<ApiMilestoneDto[]>(resource("businesses", businessId, "milestones")); return mapResult(result, (items) => toPage(items.map(mapGrowthMilestone), items.length, 1, items.length || page.limit)); },
     async listOpportunities(businessId, page) { const result = await get<ApiOpportunityPageDto>("/opportunities", { query: { page: 1, pageSize: page.limit, includeExpired: false } }); return mapResult(result, (response) => toPage(response.items.filter((item) => item.businessId === businessId).map(mapGrowthOpportunity), response.total, response.page, response.pageSize)); },
   };
-  const posts: BizConnectServices["posts"] = {
+  const posts: MabizServices["posts"] = {
     listFeed: (filters: FeedFilters) => keysetPromiseResult(get<ApiKeysetPage<ApiPostDto>>(filters.mode === "following" ? "/feed/following" : "/feed/for-you", { query: { cursor: filters.cursor, limit: filters.limit } }), mapApiPost),
     listUserPosts: (userId, page) => keysetPromiseResult(get<ApiKeysetPage<ApiPostDto>>(userId === "me" ? "/posts" : resource("users", userId, "posts"), { query: pageQuery(page) }), mapApiPost),
     listBusinessPosts: (businessId, page) => keysetPromiseResult(get<ApiKeysetPage<ApiPostDto>>(resource("businesses", businessId, "posts"), { query: pageQuery(page) }), mapApiPost),
@@ -593,11 +593,11 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     getPollResults: (pollId) => mapPromiseResult(get<ApiPollDto>(resource("polls", pollId, "results")), mapApiPoll),
   };
 
-  const feed: BizConnectServices["feed"] = {
+  const feed: MabizServices["feed"] = {
     list: (filters: FeedFilters) => posts.listFeed(filters),
   };
 
-  const catalog: BizConnectServices["catalog"] = {
+  const catalog: MabizServices["catalog"] = {
     async listProducts(businessId, page) {
       return offsetPageResult(await get<ApiPage<ApiCatalogItemDto>>(resource("businesses", businessId, "products"), { query: catalogListQuery(page) }), (item) => mapApiCatalogItem(item, config));
     },
@@ -640,7 +640,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     getPublicService: (slugOrId) => mapPromiseResult(get<ApiPublicItemDto>(resource("catalogue", "services", slugOrId), { authenticated: false }), (item) => mapApiPublicService(item, config)),
   };
 
-  const stories: BizConnectServices["stories"] = {
+  const stories: MabizServices["stories"] = {
     listStories: (page) => get("/stories", { query: pageQuery(page) }),
     getStory: (storyId) => get(resource("stories", storyId)),
     saveStory: (storyId) => post(resource("stories", storyId, "saves"), {}),
@@ -651,7 +651,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     unsaveOpportunity: (opportunityId) => del(resource("opportunities", opportunityId, "saves")),
   };
 
-  const socialStories: BizConnectServices["socialStories"] = {
+  const socialStories: MabizServices["socialStories"] = {
     listActive: (page: PageRequest) => get("/social-stories", { query: { ...pageQuery(page), active: true } }),
     get: (storyId) => get(resource("social-stories", storyId)),
     create: (input: SocialStoryCreateInput) => post("/social-stories", input, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
@@ -662,7 +662,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     deleteHighlight: (highlightId) => del(resource("users", "me", "story-highlights", highlightId)),
   };
 
-  const listings: BizConnectServices["listings"] = {
+  const listings: MabizServices["listings"] = {
     listOffers: (businessId, page: PageRequest) => get(resource("businesses", businessId, "offers"), { query: pageQuery(page) }),
     createOffer: (businessId, input) => post(resource("businesses", businessId, "offers"), input, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
     updateOffer: (businessId, offerId, input) => patch(resource("businesses", businessId, "offers", offerId), input),
@@ -677,7 +677,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     deleteCommunityOpportunity: (opportunityId) => del(resource("community-opportunities", opportunityId)),
   };
 
-  const milestones: BizConnectServices["milestones"] = {
+  const milestones: MabizServices["milestones"] = {
     listMilestones: (businessId, page) => get(resource("businesses", businessId, "milestones"), { query: pageQuery(page) }),
     createMilestone: (businessId, input: Omit<Milestone, "id" | "businessId">) => post(resource("businesses", businessId, "milestones"), input, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
     updateMilestone: (businessId, milestoneId, input) => patch(resource("businesses", businessId, "milestones", milestoneId), input),
@@ -685,7 +685,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     getAnalytics: (businessId) => get(resource("businesses", businessId, "analytics")),
   };
 
-  const messaging: BizConnectServices["messaging"] = {
+  const messaging: MabizServices["messaging"] = {
     async listConversations(page) {
       const p = apiPageNumber(page);
       const response = await get<ApiConversationPageDto>("/conversations", { query: { page: p, pageSize: page.limit } });
@@ -722,7 +722,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     unblock: (conversationId) => del(resource("conversations", conversationId, "block")),
   };
 
-  const search: BizConnectServices["search"] = {
+  const search: MabizServices["search"] = {
     search: (input: SearchQuery) => get("/search", { query: { ...pageQuery(input), q: input.query, types: input.types, county: input.county, town: input.town, category: input.category } }),
     listHistory: (page) => get("/users/me/search-history", { query: pageQuery(page) }),
     recordSearch: (query) => post("/users/me/search-history", { query }),
@@ -732,7 +732,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     removeRecentlyViewed: (type, entityId) => del(resource("users", "me", "recently-viewed", type, entityId)),
   };
 
-  const notifications: BizConnectServices["notifications"] = {
+  const notifications: MabizServices["notifications"] = {
     async list(page) {
       const paging = { page: apiPageNumber(page), pageSize: Math.max(1, Math.min(100, Math.floor(page.limit || 20))) };
       return mapPagedResult(await get<ApiPage<ApiNotificationDto>>("/notifications", { query: paging }), page, mapApiNotification);
@@ -751,13 +751,13 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     removeDevice: (deviceId) => del(resource("users", "me", "devices", deviceId)),
   };
 
-  const verification: BizConnectServices["verification"] = {
+  const verification: MabizServices["verification"] = {
     submit: (businessId, input) => post(resource("businesses", businessId, "verification-requests"), input, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
     list: (businessId, page) => get(resource("businesses", businessId, "verification-requests"), { query: pageQuery(page) }),
     get: (businessId, requestId) => get(resource("businesses", businessId, "verification-requests", requestId)),
   };
 
-  const moderation: BizConnectServices["moderation"] = {
+  const moderation: MabizServices["moderation"] = {
     report: (input) => post("/moderation/reports", { targetType: input.targetType, targetId: input.targetId, reason: input.reason, details: input.details }, { headers: { "Idempotency-Key": input.idempotencyKey ?? makeIdempotencyKey() } }),
     block: (userId) => post(resource("moderation", "blocks", userId), {}),
     unblock: (userId) => del(resource("moderation", "blocks", userId)),
@@ -765,7 +765,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     unhidePost: (postId) => del(resource("moderation", "hidden-posts", postId)),
   };
 
-  const media: BizConnectServices["media"] = {
+  const media: MabizServices["media"] = {
     begin: (file) => post("/media/uploads", file, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
     upload: async (ticket: MediaUploadTicket, file: MediaFileInput, onProgress?: (progress: MediaUploadProgress) => void, signal?: AbortSignal) => {
       const error = await uploads.send(ticket, file, { onProgress, signal });
@@ -793,7 +793,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     },
   };
 
-  const dataRights: BizConnectServices["dataRights"] = {
+  const dataRights: MabizServices["dataRights"] = {
     requestExport: () => post<ExportJob>("/users/me/data-exports", {}, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
     getExportStatus: (exportId) => get(resource("users", "me", "data-exports", exportId)),
     requestDeletion: (input) => post<DataDeletionRequest>("/users/me/deletion-requests", input, { headers: { "Idempotency-Key": makeIdempotencyKey() } }),
@@ -801,7 +801,7 @@ export function createApiServices(options: ApiServicesOptions = {}): BizConnectS
     cancelDeletion: () => del("/users/me/deletion-requests/current"),
   };
 
-  const preferences: BizConnectServices["preferences"] = {
+  const preferences: MabizServices["preferences"] = {
     get: () => get<AppSettings>("/users/me/preferences"),
     update: (values: Partial<AppSettings>) => patch<AppSettings>("/users/me/preferences", values),
   };

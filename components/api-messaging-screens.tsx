@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { Avatar, EmptyState, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { MessagingRealtimeClient, type MessagingConnectionState } from "@/lib/api/messaging-realtime";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { useAppStore } from "@/hooks/use-app-store";
 import type { ChatMessage, Conversation } from "@/types/domain";
 import { colors } from "@/theme/tokens";
@@ -17,7 +17,7 @@ function uniqueMessages(values: ChatMessage[]): ChatMessage[] { const map = new 
 function clientId(): string { try { return globalThis.crypto.randomUUID(); } catch { return `${Date.now()}-${Math.random().toString(16).slice(2)}-4000-8000-${Math.random().toString(16).slice(2)}`; } }
 
 export function ApiMessagesScreen() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [items, setItems] = useState<Conversation[]>([]);
   const [query, setQuery] = useState("");
@@ -64,7 +64,7 @@ export function ApiChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const conversationId = Array.isArray(id) ? id[0] : id;
   const app = useAppStore();
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");

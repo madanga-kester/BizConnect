@@ -1,10 +1,10 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { randomUUID } from "node:crypto";
 
-const base = (process.env.BIZCONNECT_TEST_API_URL ?? "http://127.0.0.1:5199").replace(/\/$/, "");
-const testDb = process.env.BIZCONNECT_TEST_DB ?? "";
-if (!/(database|dbname)=bizconnect_test(?:;|$)/i.test(testDb)) {
-  throw new Error("Safety guard: set BIZCONNECT_TEST_DB to a connection string whose database is exactly bizconnect_test.");
+const base = (process.env.Mabiz_TEST_API_URL ?? "http://127.0.0.1:5199").replace(/\/$/, "");
+const testDb = process.env.Mabiz_TEST_DB ?? "";
+if (!/(database|dbname)=Mabiz_test(?:;|$)/i.test(testDb)) {
+  throw new Error("Safety guard: set Mabiz_TEST_DB to a connection string whose database is exactly Mabiz_test.");
 }
 
 async function json(response) {

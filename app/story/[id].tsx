@@ -20,7 +20,7 @@ export default function StoryDetailScreen() {
   const business = app.businesses.find((b) => b.id === story.businessId) ?? BUSINESSES.find((b) => b.id === story.businessId);
   if (!founder || !business || profileRestriction(founder, app.user.id, app.followedPeople, app.blockedUsers) || app.blockedUsers.includes(business.ownerId)) return <Page><TopBar title="Founder story" back /><EmptyState title="Story unavailable" detail="This founder story is private or unavailable." action="Browse stories" onAction={() => router.replace("/(tabs)/stories")} /></Page>;
   const saved = app.savedStories.includes(story.id);
-  const share = async () => { try { await Share.share({ message: `${story.title}\n${story.intro}\n\n${story.sourceLabel} · BizConnect` }); } catch {} };
+  const share = async () => { try { await Share.share({ message: `${story.title}\n${story.intro}\n\n${story.sourceLabel} · Mabiz` }); } catch {} };
   return <Page>
     <TopBar title="Business Stories" back />
     <MediaImage uri={story.cover} height={230} label={story.industry} />

@@ -5,11 +5,11 @@ import { Avatar, Button, Chip, EmptyState, Page, TopBar, styles } from "@/compon
 import { PEOPLE } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { filterVisibleBusinesses, profileRestriction } from "@/utils/privacy-policy";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { ApiFollowersScreen } from "@/components/api-social-screens";
 export default function FollowersScreen() {
   const params = useLocalSearchParams<{ businessId?: string }>();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiFollowersScreen selectedBusinessId={params.businessId} /> : <MockFollowersScreen />;
 }
 function MockFollowersScreen() {

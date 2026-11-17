@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Button, Page, TopBar, styles } from "@/components/biz-ui";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 
 function feedback(message: string) {
@@ -22,7 +22,7 @@ export default function ConfirmEmailScreen() {
     identifier?: string;
     challengeId?: string;
   }>();
-  const services = useBizConnectServices();
+  const services = useMabizServices();
 
   const identifier = params.identifier ?? "";
   const [challengeId, setChallengeId] = useState(params.challengeId ?? "");

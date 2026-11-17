@@ -577,7 +577,7 @@ export interface PreferencesService {
   update(patch: Partial<AppSettings>): Promise<Result<AppSettings>>;
 }
 
-export interface BizConnectServices {
+export interface MabizServices {
   auth: AuthService;
   users: UserService;
   businesses: BusinessService;

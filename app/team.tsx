@@ -3,7 +3,7 @@ import { Alert, Platform, Text, View } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, Button, ConfirmModal, EmptyState, Field, LocalNote, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import type { BusinessActivityRecord, BusinessInvitation, OwnershipTransfer } from "@/lib/api/feature-contracts";
 import type { BusinessTeamMember, TeamRole } from "@/types/domain";
 import { newLocalId } from "@/utils/ids";
@@ -15,8 +15,8 @@ const PAGE = { limit: 100 };
 
 export default function TeamScreen() {
   const app = useAppStore();
-  const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const services = useMabizServices();
+  const apiMode = useMabizServiceMode() === "api";
   const business = app.businesses.find((item) => item.id === app.activeBusinessId);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<TeamRole>("Content Manager");
@@ -68,7 +68,7 @@ export default function TeamScreen() {
       const result = await action();
       if (!result.ok) { const message = result.error?.message ?? "The server rejected the operation."; setError(message); feedback("Team action failed", message); }
       else {
-        if (success) feedback("BizConnect", success);
+        if (success) feedback("Mabiz", success);
         await refresh();
         if (apiMode) {
           const managed = await services.businesses.list(PAGE);
@@ -84,9 +84,9 @@ export default function TeamScreen() {
 
   const invite = () => {
     if (!canManage) return feedback("Permission denied", "Only an Owner or Administrator can invite team members.");
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return feedback("Check the email", "Enter a valid email address for a registered BizConnect user.");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return feedback("Check the email", "Enter a valid email address for a registered Mabiz user.");
     if (apiMode) {
-      void run(() => services.memberships.invite(business.id, { email: email.trim(), role }), "Invitation created by the BizConnect API. No email delivery is implied.");
+      void run(() => services.memberships.invite(business.id, { email: email.trim(), role }), "Invitation created by the Mabiz API. No email delivery is implied.");
     } else {
       if (business.team.some((member) => member.email.toLowerCase() === email.trim().toLowerCase())) return feedback("Already on the team", "This person already appears in the local team.");
       app.updateBusiness(business.id, { team: [...business.team, { userId: newLocalId("invite"), role, joinedAt: new Date().toISOString(), displayName: email.trim(), email: email.trim() }] });
@@ -127,7 +127,7 @@ export default function TeamScreen() {
   return <Page>
     <TopBar title="Business team" back />
     <LocalNote text={apiMode ? `API mode · server-enforced access for ${business.name} · your role: ${myRole ?? "no access"}.` : `Local demo · ${business.name} · role: ${myRole ?? "no access"}. Changes stay on this device.`} />
-    {loading ? <Text style={styles.caption}>Loading team access from BizConnect…</Text> : null}
+    {loading ? <Text style={styles.caption}>Loading team access from Mabiz…</Text> : null}
     {error ? <View style={[styles.card, { padding: 12 }]}><Text style={styles.body}>{error}</Text><Button title="Retry" variant="outline" small onPress={() => void refresh()} /></View> : null}
     <View style={[styles.card, { padding: 15, gap: 9 }]}><SectionTitle title="Roles & permissions" /><Text style={styles.body}>Owner: full control, transfer and archive. Admin: profile and team operations within role boundaries. Editor: edit permitted business information. Viewer: read-only access. API mode enforces every permission on the server.</Text></View>
 
@@ -146,7 +146,7 @@ export default function TeamScreen() {
 
     {canManage ? <View style={[styles.card, { padding: 15, gap: 11 }]}><Text style={styles.sectionHeading}>Invite a team member</Text><Field label="Registered user email" value={email} onChangeText={setEmail} placeholder="person@example.com" keyboardType="email-address" autoCapitalize="none" /><Text style={styles.label}>Role</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>{assignableRoles.map((item) => <Button key={item} title={item} variant={role === item ? "soft" : "outline"} small onPress={() => setRole(item)} />)}</View><Button title={busy ? "Working…" : "Invite member"} icon="person-add-outline" disabled={busy} onPress={invite} /></View> : <Text style={styles.caption}>Only the business Owner or an Administrator can invite or remove members.</Text>}
 
-    {apiMode && myRole === "Owner" ? <View style={[styles.card, { padding: 15, gap: 10 }]}><Text style={styles.sectionHeading}>Transfer ownership</Text><Text style={styles.caption}>The recipient must be a registered BizConnect user and explicitly accept. You remain the owner until then.</Text><Field label="Recipient account email" value={transferEmail} onChangeText={setTransferEmail} placeholder="recipient@example.com" keyboardType="email-address" autoCapitalize="none" /><Button title="Request transfer" variant="outline" disabled={busy} onPress={requestTransfer} /></View> : null}
+    {apiMode && myRole === "Owner" ? <View style={[styles.card, { padding: 15, gap: 10 }]}><Text style={styles.sectionHeading}>Transfer ownership</Text><Text style={styles.caption}>The recipient must be a registered Mabiz user and explicitly accept. You remain the owner until then.</Text><Field label="Recipient account email" value={transferEmail} onChangeText={setTransferEmail} placeholder="recipient@example.com" keyboardType="email-address" autoCapitalize="none" /><Button title="Request transfer" variant="outline" disabled={busy} onPress={requestTransfer} /></View> : null}
 
     {apiMode && transfers.filter((transfer) => transfer.businessId === business.id).length ? <>
       <SectionTitle title="Ownership transfers" />

@@ -12,7 +12,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 12_000 },
   use: {
-    baseURL: process.env.BIZCONNECT_E2E_BASE_URL ?? "http://127.0.0.1:8081",
+    baseURL: process.env.Mabiz_E2E_BASE_URL ?? "http://127.0.0.1:8081",
     browserName: "chromium",
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 1,

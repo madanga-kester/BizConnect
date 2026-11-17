@@ -4,7 +4,7 @@ import { Alert, Platform, Text, View } from "react-native";
 import { Button, Chip, ConfirmModal, EmptyState, Field, LocalNote, MediaImage, Page, TopBar, VideoPreview, styles } from "@/components/biz-ui";
 import { ApiCatalogItemEditor } from "@/components/api-catalog-screens";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { BUSINESS_CONTENT_ROLES } from "@/utils/business-permissions";
 import { newLocalId } from "@/utils/ids";
@@ -16,8 +16,8 @@ function tell(title: string, message: string) { if (Platform.OS === "web") windo
 export default function CreateCatalogItemScreen() {
   const { kind: requestedKind, itemId } = useLocalSearchParams<{ kind?: string; itemId?: string }>();
   const kind = requestedKind === "service" ? "service" : "product";
-  // API mode writes to the BizConnect catalogue; the local demo path below is unchanged.
-  const apiMode = useBizConnectServiceMode() === "api";
+  // API mode writes to the Mabiz catalogue; the local demo path below is unchanged.
+  const apiMode = useMabizServiceMode() === "api";
   if (apiMode) return <ApiCatalogItemEditor kind={kind} itemId={itemId} />;
   return <MockCreateCatalogItemScreen kind={kind} itemId={itemId} />;
 }

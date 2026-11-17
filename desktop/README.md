@@ -1,6 +1,6 @@
-# BizConnect Desktop Website
+# Mabiz Desktop Website
 
-The `desktop/` directory contains the dedicated desktop-first BizConnect website. It is a separate React/Vite client in the same repository and does not replace the Expo mobile application under `app/`.
+The `desktop/` directory contains the dedicated desktop-first Mabiz website. It is a separate React/Vite client in the same repository and does not replace the Expo mobile application under `app/`.
 
 ## Local development
 

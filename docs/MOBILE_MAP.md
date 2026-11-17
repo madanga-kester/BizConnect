@@ -1,6 +1,6 @@
 # Native Discovery Map
 
-BizConnect's native map uses `react-native-maps` 1.29.11, the version recommended for Expo SDK 58. Expo's [SDK 58 map-view reference](https://docs.expo.dev/versions/v58.0.0/sdk/map-view/) lists Android, iOS and Expo Go support, and says no additional native setup is required when testing with Expo Go. The project's installed `expo/bundledNativeModules.json` also lists 1.29.11. The Web build intentionally uses an accessible list fallback because this native map module is not a browser map.
+Mabiz's native map uses `react-native-maps` 1.29.11, the version recommended for Expo SDK 58. Expo's [SDK 58 map-view reference](https://docs.expo.dev/versions/v58.0.0/sdk/map-view/) lists Android, iOS and Expo Go support, and says no additional native setup is required when testing with Expo Go. The project's installed `expo/bundledNativeModules.json` also lists 1.29.11. The Web build intentionally uses an accessible list fallback because this native map module is not a browser map.
 
 The demo's pins point to public OpenStreetMap place features returned by Photon searches for the listed neighbourhoods/areas. They are **approximate neighbourhood, district or city-level area markers**, not a business address, storefront, founder's home or exact location. Businesses without an explicit matched public-area feature (including the seeded Kapsoya record) remain available in the list with a not-mapped explanation. No coordinate is fabricated for such a record. Source references are retained as OSM object type/ID in `data/business-map-locations.ts`.
 

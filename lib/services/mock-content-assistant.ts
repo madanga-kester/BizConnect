@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const ASSISTANT_HISTORY_KEY = "bizconnect.content-assistant.history.v1";
+export const ASSISTANT_HISTORY_KEY = "Mabiz.content-assistant.history.v1";
 
 export const CONTENT_PURPOSES = [
   "Caption", "Rewrite", "Grammar check", "Professional tone", "More engaging", "Shorter", "Longer", "Change tone", "Hashtags", "Post title",

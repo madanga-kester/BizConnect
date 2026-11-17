@@ -2,7 +2,7 @@ import { BUSINESSES, CURRENT_USER, NOTIFICATIONS, OPPORTUNITIES, PEOPLE, POSTS, 
 import type { ApiError, PageRequest, PageResponse, Result } from "@/lib/api/contracts";
 import type {
   AuthSession,
-  BizConnectServices,
+  MabizServices,
   BusinessCreateInput,
   BusinessActivityRecord,
   BusinessFilters,
@@ -96,7 +96,7 @@ export interface MockServicesOptions {
 }
 
 /** In-memory, deterministic fixtures. No mock method makes an HTTP request or persists a server claim. */
-export function createMockServices(options: MockServicesOptions = {}): BizConnectServices {
+export function createMockServices(options: MockServicesOptions = {}): MabizServices {
   let users = clone(PEOPLE);
   let businesses = clone(BUSINESSES);
   let posts = clone(POSTS);
@@ -175,7 +175,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     .filter((item) => !item.archived)
     .filter((item) => !filters?.category || item.category.toLowerCase().includes(filters.category.toLowerCase()));
 
-  const auth: BizConnectServices["auth"] = {
+  const auth: MabizServices["auth"] = {
     async register(input: RegistrationRequest) {
       if (!input.username.trim() || !input.password) return fail("VALIDATION_ERROR", "Enter a username and password.");
       if (users.some((user) => user.username.toLowerCase() === usernameSlug(input.username))) return fail("USERNAME_TAKEN", "That username is already in the local demo.");
@@ -208,7 +208,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async completePasswordReset() { return localOnly("Password reset delivery"); },
   };
 
-  const usersService: BizConnectServices["users"] = {
+  const usersService: MabizServices["users"] = {
     async getProfile(userId) { const user = userId === "me" ? currentUser() : users.find((item) => item.id === userId); return user ? ok(user) : notFound("Profile"); },
     async updateMyProfile(input: ProfileUpdate) {
       const target = currentUser();
@@ -244,7 +244,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async cancelFollowRequest(requestId) { if (!followRequests.some((request) => request.id === requestId)) return notFound("Follow request"); followRequests = followRequests.filter((request) => request.id !== requestId); return ok(undefined); },
   };
 
-  const businessesService: BizConnectServices["businesses"] = {
+  const businessesService: MabizServices["businesses"] = {
     async list(filters: BusinessFilters) {
       let result = bySearch(businesses, filters, (item) => `${item.name} ${item.category} ${item.subcategory} ${item.county} ${item.town} ${item.neighbourhood}`);
       if (filters.category) result = result.filter((item) => item.category === filters.category || item.subcategory === filters.category);
@@ -281,7 +281,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async removeMember(businessId, userId) { const business = findBusiness(businessId); if (!business) return notFound("Business"); business.team = business.team.filter((member) => member.userId !== userId); return ok(undefined); },
   };
 
-  const memberships: BizConnectServices["memberships"] = {
+  const memberships: MabizServices["memberships"] = {
     async list(businessId, request) { const business = findBusiness(businessId); return business ? pageResult(business.team, request) : notFound("Business"); },
     async listInvitations(_businessId, request) { return pageResult<BusinessInvitation>([], request); },
     async listMyInvitations(request) { return pageResult<BusinessInvitation>([], request); },
@@ -307,7 +307,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async cancelOwnershipTransfer() { return localOnly("Ownership transfers"); },
   };
 
-  const postsService: BizConnectServices["posts"] = {
+  const postsService: MabizServices["posts"] = {
     async listFeed(filters: FeedFilters) {
       let result = posts.filter((post) => !hiddenPosts.has(post.id) && !blockedUsers.has(post.authorId));
       if (filters.mode === "following") result = result.filter((post) => followedUsers.has(`${currentUserId}:${post.authorId}`) || followedBusinesses.has(post.businessId ?? ""));
@@ -349,11 +349,11 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     },
     async listComments(postId, request) {
       const post = findPost(postId);
-      return post ? pageResult(post.comments.map((comment) => ({ ...comment, postId, parentCommentId: null, userName: users.find((user) => user.id === comment.userId)?.name ?? "BizConnect member", replyCount: comment.replies.length })), request) : notFound("Post");
+      return post ? pageResult(post.comments.map((comment) => ({ ...comment, postId, parentCommentId: null, userName: users.find((user) => user.id === comment.userId)?.name ?? "Mabiz member", replyCount: comment.replies.length })), request) : notFound("Post");
     },
     async listReplies(commentId, request) {
       const comment = posts.flatMap((post) => post.comments).find((item) => item.id === commentId);
-      return comment ? pageResult(comment.replies.map((reply) => ({ ...reply, postId: "", parentCommentId: commentId, userName: users.find((user) => user.id === reply.userId)?.name ?? "BizConnect member", replyCount: 0, replies: [] })), request) : notFound("Comment");
+      return comment ? pageResult(comment.replies.map((reply) => ({ ...reply, postId: "", parentCommentId: commentId, userName: users.find((user) => user.id === reply.userId)?.name ?? "Mabiz member", replyCount: 0, replies: [] })), request) : notFound("Comment");
     },
     async share(postId) { return findPost(postId) ? ok(undefined) : notFound("Post"); },
     async vote(postId, input): Promise<Result<Poll>> {
@@ -384,11 +384,11 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async getPollResults(pollId) { return postsService.getPoll(pollId); },
   };
 
-  const feed: BizConnectServices["feed"] = {
+  const feed: MabizServices["feed"] = {
     list: (filters: FeedFilters) => postsService.listFeed(filters),
   };
 
-  const catalog: BizConnectServices["catalog"] = {
+  const catalog: MabizServices["catalog"] = {
     async listProducts(businessId, request) { const business = findBusiness(businessId); return business ? pageResult(business.products, request) : notFound("Business"); },
     async getProduct(businessId, productId) { const product = findProduct(businessId, productId); return product ? ok(product) : notFound("Product"); },
     async createProduct(businessId, input) { const business = findBusiness(businessId); if (!business) return notFound("Business"); const product: Product = { ...clone(input), id: id("product"), businessId }; business.products.push(product); return ok(product); },
@@ -411,7 +411,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async getPublicService(slugOrId) { const service = visibleLocalServices().find((item) => item.id === slugOrId || item.slug === slugOrId); return service ? ok(service) : notFound("Service"); },
   };
 
-  const storiesService: BizConnectServices["stories"] = {
+  const storiesService: MabizServices["stories"] = {
     async listStories(request) { return pageResult(bySearch(stories, request, (story) => `${story.title} ${story.intro} ${story.category} ${story.industry}`), request); },
     async getStory(storyId) { const story = stories.find((item) => item.id === storyId); return story ? ok(story) : notFound("Story"); },
     async saveStory(storyId) { if (!stories.some((story) => story.id === storyId)) return notFound("Story"); savedStories.add(storyId); return ok(undefined); },
@@ -422,7 +422,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async unsaveOpportunity(opportunityId) { savedOpportunities.delete(opportunityId); return ok(undefined); },
   };
 
-  const socialStories: BizConnectServices["socialStories"] = {
+  const socialStories: MabizServices["socialStories"] = {
     async listActive(request) {
       const visible = socialStoryRecords.filter(canReadSocialStory);
       return pageResult(visible.sort((a, b) => b.createdAt.localeCompare(a.createdAt)), request);
@@ -466,7 +466,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     },
   };
 
-  const listings: BizConnectServices["listings"] = {
+  const listings: MabizServices["listings"] = {
     async listOffers(businessId, request) { return findBusiness(businessId) ? pageResult(businessOffers.filter((item) => item.businessId === businessId), request) : notFound("Business"); },
     async createOffer(businessId, input) {
       if (!findBusiness(businessId)) return notFound("Business");
@@ -488,7 +488,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async deleteCommunityOpportunity(opportunityId) { const opportunity = communityOpportunityRecords.find((item) => item.id === opportunityId); if (!opportunity) return notFound("Community opportunity"); const allowed = opportunity.identityKind === "personal" ? opportunity.identityId === currentUserId : canManageBusiness(opportunity.identityId); if (!allowed) return fail("FORBIDDEN", "Only the opportunity owner may delete this local listing."); communityOpportunityRecords = communityOpportunityRecords.filter((item) => item.id !== opportunityId); return ok(undefined); },
   };
 
-  const milestones: BizConnectServices["milestones"] = {
+  const milestones: MabizServices["milestones"] = {
     async listMilestones(businessId, request) { const business = findBusiness(businessId); return business ? pageResult(business.milestones, request) : notFound("Business"); },
     async createMilestone(businessId, input) { const business = findBusiness(businessId); if (!business) return notFound("Business"); const milestone: Milestone = { ...clone(input), id: id("milestone"), businessId }; business.milestones.push(milestone); return ok(milestone); },
     async updateMilestone(businessId, milestoneId, input) { const milestone = findBusiness(businessId)?.milestones.find((item) => item.id === milestoneId); if (!milestone) return notFound("Milestone"); Object.assign(milestone, clone(input)); return ok(milestone); },
@@ -496,7 +496,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async getAnalytics(businessId) { const business = findBusiness(businessId); return business ? ok(business.analytics) : notFound("Business"); },
   };
 
-  const reviews: BizConnectServices["reviews"] = {
+  const reviews: MabizServices["reviews"] = {
     async list(businessId, request) {
       const business = findBusiness(businessId);
       if (!business) return notFound("Business");
@@ -504,7 +504,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
       return pageResult(seeded, request);
     },
   };
-  const growth: BizConnectServices["growth"] = {
+  const growth: MabizServices["growth"] = {
     async getSummary(businessId, range = "30d") {
       const business = findBusiness(businessId);
       if (!business) return notFound("Business");
@@ -523,7 +523,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async listMilestones(businessId, request) { const business = findBusiness(businessId); return business ? pageResult(business.milestones, request) : notFound("Business"); },
     async listOpportunities(businessId, request) { return findBusiness(businessId) ? pageResult(clone(OPPORTUNITIES), request) : notFound("Business"); },
   };
-  const messaging: BizConnectServices["messaging"] = {
+  const messaging: MabizServices["messaging"] = {
     async listConversations(request) { return pageResult(conversations, request); },
     async getConversation(conversationId) { const conversation = conversations.find((item) => item.id === conversationId); return conversation ? ok(conversation) : notFound("Conversation"); },
     async startConversation(input: StartConversationInput) {
@@ -534,7 +534,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
       const person = users.find((user) => user.id === participantId);
       const nowAt = now();
       const first = input.firstMessage?.trim();
-      const conversation: Conversation = { id: id("conversation"), participantId, participantName: business?.name ?? person?.name ?? "BizConnect member", ...(input.businessId ? { businessId: input.businessId, kind: "business" as const } : { kind: "direct" as const }), ...(input.catalogItemId ? { catalogItemId: input.catalogItemId } : {}), ...(input.catalogItemId ? { catalogItemTitle: "Catalogue enquiry" } : {}), lastMessage: first ?? "", updatedAt: nowAt, unread: 0, isArchived: false, isBlocked: false, messages: first ? [{ id: id("message"), senderId: currentUserId, text: first, createdAt: nowAt, status: "sent" }] : [] };
+      const conversation: Conversation = { id: id("conversation"), participantId, participantName: business?.name ?? person?.name ?? "Mabiz member", ...(input.businessId ? { businessId: input.businessId, kind: "business" as const } : { kind: "direct" as const }), ...(input.catalogItemId ? { catalogItemId: input.catalogItemId } : {}), ...(input.catalogItemId ? { catalogItemTitle: "Catalogue enquiry" } : {}), lastMessage: first ?? "", updatedAt: nowAt, unread: 0, isArchived: false, isBlocked: false, messages: first ? [{ id: id("message"), senderId: currentUserId, text: first, createdAt: nowAt, status: "sent" }] : [] };
       conversations = [conversation, ...conversations];
       return ok(conversation);
     },
@@ -564,7 +564,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async unblock(conversationId) { const conversation = conversations.find((item) => item.id === conversationId); if (!conversation) return notFound("Conversation"); conversation.isBlocked = false; return ok(undefined); },
   };
 
-  const searchService: BizConnectServices["search"] = {
+  const searchService: MabizServices["search"] = {
     async search(input: SearchQuery) {
       const query = input.query.trim().toLowerCase();
       const matches: SearchHit[] = [];
@@ -589,7 +589,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async removeRecentlyViewed(type, entityId) { recentlyViewed = recentlyViewed.filter((item) => item.type !== type || item.entityId !== entityId); return ok(undefined); },
   };
 
-  const notificationsService: BizConnectServices["notifications"] = {
+  const notificationsService: MabizServices["notifications"] = {
     async list(request) { return pageResult(notifications, request); },
     async getUnreadCount() { return ok(notifications.filter((item) => !item.read).length); },
     async markRead(notificationId) { const item = notifications.find((notification) => notification.id === notificationId); if (!item) return notFound("Notification"); item.read = true; return ok(undefined); },
@@ -601,7 +601,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async removeDevice() { return localOnly("Push device removal"); },
   };
 
-  const verification: BizConnectServices["verification"] = {
+  const verification: MabizServices["verification"] = {
     async submit(businessId, input) {
       const business = findBusiness(businessId);
       if (!business) return notFound("Business");
@@ -616,7 +616,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async get(businessId, requestId) { const item = verificationRequests.find((request) => request.businessId === businessId && request.id === requestId); return item ? ok(item) : notFound("Verification request"); },
   };
 
-  const moderation: BizConnectServices["moderation"] = {
+  const moderation: MabizServices["moderation"] = {
     async report(input) { if (!input.targetId || !input.reason) return fail("VALIDATION_ERROR", "Choose a reason before submitting a report."); return ok({ reportId: input.idempotencyKey ?? id("report"), status: "submitted" as const }); },
     async block(userId) { if (!users.some((user) => user.id === userId)) return notFound("Profile"); blockedUsers.add(userId); followedUsers.delete(`${currentUserId}:${userId}`); return ok(undefined); },
     async unblock(userId) { blockedUsers.delete(userId); return ok(undefined); },
@@ -624,7 +624,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async unhidePost(postId) { hiddenPosts.delete(postId); return ok(undefined); },
   };
 
-  const media: BizConnectServices["media"] = {
+  const media: MabizServices["media"] = {
     async begin() { return localOnly("Media upload"); },
     async upload(_ticket, _file: MediaFileInput, _onProgress?: (progress: MediaUploadProgress) => void, _signal?: AbortSignal) { return localOnly("Media upload"); },
     async complete() { return localOnly("Media upload completion"); },
@@ -633,7 +633,7 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async cancel() { return localOnly("Upload cancellation"); },
   };
 
-  const dataRights: BizConnectServices["dataRights"] = {
+  const dataRights: MabizServices["dataRights"] = {
     async requestExport(): Promise<Result<ExportJob>> { return localOnly("Data export"); },
     async getExportStatus(): Promise<Result<ExportJob>> { return localOnly("Data export status"); },
     async requestDeletion(): Promise<Result<DataDeletionRequest>> { return localOnly("Account deletion"); },
@@ -641,11 +641,11 @@ export function createMockServices(options: MockServicesOptions = {}): BizConnec
     async cancelDeletion() { if (!deletionRequest || deletionRequest.status === "completed") return fail("NO_ACTIVE_DELETION_REQUEST", "There is no cancellable local deletion request."); deletionRequest = { ...deletionRequest, status: "cancelled" }; return ok(undefined); },
   };
 
-  const preferences: BizConnectServices["preferences"] = {
+  const preferences: MabizServices["preferences"] = {
     async get() { return ok(appPreferences); },
     async update(patch) { appPreferences = { ...appPreferences, ...clone(patch) }; return ok(appPreferences); },
   };
 
-  const services: BizConnectServices = { auth, users: usersService, businesses: businessesService, memberships, reviews, growth, feed, posts: postsService, catalog, stories: storiesService, socialStories, listings, milestones, messaging, search: searchService, notifications: notificationsService, verification, moderation, media, dataRights, preferences };
+  const services: MabizServices = { auth, users: usersService, businesses: businessesService, memberships, reviews, growth, feed, posts: postsService, catalog, stories: storiesService, socialStories, listings, milestones, messaging, search: searchService, notifications: notificationsService, verification, moderation, media, dataRights, preferences };
   return services;
 }

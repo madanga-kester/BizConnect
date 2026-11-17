@@ -1,4 +1,4 @@
-# BizConnect Desktop — Visual Comparison Report
+# Mabiz Desktop — Visual Comparison Report
 
 The supplied `IMAGES.docx` contains three reference sheets: Messaging and Opportunities; Products & Services and Businesses; Discover and Home. The current desktop implementation preserves the approved visual system across the page-specific compositions rather than collapsing pages into one dashboard.
 
@@ -13,7 +13,7 @@ The supplied `IMAGES.docx` contains three reference sheets: Messaging and Opport
 | Notifications | Notification centre list, filters, unread/read styling and preference side panel | Implemented with filter, read-all, dismiss, and preference controls; API read/dismiss routes are wired | Backend exposes preference read but no confirmed preference-update route in this source |
 | Analytics | Green performance banner, range switch, metrics, activity chart and top-content panel | Implemented with range controls, metric cards, chart treatment and API analytics refresh | Demo chart is a local presentation until an API payload is available |
 | Settings | Structured account/profile panel, settings rail, preference rows and danger/session section | Implemented with editable name validation, save feedback, preference selectors and logout | Profile write remains local until the confirmed backend profile-update route is mapped |
-| Authentication | Supplied references use the same BizConnect brand language and full-height split layout | Implemented route-aware login/register pages with required validation, CSRF/API wiring and demo disclosure | OAuth/verification/password-reset screens are not claimed because they were not in the supplied page references |
+| Authentication | Supplied references use the same Mabiz brand language and full-height split layout | Implemented route-aware login/register pages with required validation, CSRF/API wiring and demo disclosure | OAuth/verification/password-reset screens are not claimed because they were not in the supplied page references |
 
 ## Consistency checks
 

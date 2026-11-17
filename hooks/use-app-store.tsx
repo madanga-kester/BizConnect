@@ -15,7 +15,7 @@ import { newLocalId } from "@/utils/ids";
 import { DEFAULT_APP_SETTINGS, hydrateAppSettings, isAppearanceOnlyUpdate, serializeLocalAppState } from "@/utils/theme-preference";
 import { canViewSocialStory } from "@/utils/social-story-privacy";
 
-const STORAGE_KEY = "bizconnect-demo-state-v1";
+const STORAGE_KEY = "Mabiz-demo-state-v1";
 
 type OnboardingStage = "idle" | "awaiting_otp" | "profile_setup";
 
@@ -285,7 +285,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const setSession = useCallback(async (value: boolean) => {
     if (!value) await apiSession.clear().catch(() => undefined);
     const signedIn = value && await hasApiSession();
-    setState((current) => ({ ...current, isAuthenticated: signedIn, onboardingStage: "idle", localNotice: signedIn ? "Signed in to the BizConnect API" : "Signed out" }));
+    setState((current) => ({ ...current, isAuthenticated: signedIn, onboardingStage: "idle", localNotice: signedIn ? "Signed in to the Mabiz API" : "Signed out" }));
   }, []);
 
   const actions: AppActions = useMemo(() => ({
@@ -566,21 +566,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       return result.changed ? { ...current, businesses: result.businesses, activeBusinessId: business.id, localNotice: "Business profile created locally; it is not published to a server" } : current;
     }),
     setApiUser: async (user) => {
-      setState((current) => ({ ...current, user, isAuthenticated: true, onboardingStage: "idle", localNotice: "Signed in to the BizConnect API; business data is managed by the server" }));
+      setState((current) => ({ ...current, user, isAuthenticated: true, onboardingStage: "idle", localNotice: "Signed in to the Mabiz API; business data is managed by the server" }));
     },
     replaceApiBusinesses: (businesses) => setState((current) => {
       const enriched = businesses.map((business) => business.currentUserRole ? {
         ...business,
         team: [{ userId: current.user.id, role: business.currentUserRole, joinedAt: business.joinedAt, displayName: current.user.name, email: current.user.email ?? "" }],
       } : business);
-      return { ...current, businesses: enriched, activeBusinessId: enriched.some((business) => business.id === current.activeBusinessId) ? current.activeBusinessId : enriched[0]?.id, localNotice: "Business list refreshed from the BizConnect API" };
+      return { ...current, businesses: enriched, activeBusinessId: enriched.some((business) => business.id === current.activeBusinessId) ? current.activeBusinessId : enriched[0]?.id, localNotice: "Business list refreshed from the Mabiz API" };
     }),
     upsertApiBusiness: (business) => setState((current) => {
       const enriched = business.currentUserRole ? {
         ...business,
         team: [{ userId: current.user.id, role: business.currentUserRole, joinedAt: business.joinedAt, displayName: current.user.name, email: current.user.email ?? "" }],
       } : business;
-      return { ...current, businesses: [enriched, ...current.businesses.filter((item) => item.id !== business.id)], activeBusinessId: business.id, localNotice: "Business profile saved by the BizConnect API" };
+      return { ...current, businesses: [enriched, ...current.businesses.filter((item) => item.id !== business.id)], activeBusinessId: business.id, localNotice: "Business profile saved by the Mabiz API" };
     }),
     recordBusinessView: (id) => setState((current) => ({ ...current, recentlyViewed: [id, ...current.recentlyViewed.filter((item) => item !== id)].slice(0, 12) })),
     recordSearch: (query) => setState((current) => current.isAuthenticated && query.trim() ? { ...current, searchHistory: [query.trim(), ...current.searchHistory.filter((item) => item !== query.trim())].slice(0, 12) } : current),

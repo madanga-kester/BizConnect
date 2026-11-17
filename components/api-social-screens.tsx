@@ -18,7 +18,7 @@ import {
 import { ApiPostCard } from "@/components/api-post-card";
 import { useAppStore } from "@/hooks/use-app-store";
 import { pickFromGallery, type PickedMedia } from "@/hooks/use-media-picker";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import type { ApiPollInput, FeedFilters, SocialApiComment } from "@/lib/api/feature-contracts";
 import type { Business, Post, UserProfile } from "@/types/domain";
@@ -29,7 +29,7 @@ const errorText = (error: { message: string; code?: string }) =>
   `${error.message}${error.code ? ` (${error.code})` : ""}`;
 
 export function ApiHomeFeed() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [mode, setMode] = useState<"for-you" | "following">("for-you");
   const [posts, setPosts] = useState<Post[]>([]);
@@ -143,7 +143,7 @@ export function ApiHomeFeed() {
 }
 
 export function ApiPostComposer() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [caption, setCaption] = useState("");
@@ -499,7 +499,7 @@ export function ApiPostComposer() {
   );
 }
 export function ApiPostDetail({ postId }: { postId: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<SocialApiComment[]>([]);
@@ -629,7 +629,7 @@ export function ApiPostDetail({ postId }: { postId: string }) {
 }
 
 function Replies({ comment }: { comment: SocialApiComment }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [replies, setReplies] = useState<SocialApiComment[]>([]);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -665,7 +665,7 @@ function Replies({ comment }: { comment: SocialApiComment }) {
 }
 
 export function ApiPersonProfile({ personId }: { personId: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [person, setPerson] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -776,7 +776,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
 }
 
 export function ApiBusinessProfile({ businessId }: { businessId: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [business, setBusiness] = useState<Business | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -905,7 +905,7 @@ export function ApiBusinessProfile({ businessId }: { businessId: string }) {
 }
 
 export function ApiFollowersScreen({ selectedBusinessId }: { selectedBusinessId?: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [list, setList] = useState<"Followers" | "Following">("Following");
   const [mode, setMode] = useState<"People" | "Businesses">("People");
@@ -1009,7 +1009,7 @@ export function ApiFollowersScreen({ selectedBusinessId }: { selectedBusinessId?
 }
 
 export function ApiPersonalProfile() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [person, setPerson] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);

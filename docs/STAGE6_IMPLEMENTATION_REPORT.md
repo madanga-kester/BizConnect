@@ -1,6 +1,6 @@
-# BizConnect Stage 6 — Implementation and verification report
+# Mabiz Stage 6 — Implementation and verification report
 
-**Status: implemented in the existing project.** This work extends the uploaded Stage 5 source; it does not replace the Expo/React Native frontend or the .NET 10/ASP.NET Core/EF Core/PostgreSQL backend. Stage 2–5 source and features remain in place. No Stage 6 feature was applied to `bizconnect_dev` or production.
+**Status: implemented in the existing project.** This work extends the uploaded Stage 5 source; it does not replace the Expo/React Native frontend or the .NET 10/ASP.NET Core/EF Core/PostgreSQL backend. Stage 2–5 source and features remain in place. No Stage 6 feature was applied to `Mabiz_dev` or production.
 
 ## Delivered
 
@@ -12,13 +12,13 @@
 
 ## Verification results
 
-The test suite was run against the source workspace and the extracted deliverable archive. Integration tests received a `BIZCONNECT_TEST_DB` connection string whose database is exactly `bizconnect_test`; the test fixture validates that name before destructive operations. The extracted-archive API smoke server was also configured to connect only to `bizconnect_test`. `bizconnect_dev` was not used or modified.
+The test suite was run against the source workspace and the extracted deliverable archive. Integration tests received a `Mabiz_TEST_DB` connection string whose database is exactly `Mabiz_test`; the test fixture validates that name before destructive operations. The extracted-archive API smoke server was also configured to connect only to `Mabiz_test`. `Mabiz_dev` was not used or modified.
 
 | Check | Result |
 | --- | --- |
-| `dotnet restore BizConnect.sln` (extracted archive) | Passed. |
-| `dotnet build BizConnect.sln` | Passed; 0 errors. Four existing xUnit analyzer warnings remain in `Stage3BusinessApiTests.cs` (`xUnit2031`). |
-| `dotnet test BizConnect.sln` | Passed from source and extracted archive: 68 unit tests and 32 PostgreSQL integration tests; 0 failed, 0 skipped. |
+| `dotnet restore Mabiz.sln` (extracted archive) | Passed. |
+| `dotnet build Mabiz.sln` | Passed; 0 errors. Four existing xUnit analyzer warnings remain in `Stage3BusinessApiTests.cs` (`xUnit2031`). |
+| `dotnet test Mabiz.sln` | Passed from source and extracted archive: 68 unit tests and 32 PostgreSQL integration tests; 0 failed, 0 skipped. |
 | `pnpm install --frozen-lockfile` (extracted archive) | Passed. |
 | `pnpm check` | Passed (TypeScript, source and extracted archive). |
 | `pnpm test` | Passed (source and extracted archive): 115 tests in 16 files. |
@@ -28,7 +28,7 @@ The test suite was run against the source workspace and the extracted deliverabl
 | Live SignalR smoke (extracted archive) | Passed: two authenticated clients joined; an outsider's private-group join was denied; send acknowledgement matched the `MessageReceived` broadcast; a read receipt was observed; and REST returned the persisted message. |
 | ZIP integrity and required-file checks | Passed. The archive was extracted to a clean directory and built/tested; all required Stage 6 source, migration, docs and smoke-script files were present. |
 
-The live SignalR smoke script creates disposable test accounts and conversation/message records in `bizconnect_test` only. It does not call external mail, SMS, push, payment or AI providers.
+The live SignalR smoke script creates disposable test accounts and conversation/message records in `Mabiz_test` only. It does not call external mail, SMS, push, payment or AI providers.
 
 ## Boundaries and not tested
 

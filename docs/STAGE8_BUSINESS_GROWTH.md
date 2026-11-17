@@ -1,6 +1,6 @@
-# BizConnect Stage 8 — Business Growth
+# Mabiz Stage 8 — Business Growth
 
-Stage 8 adds a business-growth layer to the existing BizConnect Expo client and .NET/PostgreSQL API. It preserves the Stage 2–7 architecture, keeps the local demo provider separate from API mode, and does not add payments, AI, transaction verification, or brokerage.
+Stage 8 adds a business-growth layer to the existing Mabiz Expo client and .NET/PostgreSQL API. It preserves the Stage 2–7 architecture, keeps the local demo provider separate from API mode, and does not add payments, AI, transaction verification, or brokerage.
 
 ## Delivered API surface
 
@@ -48,12 +48,12 @@ pnpm exec expo export --platform web
 For the backend, configure a disposable PostgreSQL database and run the existing solution commands after installing the .NET 10 SDK:
 
 ```bash
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=...'
-dotnet build BizConnect.sln
-dotnet test BizConnect.sln
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=...'
+dotnet build Mabiz.sln
+dotnet test Mabiz.sln
 ```
 
-The Stage 8 migration is additive and is intentionally not applied automatically to `bizconnect_dev` or production. Destructive integration tests must use only `bizconnect_test`.
+The Stage 8 migration is additive and is intentionally not applied automatically to `Mabiz_dev` or production. Destructive integration tests must use only `Mabiz_test`.
 
 ## Limitations and follow-up work
 

@@ -34,7 +34,7 @@ function VideoPost({ post, active }: { post: Post; active: boolean }) {
     return () => subscription.remove();
   }, [player]);
 
-  const name = business?.name ?? (post.authorId === app.user.id ? app.user.name : PEOPLE.find((person) => person.id === post.authorId)?.name ?? "BizConnect member");
+  const name = business?.name ?? (post.authorId === app.user.id ? app.user.name : PEOPLE.find((person) => person.id === post.authorId)?.name ?? "Mabiz member");
   const isLiked = app.likedPosts.includes(post.id);
   const mediaUri = post.media;
 

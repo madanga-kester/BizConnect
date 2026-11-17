@@ -1,6 +1,6 @@
 # Stage 6 — Messaging and business enquiries
 
-Stage 6 adds private, persistent conversations and buyer-to-business enquiries to the existing BizConnect Expo + ASP.NET Core .NET 10 + EF Core 10 + PostgreSQL application. The local mock mode remains available and separate. In API mode, REST is the source of truth and SignalR is the live event transport.
+Stage 6 adds private, persistent conversations and buyer-to-business enquiries to the existing Mabiz Expo + ASP.NET Core .NET 10 + EF Core 10 + PostgreSQL application. The local mock mode remains available and separate. In API mode, REST is the source of truth and SignalR is the live event transport.
 
 ## User flows
 
@@ -42,20 +42,20 @@ Hub methods are `JoinConversation(conversationId)`, `LeaveConversation(conversat
 
 ## Local configuration and verification
 
-Use .NET 10, PostgreSQL, Node and the repository's pinned pnpm version. Keep local development and tests on separate databases. Never set the destructive integration fixture to `bizconnect_dev`.
+Use .NET 10, PostgreSQL, Node and the repository's pinned pnpm version. Keep local development and tests on separate databases. Never set the destructive integration fixture to `Mabiz_dev`.
 
 ```bash
 # Backend restore/build
-dotnet restore BizConnect.sln
-dotnet build BizConnect.sln
+dotnet restore Mabiz.sln
+dotnet build Mabiz.sln
 
 # Apply migrations manually only to a database you intend to update.
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=bizconnect_dev;Password=...'
-dotnet ef database update --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Api
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=Mabiz_dev;Password=...'
+dotnet ef database update --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Api
 
-# Destructive integration tests: this fixture validates and drops/recreates only bizconnect_test.
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=...'
-dotnet test BizConnect.sln
+# Destructive integration tests: this fixture validates and drops/recreates only Mabiz_test.
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=...'
+dotnet test Mabiz.sln
 
 # Frontend checks
 pnpm install --frozen-lockfile
@@ -63,14 +63,14 @@ pnpm check
 pnpm test
 pnpm exec expo export --platform web
 
-# Live SignalR smoke test (API server must use this same bizconnect_test database).
-# Start the API with Jwt__SigningKey, Auth__ChallengePepper, and ConnectionStrings__BizConnect set.
-export BIZCONNECT_TEST_API_URL='http://127.0.0.1:5199'
+# Live SignalR smoke test (API server must use this same Mabiz_test database).
+# Start the API with Jwt__SigningKey, Auth__ChallengePepper, and ConnectionStrings__Mabiz set.
+export Mabiz_TEST_API_URL='http://127.0.0.1:5199'
 node scripts/stage6_signalr_smoke.mjs
 ```
 
-For Expo API mode, set `EXPO_PUBLIC_API_MODE=api` and `EXPO_PUBLIC_API_BASE_URL` to the API origin (no `/api/v1` suffix). The app defaults to `mock-local`. API mode does not convert local demo data into server data. The live smoke script refuses to run unless its explicit test-database variable names `bizconnect_test`.
+For Expo API mode, set `EXPO_PUBLIC_API_MODE=api` and `EXPO_PUBLIC_API_BASE_URL` to the API origin (no `/api/v1` suffix). The app defaults to `mock-local`. API mode does not convert local demo data into server data. The live smoke script refuses to run unless its explicit test-database variable names `Mabiz_test`.
 
 ## Boundaries and follow-up
 
-Stage 6 does not send email, SMS or push notifications and does not claim external delivery. Message content is stored as submitted text; end-to-end encryption, abuse reporting, retention/erasure policy, attachment transfer, read-receipt privacy controls and push notifications are outside this stage and require separate product/security review. The migrations are included but are not automatically applied to `bizconnect_dev` or production.
+Stage 6 does not send email, SMS or push notifications and does not claim external delivery. Message content is stored as submitted text; end-to-end encryption, abuse reporting, retention/erasure policy, attachment transfer, read-receipt privacy controls and push notifications are outside this stage and require separate product/security review. The migrations are included but are not automatically applied to `Mabiz_dev` or production.

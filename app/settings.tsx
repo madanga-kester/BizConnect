@@ -8,9 +8,9 @@ import { t } from "@/i18n/translations";
 import { useThemeContext } from "@/lib/theme-provider";
 import { colors } from "@/theme/tokens";
 import type { AppearanceMode } from "@/types/domain";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 
-function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("BizConnect", message); }
+function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Mabiz", message); }
 
 function AppearanceSelector({ appearance, language, onChange, disabled }: { appearance: AppearanceMode; language: "en" | "sw"; onChange: (mode: AppearanceMode) => void; disabled: boolean }) {
   return <>
@@ -41,8 +41,8 @@ function AppearanceSelector({ appearance, language, onChange, disabled }: { appe
 
 export default function SettingsScreen() {
   const app = useAppStore();
-    const services = useBizConnectServices();
-  const serviceMode = useBizConnectServiceMode();
+    const services = useMabizServices();
+  const serviceMode = useMabizServiceMode();
   const { setColorScheme } = useThemeContext();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
     const signOut = async () => {
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
     <ActionTile title="Export your data" detail="Create a local JSON export of demo profile and activity" icon="download-outline" onPress={() => router.push("/data-export")} />
     <ActionTile title="Delete account" detail="Remove this local demo profile and stored state" icon="trash-outline" onPress={() => router.push("/delete-account")} />
     <ActionTile title="Help centre & guidelines" icon="help-circle-outline" onPress={() => router.push("/help")} />
-    <ActionTile title="About BizConnect" detail="Version 1.0 · frontend demo" icon="information-circle-outline" onPress={() => router.push("/about")} />
+    <ActionTile title="About Mabiz" detail="Version 1.0 · frontend demo" icon="information-circle-outline" onPress={() => router.push("/about")} />
     <Button title="Sign out" icon="log-out-outline" variant="outline" onPress={() => setLogoutConfirm(true)} />
     <Text style={styles.caption}>Signing out ends your session on the server and on this device.</Text>
     <ConfirmModal visible={logoutConfirm} title="Sign out?" detail="You can browse public businesses while signed out. Interactions that require authentication will ask you to sign in again." confirmLabel="Sign out" onCancel={() => setLogoutConfirm(false)} onConfirm={() => { setLogoutConfirm(false); void signOut(); }} />

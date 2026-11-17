@@ -3,12 +3,12 @@ import { Text, TextInput, View } from "react-native";
 import { ApiCatalogueDiscovery } from "@/components/api-catalog-screens";
 import { Page, ProductCard, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { filterVisibleBusinesses } from "@/utils/privacy-policy";
 
 export default function ProductsScreen() {
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   // Stage 5: API mode browses the published server catalogue through anonymous discovery.
   if (apiMode) return <ApiCatalogueDiscovery />;
   return <MockProductsScreen />;

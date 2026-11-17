@@ -1,4 +1,4 @@
-# BizConnect — Phase 3.15 Final Engineering Handoff
+# Mabiz — Phase 3.15 Final Engineering Handoff
 
 - **Handoff date:** 12 November 2026
 - **Application:** Expo SDK 58 (`~58.0.23`) / React Native / TypeScript / Expo Router
@@ -44,7 +44,7 @@ The broader Phase 3 acceptance scope outside this Create-focused phase is not ma
 
 1. Review and version the API and SignalR contracts; provide an isolated non-production ASP.NET Core/PostgreSQL environment.
 2. Implement server-side authorization, validation, persistence, secure credential flows and the reviewed media-ticket/object-storage protocol.
-3. Connect one screen domain at a time to `useBizConnectServices()`, retaining the mock adapter as the explicit demo/offline mode and preserving loading, empty, offline and error states.
+3. Connect one screen domain at a time to `useMabizServices()`, retaining the mock adapter as the explicit demo/offline mode and preserving loading, empty, offline and error states.
 4. Add backend integration tests and broaden E2E coverage; verify privacy, team roles, accessibility and Android/iOS device behavior against staging.
 5. Keep production-only secrets out of public Expo variables. Supply any Android Maps key only through the private build environment, restrict it to the application identifier/signing certificate, and keep map functionality clearly unavailable or usable without a valid key.
 

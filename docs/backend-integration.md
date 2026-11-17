@@ -1,6 +1,6 @@
 # Backend integration status
 
-**Current status:** Stage 2 backend foundation is implemented locally. The authoritative setup, schema, route, security, test and deployment notes are in [`STAGE2_BACKEND.md`](STAGE2_BACKEND.md). The backend is a separate C#/.NET 10 ASP.NET Core solution under `src/`, backed by PostgreSQL/Npgsql; the existing managed Node starter is not the BizConnect backend.
+**Current status:** Stage 2 backend foundation is implemented locally. The authoritative setup, schema, route, security, test and deployment notes are in [`STAGE2_BACKEND.md`](STAGE2_BACKEND.md). The backend is a separate C#/.NET 10 ASP.NET Core solution under `src/`, backed by PostgreSQL/Npgsql; the existing managed Node starter is not the Mabiz backend.
 
 ## Implemented in Stage 2
 

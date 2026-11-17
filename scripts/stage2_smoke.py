@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live Stage 2 verification against the running BizConnect ASP.NET Core API.
+"""Live Stage 2 verification against the running Mabiz ASP.NET Core API.
 
 Auth endpoints share a fixed-window rate limiter (12 requests/minute/IP in
 Development), so the run is phased: A = account/token/OTP flows, B = reset +
@@ -63,7 +63,7 @@ def logged_code(offset, must_contain):
 
 
 suffix = uuid.uuid4().hex[:8]
-email = f"smoke.{suffix}@bizconnect.test"
+email = f"smoke.{suffix}@Mabiz.test"
 phone = f"+2547{suffix}1"
 username = f"smoke{suffix}"
 password = "Stage2Dev!Pass123"
@@ -117,7 +117,7 @@ check("GET /users/{id} owner sees own private profile, contact fields omitted",
 st, _, _ = call("GET", API + f"/users/{user_id}")
 check("GET /users/{id} private profile concealed from other viewers (404)", st == 404, f"status={st}")
 
-st, contact_edit, _ = call("PATCH", API + "/users/me", {"email": "changed@bizconnect.test"}, token=access)
+st, contact_edit, _ = call("PATCH", API + "/users/me", {"email": "changed@Mabiz.test"}, token=access)
 check("PATCH /users/me email change blocked pending verified-contact flow (422)",
       st == 422 and code_of(contact_edit) == "CONTACT_VERIFICATION_REQUIRED", f"status={st} code={code_of(contact_edit)}")
 
@@ -193,11 +193,11 @@ time.sleep(WINDOW)
 print("==== PHASE B: password policy, reset flow, logout, device removal ====")
 
 st, weak, _ = call("POST", API + "/auth/register", {**reg_body, "username": "weak" + suffix,
-                                                    "email": f"weak.{suffix}@bizconnect.test", "phone": None, "password": "123"})  # 1
+                                                    "email": f"weak.{suffix}@Mabiz.test", "phone": None, "password": "123"})  # 1
 check("POST /auth/register password below policy rejected (400)", st == 400, f"status={st} code={code_of(weak)}")
 
 offset_unknown = log_offset()
-st, unknown, _ = call("POST", API + "/auth/password-resets", {"identifier": f"nobody.{suffix}@bizconnect.test"})  # 2
+st, unknown, _ = call("POST", API + "/auth/password-resets", {"identifier": f"nobody.{suffix}@Mabiz.test"})  # 2
 check("password reset for an unknown identifier is accepted without confirming the account exists",
       st == 202 and (unknown or {}).get("accepted") is True and logged_code(offset_unknown, "nobody." + suffix) is None,
       f"status={st} body={unknown}")
@@ -262,7 +262,7 @@ print(f"\n==== waiting {WINDOW}s for a clean window before the rate-limit burst 
 time.sleep(WINDOW)
 
 print("==== PHASE C: cross-account isolation and auth rate limiting (12/minute/IP) ====")
-email2 = f"smoke2.{suffix}@bizconnect.test"
+email2 = f"smoke2.{suffix}@Mabiz.test"
 st, reg2, _ = call("POST", API + "/auth/register", {**reg_body, "username": "smoketwo" + suffix,
                                                     "email": email2, "phone": f"+2547{suffix}9"})          # 1
 st, login5, _ = call("POST", API + "/auth/login", {"identifier": email2, "password": password})            # 2

@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
-const INSTALLATION_ID_KEY = "bizconnect.notification-installation-id.v1";
+const INSTALLATION_ID_KEY = "Mabiz.notification-installation-id.v1";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: true }),
@@ -37,7 +37,7 @@ export async function getExpoPushRegistration(): Promise<ExpoPushRegistration> {
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
-      name: "BizConnect notifications",
+      name: "Mabiz notifications",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
     });

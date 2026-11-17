@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { colorScheme as nativewindColorScheme, vars } from "nativewind";
 
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
-import { colors, setBizConnectColorScheme } from "@/theme/tokens";
+import { colors, setMabizColorScheme } from "@/theme/tokens";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>("light");
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
-    setBizConnectColorScheme(scheme);
+    setMabizColorScheme(scheme);
     nativewindColorScheme.set(scheme);
     if (typeof document !== "undefined") {
       const root = document.documentElement;

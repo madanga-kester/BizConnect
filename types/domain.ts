@@ -14,7 +14,7 @@ export type CatalogAvailabilityStatus = "available" | "on_request" | "fully_book
 export type CatalogVisitType = "onsite" | "remote" | "hybrid";
 export type CatalogImageProvider = "local" | "s3";
 
-/** One ordered gallery entry as stored by the BizConnect catalogue API. Index 0 of a gallery is the primary image. */
+/** One ordered gallery entry as stored by the Mabiz catalogue API. Index 0 of a gallery is the primary image. */
 export interface CatalogGalleryImage {
   mediaAssetId: Id;
   /** Absolute URL resolved against the API origin, ready to hand to <MediaImage />. */

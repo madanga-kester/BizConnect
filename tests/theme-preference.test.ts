@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { AppSettings } from "@/types/domain";
-import { colors, createThemedStyles, getTabBarColors, setBizConnectColorScheme } from "@/theme/tokens";
+import { colors, createThemedStyles, getTabBarColors, setMabizColorScheme } from "@/theme/tokens";
 import { DEFAULT_APP_SETTINGS, hydrateAppSettings, isAppearanceOnlyUpdate, normalizeAppearance, serializeLocalAppState } from "@/utils/theme-preference";
 
 const defaultSettings: AppSettings = { ...DEFAULT_APP_SETTINGS };
 
-afterEach(() => setBizConnectColorScheme("light"));
+afterEach(() => setMabizColorScheme("light"));
 
 describe("theme preference", () => {
   it("defaults missing or invalid legacy appearance values to Light", () => {
@@ -58,7 +58,7 @@ describe("theme preference", () => {
     const lightSurface = styles.surface;
 
     expect(getTabBarColors("light")).toEqual({ backgroundColor: "#FFFFFF", borderTopColor: "#E5E9E6" });
-    setBizConnectColorScheme("dark");
+    setMabizColorScheme("dark");
     expect(colors.emeraldFill).toBe("#0C8366");
     expect(colors.canvas).toBe("#000000");
     expect(colors.subtle).toBe("#141414");
@@ -67,7 +67,7 @@ describe("theme preference", () => {
     expect(styles.foreground).toBe("#F5F5F5");
     expect(getTabBarColors("dark")).toEqual({ backgroundColor: "#000000", borderTopColor: "#262626" });
 
-    setBizConnectColorScheme("light");
+    setMabizColorScheme("light");
     expect(styles.surface).toBe("#FFFFFF");
   });
 });

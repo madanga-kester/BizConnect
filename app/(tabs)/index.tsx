@@ -6,7 +6,7 @@ import { Avatar, Button, EmptyState, IconButton, LocalNote, Page, PostCard, Sect
 import { HomeQuickMenu } from "@/components/home-quick-menu";
 import { BUSINESSES, PEOPLE, STORIES } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { ApiHomeFeed } from "@/components/api-social-screens";
 import { colors } from "@/theme/tokens";
 import { t } from "@/i18n/translations";
@@ -14,7 +14,7 @@ import type { Post } from "@/types/domain";
 import { filterVisiblePosts, profileRestriction } from "@/utils/privacy-policy";
 
 export default function HomeScreen() {
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiHomeFeed /> : <MockHomeScreen />;
 }
 function MockHomeScreen() {

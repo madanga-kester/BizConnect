@@ -1,4 +1,4 @@
-# BizConnect Stage 8 — Implementation Report
+# Mabiz Stage 8 — Implementation Report
 
 ## Status
 
@@ -51,15 +51,15 @@ Stage 8 Business Growth has been implemented in the Stage 7 source baseline with
 
 ## Changed source areas
 
-- `src/BizConnect.Domain/Businesses/GrowthEntities.cs`
-- `src/BizConnect.Application/Contracts/GrowthContracts.cs`
-- `src/BizConnect.Application/Services/GrowthServices.cs`
-- `src/BizConnect.Infrastructure/Services/GrowthService.cs`
-- `src/BizConnect.Infrastructure/Persistence/Stage8Model.cs`
-- `src/BizConnect.Infrastructure/Persistence/AppDbContext.cs`
-- `src/BizConnect.Infrastructure/Persistence/Migrations/20261113100000_Stage8BusinessGrowth.cs`
-- `src/BizConnect.Api/Controllers/GrowthReviewsController.cs`
-- `src/BizConnect.Api/Controllers/GrowthController.cs`
+- `src/Mabiz.Domain/Businesses/GrowthEntities.cs`
+- `src/Mabiz.Application/Contracts/GrowthContracts.cs`
+- `src/Mabiz.Application/Services/GrowthServices.cs`
+- `src/Mabiz.Infrastructure/Services/GrowthService.cs`
+- `src/Mabiz.Infrastructure/Persistence/Stage8Model.cs`
+- `src/Mabiz.Infrastructure/Persistence/AppDbContext.cs`
+- `src/Mabiz.Infrastructure/Persistence/Migrations/20261113100000_Stage8BusinessGrowth.cs`
+- `src/Mabiz.Api/Controllers/GrowthReviewsController.cs`
+- `src/Mabiz.Api/Controllers/GrowthController.cs`
 - `app/business-growth.tsx`
 - `lib/api/feature-contracts.ts`
 - `lib/api/production-services.ts`

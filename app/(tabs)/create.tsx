@@ -8,11 +8,11 @@ import { StepReview } from "@/components/create/step-review";
 import { StepWrite } from "@/components/create/step-write";
 import { usePostComposer } from "@/components/create/use-post-composer";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 
 export default function CreateScreen() {
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiPostComposer /> : <MockCreateScreen />;
 }
 

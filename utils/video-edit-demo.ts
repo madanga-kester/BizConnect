@@ -16,7 +16,7 @@ export type VideoEditState = {
 };
 export type ProgressStatus = "idle" | "running" | "cancelled" | "error" | "complete";
 export type ProgressDemo = { status: ProgressStatus; progress: number; attempt: number };
-const PREFIX = "@bizconnect/video-edit/v1/";
+const PREFIX = "@Mabiz/video-edit/v1/";
 const MAX_URI_LENGTH = 4096;
 
 /** Accept only local or HTTPS media references (never javascript:, data: or arbitrary schemes). */

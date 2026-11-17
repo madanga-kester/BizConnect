@@ -1,7 +1,7 @@
 import type { AuthTokenProvider } from "./http-client";
 import type { AuthSession } from "./feature-contracts";
 
-const NATIVE_SESSION_KEY = "bizconnect.api.session.v1";
+const NATIVE_SESSION_KEY = "Mabiz.api.session.v1";
 let browserSession: AuthSession | null = null;
 
 export interface SessionStorage {

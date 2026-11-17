@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { Alert, Platform, ScrollView, Text, View } from "react-native";
 import { Button, Chip, Field, LoadingState, LocalNote, MediaImage, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { KENYAN_COUNTIES, COUNTY_TOWNS, formatKes, isValidKenyanPhone } from "@/utils/kenya";
 import type { Business, County } from "@/types/domain";
 import { newLocalId } from "@/utils/ids";
 
-const KEY = "bizconnect-business-registration-draft";
+const KEY = "Mabiz-business-registration-draft";
 const CATEGORIES = ["Fashion", "Food & restaurants", "Bakery & baked goods", "Natural hair salon", "Beauty & cosmetics", "Electronics", "Agriculture", "Furniture", "Construction", "Education", "Technology", "Transport", "Professional services", "Health & wellness", "Entertainment", "Home services", "Retail"];
 interface Form { name: string; category: string; subcategory: string; description: string; about: string; originStory: string; founder: string; county: County; town: string; neighbourhood: string; serviceAreas: string; phone: string; whatsapp: string; email: string; website: string; logo: string; instagram: string; facebook: string; tiktok: string; operatingHours: string; businessType: "products" | "services" | "hybrid"; visibility: "public" | "private"; productName: string; productDescription: string; productPrice: string; serviceName: string; servicePrice: string; }
 const EMPTY: Form = { name: "", category: "Fashion", subcategory: "", description: "", about: "", originStory: "", founder: "", county: "Nairobi", town: "Nairobi", neighbourhood: "", serviceAreas: "", phone: "", whatsapp: "", email: "", website: "", logo: "", instagram: "", facebook: "", tiktok: "", operatingHours: "", businessType: "hybrid", visibility: "public", productName: "", productDescription: "", productPrice: "", serviceName: "", servicePrice: "" };
@@ -27,8 +27,8 @@ export default function CreateBusinessScreen() {
 }
 
 function BusinessForm({ app, id }: { app: ReturnType<typeof useAppStore>; id?: string }) {
-  const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const services = useMabizServices();
+  const apiMode = useMabizServiceMode() === "api";
   const existing = app.businesses.find((business) => business.id === id);
   const [draftReady, setDraftReady] = useState(Boolean(existing));
   const [step, setStep] = useState(1);
@@ -91,7 +91,7 @@ function BusinessForm({ app, id }: { app: ReturnType<typeof useAppStore>; id?: s
       if (!result.ok) return notify("Business was not saved", result.error.message);
       app.upsertApiBusiness(result.data);
       await AsyncStorage.removeItem(draftKey);
-      notify(existing ? "Business profile updated" : "Business profile created", "The BizConnect API saved your business profile.");
+      notify(existing ? "Business profile updated" : "Business profile created", "The Mabiz API saved your business profile.");
       router.replace({ pathname: "/business/[id]", params: { id: result.data.id } });
       return;
     }
@@ -108,7 +108,7 @@ function BusinessForm({ app, id }: { app: ReturnType<typeof useAppStore>; id?: s
   const stepNames = ["Basics", "Our story", "Offerings", "Location", "Contact", "Preview"];
   return <Page>
     <TopBar title={existing ? "Edit business profile" : "Create a business"} back />
-    <LocalNote text={apiMode ? "API mode · this form saves business profiles to the BizConnect C# backend." : "Your six-step profile changes are stored on this device. Nothing is published to a server."} />
+    <LocalNote text={apiMode ? "API mode · this form saves business profiles to the Mabiz C# backend." : "Your six-step profile changes are stored on this device. Nothing is published to a server."} />
     <View style={styles.rowBetween}><Text style={styles.sectionHeading}>Step {step} of 6</Text><Text style={styles.caption}>{stepNames[step - 1]}</Text></View>
     <View style={{ height: 5, borderRadius: 5, backgroundColor: colors.border, overflow: "hidden" }}><View style={{ width: `${step / 6 * 100}%`, height: 5, backgroundColor: colors.emerald }} /></View>
     {step === 1 ? <View style={{ gap: 13 }}><Field label="Business name" value={form.name} onChangeText={(name) => patch({ name })} placeholder="e.g. Tawi Studio" /><Text style={styles.label}>Business type</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{(["products", "services", "hybrid"] as const).map((item) => <Chip key={item} label={item[0].toUpperCase() + item.slice(1)} selected={form.businessType === item} onPress={() => patch({ businessType: item })} />)}</View><Text style={styles.label}>Category</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{CATEGORIES.map((item) => <Chip key={item} label={item} selected={form.category === item} onPress={() => patch({ category: item })} />)}</View><Field label="Subcategory" value={form.subcategory} onChangeText={(subcategory) => patch({ subcategory })} placeholder="A little more detail" /><Field label="Short description" value={form.description} onChangeText={(description) => patch({ description })} placeholder="What do you offer, and what makes it yours?" multiline /><Button title={cover ? "Change cover photo" : "Choose cover photo"} icon="image-outline" variant="soft" onPress={() => void pickCover()} />{cover ? <MediaImage uri={cover} height={155} label="Business cover preview" /> : null}</View> : null}

@@ -1,23 +1,23 @@
-# BizConnect
+# Mabiz
 
-BizConnect is a React Native + Expo mobile-first social business discovery and entrepreneurship frontend for Kenya. It helps people discover local businesses, explore products and services, learn from founders, and connect with entrepreneurs. The project targets Android and iOS and also supports Expo Web for preview.
+Mabiz is a React Native + Expo mobile-first social business discovery and entrepreneurship frontend for Kenya. It helps people discover local businesses, explore products and services, learn from founders, and connect with entrepreneurs. The project targets Android and iOS and also supports Expo Web for preview.
 The app is aligned to Expo SDK 58, Expo Router 58 and React Native 0.88.1 to match Expo Go SDK 58; the generated identifiers, app scheme, local-demo boundary, static Web output and fixed preview ports remain unchanged.
 
 ## Stages 2–6 backend and integration status
 
 The repository includes a separate C# / ASP.NET Core Web API solution targeting .NET 10, EF Core 10 and PostgreSQL/Npgsql, with ASP.NET Core Identity, JWT access tokens, rotating opaque refresh tokens, OpenAPI, additive migrations and xUnit tests. Stage 3 adds business/team management and role permissions. Stage 4 adds server-backed social feeds, posts, likes, comments/replies, polls, user/business follows, and privacy/block/hide enforcement. Stage 6 adds private conversations, business enquiries, authenticated SignalR and inbox/chat screens; see [`docs/STAGE6_MESSAGING.md`](docs/STAGE6_MESSAGING.md) for contracts, setup and verification. Earlier stage references: [`docs/STAGE2_BACKEND.md`](docs/STAGE2_BACKEND.md), [`docs/STAGE3_BUSINESSES.md`](docs/STAGE3_BUSINESSES.md), and [`docs/STAGE4_SOCIAL.md`](docs/STAGE4_SOCIAL.md).
 
-Expo keeps local-demo mode as its default and has an explicit API mode for implemented backend features. API mode connects auth/account, Stage 3 business/team flows, Stage 4 feed/post/profile/follow/engagement screens, Stage 5 products/services/catalogue management/image upload/storage, and Stage 6 conversation/enquiry screens through the shared service provider and REST/SignalR transport. Other product domains remain local or unimplemented; changing API mode does not imply those are server-backed. The browser auth client is not connected to the server's cookie/CSRF session flow. The Stage 4, 5 and 6 migrations are included; they have **not** been automatically applied to `bizconnect_dev` or production.
+Expo keeps local-demo mode as its default and has an explicit API mode for implemented backend features. API mode connects auth/account, Stage 3 business/team flows, Stage 4 feed/post/profile/follow/engagement screens, Stage 5 products/services/catalogue management/image upload/storage, and Stage 6 conversation/enquiry screens through the shared service provider and REST/SignalR transport. Other product domains remain local or unimplemented; changing API mode does not imply those are server-backed. The browser auth client is not connected to the server's cookie/CSRF session flow. The Stage 4, 5 and 6 migrations are included; they have **not** been automatically applied to `Mabiz_dev` or production.
 
 ### Stage 5 verification (2026-11-12)
-`dotnet build BizConnect.sln` succeeded (0 errors, the same 4 pre-existing warnings) and the full xUnit/PostgreSQL suite passed: **90 passed, 0 failed** - 62 unit and 28 integration, run against the isolated `bizconnect_test` database and up from the 50 Stage 4 tests. The additive migration `20261112182203_Stage5Catalog` creates `catalog_items`, `catalog_item_media` and `media_assets` and is applied from scratch by the test fixture; it has **not** been applied to `bizconnect_dev`. Frontend verification passed: `pnpm check`, **114 tests in 16 files** (previously 98 in 15) and `npx expo export --platform web`. A live API smoke run of 42 checks against `bizconnect_test` with startup migrations disabled covered the health and OpenAPI endpoints, anonymous catalogue discovery, 401 on unauthenticated catalogue and media management, a real multipart image upload served only through the access-controlled proxy, ordered gallery creation and reordering, publish/unpublish visibility, the media deletion guard, duplicate SKU and validation failures. See [`docs/STAGE5_CATALOG_MEDIA.md`](./docs/STAGE5_CATALOG_MEDIA.md).
+`dotnet build Mabiz.sln` succeeded (0 errors, the same 4 pre-existing warnings) and the full xUnit/PostgreSQL suite passed: **90 passed, 0 failed** - 62 unit and 28 integration, run against the isolated `Mabiz_test` database and up from the 50 Stage 4 tests. The additive migration `20261112182203_Stage5Catalog` creates `catalog_items`, `catalog_item_media` and `media_assets` and is applied from scratch by the test fixture; it has **not** been applied to `Mabiz_dev`. Frontend verification passed: `pnpm check`, **114 tests in 16 files** (previously 98 in 15) and `npx expo export --platform web`. A live API smoke run of 42 checks against `Mabiz_test` with startup migrations disabled covered the health and OpenAPI endpoints, anonymous catalogue discovery, 401 on unauthenticated catalogue and media management, a real multipart image upload served only through the access-controlled proxy, ordered gallery creation and reordering, publish/unpublish visibility, the media deletion guard, duplicate SKU and validation failures. See [`docs/STAGE5_CATALOG_MEDIA.md`](./docs/STAGE5_CATALOG_MEDIA.md).
 
 ### Stage 6 verification (2026-11-13)
-Backend and frontend verification, plus live SignalR testing, are summarized in [`docs/STAGE6_IMPLEMENTATION_REPORT.md`](docs/STAGE6_IMPLEMENTATION_REPORT.md). The Stage 6 migration is additive and integration-test execution is restricted to `bizconnect_test`.
+Backend and frontend verification, plus live SignalR testing, are summarized in [`docs/STAGE6_IMPLEMENTATION_REPORT.md`](docs/STAGE6_IMPLEMENTATION_REPORT.md). The Stage 6 migration is additive and integration-test execution is restricted to `Mabiz_test`.
 
 ### Stage 4 verification (2026-11-12)
 
-`dotnet build BizConnect.sln` succeeded and the full xUnit/PostgreSQL suite passed: **50 passed, 0 failed** (run against the isolated `bizconnect_test` database). Frontend verification passed: `pnpm check`, **98 tests in 15 files**, and `pnpm exec expo export --platform web`. A live API smoke check against the test database with startup migrations disabled returned 200 from `/health/ready` and `/openapi/v1.json`, and 401 for unauthenticated feed/posts requests. These checks do not mean the API is publicly deployed or that the Stage 4 migration was applied to development.
+`dotnet build Mabiz.sln` succeeded and the full xUnit/PostgreSQL suite passed: **50 passed, 0 failed** (run against the isolated `Mabiz_test` database). Frontend verification passed: `pnpm check`, **98 tests in 15 files**, and `pnpm exec expo export --platform web`. A live API smoke check against the test database with startup migrations disabled returned 200 from `/health/ready` and `/openapi/v1.json`, and 401 for unauthenticated feed/posts requests. These checks do not mean the API is publicly deployed or that the Stage 4 migration was applied to development.
 
 ### Run locally (backend, then app)
 
@@ -25,29 +25,29 @@ These are the exact commands used to build and verify this workspace. The .NET A
 
 ```bash
 # 1. PostgreSQL: two distinct databases, one for development, one disposable one for tests
-sudo -u postgres psql -c "CREATE ROLE bizconnect_dev LOGIN PASSWORD '...'; CREATE DATABASE bizconnect_dev OWNER bizconnect_dev;"
-sudo -u postgres psql -c "CREATE ROLE bizconnect_test LOGIN PASSWORD '...'; CREATE DATABASE bizconnect_test OWNER bizconnect_test;"
+sudo -u postgres psql -c "CREATE ROLE Mabiz_dev LOGIN PASSWORD '...'; CREATE DATABASE Mabiz_dev OWNER Mabiz_dev;"
+sudo -u postgres psql -c "CREATE ROLE Mabiz_test LOGIN PASSWORD '...'; CREATE DATABASE Mabiz_test OWNER Mabiz_test;"
 
 # 2. .NET 10 SDK, then restore/build the solution
 export DOTNET_ROOT="$HOME/.dotnet"; export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH"
-dotnet build BizConnect.sln
+dotnet build Mabiz.sln
 
 # 3. Apply the additive EF migrations to the development database only
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=bizconnect_dev;Password=...'
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=Mabiz_dev;Password=...'
 dotnet tool install --global dotnet-ef --version 10.0.0   # if the CLI is not installed
-dotnet ef database update --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Infrastructure
+dotnet ef database update --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Infrastructure
 
 # 4. Start the API with server-only secrets (generate them; never commit them)
 export ASPNETCORE_ENVIRONMENT=Development
-export Jwt__Issuer=BizConnect.Api Jwt__Audience=BizConnect.Clients
+export Jwt__Issuer=Mabiz.Api Jwt__Audience=Mabiz.Clients
 export Jwt__SigningKey="$(openssl rand -hex 32)" Auth__ChallengePepper="$(openssl rand -hex 32)"
 export Cors__AllowedOrigins__0=http://localhost:8081
-dotnet run --project src/BizConnect.Api --urls http://localhost:5155
+dotnet run --project src/Mabiz.Api --urls http://localhost:5155
 # → http://localhost:5155/health/ready and http://localhost:5155/openapi/v1.json
 
-# 5. Tests (the integration fixture drops/recreates ONLY BIZCONNECT_TEST_DB; confirm it is bizconnect_test)
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=...'
-dotnet test BizConnect.sln
+# 5. Tests (the integration fixture drops/recreates ONLY Mabiz_TEST_DB; confirm it is Mabiz_test)
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=...'
+dotnet test Mabiz.sln
 python3 scripts/stage2_smoke.py   # optional live API walkthrough; see docs/STAGE2_BACKEND.md
 
 # 6. Mobile app against that API (native builds, not web preview)
@@ -70,7 +70,7 @@ Demo OTP `123456` is an explicitly labelled local verification step, not an SMS 
 
 Business, founder, story, product, service, opportunity, notification and analytics fixtures are illustrative sample data. Startup costs are estimates, and story sources are labelled. A business is not verified from a local request; the badge shown on fixtures reflects only their seeded sample status. The app does not provide legal, financial or business verification advice.
 
-The fixed managed starter still includes a port-3000 Node API listener and its own starter database/authentication libraries; that scaffold is not the BizConnect Stage 2 backend and product screens do not use it. The Stage 2 service is the separate C# solution under `src/` and uses PostgreSQL. `pnpm dev` starts the template listeners for the managed Mobile Preview; this does not make product actions server-backed. `pnpm db:push` is not required for the local demo or the .NET backend.
+The fixed managed starter still includes a port-3000 Node API listener and its own starter database/authentication libraries; that scaffold is not the Mabiz Stage 2 backend and product screens do not use it. The Stage 2 service is the separate C# solution under `src/` and uses PostgreSQL. `pnpm dev` starts the template listeners for the managed Mobile Preview; this does not make product actions server-backed. `pnpm db:push` is not required for the local demo or the .NET backend.
 
 ## Requirements and installation
 
@@ -132,7 +132,7 @@ pnpm exec expo export --platform ios
 ## Architecture
 
 - `app/`: Expo Router tabs and nested auth, discovery, business/person/post/story/product, messaging, management, privacy and moderation routes.
-- `components/`: reusable BizConnect cards, forms, navigation, accessible loading skeletons and contextual empty-state primitives.
+- `components/`: reusable Mabiz cards, forms, navigation, accessible loading skeletons and contextual empty-state primitives.
 - `hooks/use-app-store.tsx`: persistent local app state, local-session handling and authorization/privacy-aware mutation boundaries.
 - `data/seed.ts`: Kenya-focused business, founder, catalogue, post, story, opportunity and notification fixtures.
 - `data/business-map-locations.ts`, `components/discovery/business-map*` and `utils/business-map.ts`: source-attributed approximate-area map points, native map UI, web fallback and coordinate validation.
@@ -157,14 +157,14 @@ The native map uses the Expo SDK 58-aligned `react-native-maps` package and is i
 
 ## API mode, Stage 7 delivery and remaining work
 
-The API mode remains `mock-local` by default. Auth/account, Stage 3 business/team, Stage 4 social, Stage 5 catalogue/media, Stage 6 messaging/enquiry and Stage 7 notifications can use the C# API when its non-secret origin is explicitly configured. Do not enable API mode without a reachable API and appropriate non-production setup; the mode switch does not connect unrelated domains. Stage 7 provides persistent in-app notifications, authenticated SignalR delivery, category preferences and optional Expo Push Service integration. Push remains disabled until separately configured, and device-level push delivery has not been validated on physical hardware. Reports/verification, checkout, payments, wallets and AI remain outside Stage 7. Stage 5 does not include media transcoding, metadata stripping or a CDN; Stage 6 does not include message attachments. Do not treat local demo actions or seeded fixtures as production data. Stage 2–7 migrations are additive and have not been applied to `bizconnect_dev` or production. See [`STAGE7_IMPLEMENTATION_REPORT.md`](./STAGE7_IMPLEMENTATION_REPORT.md) for actual verification outcomes.
+The API mode remains `mock-local` by default. Auth/account, Stage 3 business/team, Stage 4 social, Stage 5 catalogue/media, Stage 6 messaging/enquiry and Stage 7 notifications can use the C# API when its non-secret origin is explicitly configured. Do not enable API mode without a reachable API and appropriate non-production setup; the mode switch does not connect unrelated domains. Stage 7 provides persistent in-app notifications, authenticated SignalR delivery, category preferences and optional Expo Push Service integration. Push remains disabled until separately configured, and device-level push delivery has not been validated on physical hardware. Reports/verification, checkout, payments, wallets and AI remain outside Stage 7. Stage 5 does not include media transcoding, metadata stripping or a CDN; Stage 6 does not include message attachments. Do not treat local demo actions or seeded fixtures as production data. Stage 2–7 migrations are additive and have not been applied to `Mabiz_dev` or production. See [`STAGE7_IMPLEMENTATION_REPORT.md`](./STAGE7_IMPLEMENTATION_REPORT.md) for actual verification outcomes.
 
 
 ## Stage 8 — Business Growth
 
 Stage 8 adds a business growth system on top of the existing Stage 2–7 architecture. The C# API now persists business reviews and ratings, self-reported milestones, business opportunities, and privacy-conscious analytics events through additive EF Core migration source. It exposes business-scoped growth routes under `/api/v1`, applies the existing Owner/Admin/Editor/Viewer authorization model, prevents owners and team members from reviewing their own businesses, prevents duplicate reviews, supports owner responses and moderation reporting, and records opportunity enquiry activity without implementing transactions or payments.
 
-The Expo app adds a unified `Business Growth` dashboard reachable from business management and profile business selection. It keeps API mode separate from the deterministic local demo provider, supports selected-business isolation, date-range analytics, reviews, milestones, opportunities, activity, loading/empty/error/retry states, and explicit disclosure when local values are illustrative. See [`docs/STAGE8_BUSINESS_GROWTH.md`](docs/STAGE8_BUSINESS_GROWTH.md) and [`STAGE8_IMPLEMENTATION_REPORT.md`](STAGE8_IMPLEMENTATION_REPORT.md) for routes, setup, verification status, and limitations. The Stage 8 migration has not been applied to `bizconnect_dev` or production.
+The Expo app adds a unified `Business Growth` dashboard reachable from business management and profile business selection. It keeps API mode separate from the deterministic local demo provider, supports selected-business isolation, date-range analytics, reviews, milestones, opportunities, activity, loading/empty/error/retry states, and explicit disclosure when local values are illustrative. See [`docs/STAGE8_BUSINESS_GROWTH.md`](docs/STAGE8_BUSINESS_GROWTH.md) and [`STAGE8_IMPLEMENTATION_REPORT.md`](STAGE8_IMPLEMENTATION_REPORT.md) for routes, setup, verification status, and limitations. The Stage 8 migration has not been applied to `Mabiz_dev` or production.
 
 ## Dedicated desktop website
 

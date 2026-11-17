@@ -9,10 +9,10 @@ import { formatDate } from "@/utils/kenya";
 import { PEOPLE } from "@/data/seed";
 import { evaluateMessagePermission } from "@/utils/privacy-policy";
 import { ApiMessagesScreen } from "@/components/api-messaging-screens";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 
 export default function MessagesScreen() {
-  const mode = useBizConnectServiceMode();
+  const mode = useMabizServiceMode();
   return mode === "api" ? <ApiMessagesScreen /> : <LocalMessagesScreen />;
 }
 

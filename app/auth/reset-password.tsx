@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { Alert, Platform, Text } from "react-native";
 import { Button, Field, Page, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { useThemeContext } from "@/lib/theme-provider";
 import { PASSWORD_ERROR, isStrongPassword } from "@/utils/password-policy";
 
@@ -16,7 +16,7 @@ export default function ResetPasswordScreen() {
   useThemeContext();
   const params = useLocalSearchParams<{ identifier?: string }>();
   const app = useAppStore();
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [step, setStep] = useState<"code" | "password">("code");
   const [identifier, setIdentifier] = useState(params.identifier ?? "");
   const [code, setCode] = useState("");

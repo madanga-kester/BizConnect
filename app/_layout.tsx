@@ -18,7 +18,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { AppStoreProvider, useAppStore } from "@/hooks/use-app-store";
-import { BizConnectServicesProvider } from "@/lib/services/service-provider";
+import { MabizServicesProvider } from "@/lib/services/service-provider";
 import { Page, ScreenSkeleton } from "@/components/biz-ui";
 import { normalizeAppearance } from "@/utils/theme-preference";
 
@@ -61,7 +61,7 @@ function ThemeAwareApp() {
     updateSettings({ appearance });
   }, [colorScheme, hasHydrated, setColorScheme, storedAppearance, updateSettings]);
 
-  if (!hasHydrated) return <><StatusBar barStyle={colorScheme === "dark" ? "light-content" : "dark-content"} /><Page><ScreenSkeleton variant="feed" count={2} label="Loading BizConnect" /></Page></>;
+  if (!hasHydrated) return <><StatusBar barStyle={colorScheme === "dark" ? "light-content" : "dark-content"} /><Page><ScreenSkeleton variant="feed" count={2} label="Loading Mabiz" /></Page></>;
   return <NotificationSyncProvider><><GuardedStack /><StatusBar barStyle={colorScheme === "dark" ? "light-content" : "dark-content"} /></></NotificationSyncProvider>;
 }
 
@@ -119,7 +119,7 @@ export default function RootLayout() {
 
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BizConnectServicesProvider>
+      <MabizServicesProvider>
         <AppStoreProvider>
           <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
@@ -130,7 +130,7 @@ export default function RootLayout() {
             </QueryClientProvider>
           </trpc.Provider>
         </AppStoreProvider>
-      </BizConnectServicesProvider>
+      </MabizServicesProvider>
     </GestureHandlerRootView>
   );
 

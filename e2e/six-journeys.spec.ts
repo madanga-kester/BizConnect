@@ -46,7 +46,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
   await page.goto("/");
 
   await test.step("1. Guest searches for a Kenyan business and opens its profile", async () => {
-    await expect(page.getByText("BizConnect", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Mabiz", { exact: true }).first()).toBeVisible();
     await expect(page.getByText(/Good morning,/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Search" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Open your profile" })).toBeVisible();
@@ -83,7 +83,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await expect(page.getByText("What would you like to discover?")).toBeVisible();
     await page.getByRole("button", { name: "Finish profile setup" }).click();
     await openTab(page, "Home");
-    await expect(page.getByText("BizConnect", { exact: true }).last()).toBeVisible();
+    await expect(page.getByText("Mabiz", { exact: true }).last()).toBeVisible();
     await expect(page.getByText("Local demo session · no server account").last()).toBeVisible();
   });
 
@@ -95,7 +95,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await expect(page.getByText("Business tools")).toBeVisible();
     await expect(page.getByRole("button", { name: "Manage products and services" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Add business milestone" })).toBeVisible();
-    const caption = "E2E local demo: a new Nairobi business idea #BizConnect";
+    const caption = "E2E local demo: a new Nairobi business idea #Mabiz";
     await page.getByLabel("What's the story?").fill(caption);
     await page.getByRole("button", { name: /Preview$/ }).click();
     await expect(page.getByText("Post preview")).toBeVisible();
@@ -114,7 +114,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await expect(page.getByText(/Posts · .* · Published locally$/, { exact: true }).last()).toBeVisible();
     await expect(page.getByText(/Drafts · .* · Draft$/, { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: /Edit$/ }).click();
-    await expect(page.getByLabel("What's the story?").last()).toHaveValue("E2E local demo: a new Nairobi business idea #BizConnect");
+    await expect(page.getByLabel("What's the story?").last()).toHaveValue("E2E local demo: a new Nairobi business idea #Mabiz");
     await page.getByRole("button", { name: /Manage my posts$/ }).last().click();
     await page.getByLabel("Search all content").last().fill("E2E local demo: a new Nairobi business idea");
     await expect(page.getByText(/Posts · .* · Published locally$/, { exact: true }).last()).toBeVisible();
@@ -187,7 +187,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await page.getByRole("button", { name: /Create business$/ }).click();
     await expect(page.getByText("Step 1 of 6")).toBeVisible();
     await page.getByLabel("Business name").fill("Pamoja Studio E2E");
-    await page.getByLabel("Short description").fill("A local design studio created for the BizConnect journey audit.");
+    await page.getByLabel("Short description").fill("A local design studio created for the Mabiz journey audit.");
     await page.getByRole("button", { name: /Continue$/ }).click();
     await expect(page.getByText("Step 2 of 6")).toBeVisible();
     await page.getByLabel("How did the business start?").fill("A local founder saw a need for accessible design services.");
@@ -299,9 +299,9 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await expect(page.getByRole("button", { name: /Following$/ })).toBeVisible();
     await page.getByRole("button", { name: /Message$/ }).click();
     await expect(page.getByText(/Local chat demo · nothing is delivered/i)).toBeVisible();
-    await page.getByPlaceholder("Write a message…").fill("Hello from the BizConnect E2E audit.");
+    await page.getByPlaceholder("Write a message…").fill("Hello from the Mabiz E2E audit.");
     await page.getByRole("button", { name: "Send local demo message" }).click();
-    await expect(page.getByText("Hello from the BizConnect E2E audit.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Hello from the Mabiz E2E audit.", { exact: true })).toBeVisible();
     await expect(page.getByText("Sent locally", { exact: true })).toBeVisible();
     await goBack(page);
     await goBack(page);
@@ -315,7 +315,7 @@ test("six core journeys: discover, onboard, publish, create a business, message,
     await expect(page.getByRole("tablist")).toBeVisible();
     await expect.poll(() => tabBackground(page)).toBe("rgb(0, 0, 0)");
     await expect.poll(() => page.evaluate(() => {
-      const stored = window.localStorage.getItem("bizconnect-demo-state-v1");
+      const stored = window.localStorage.getItem("Mabiz-demo-state-v1");
       return stored ? JSON.parse(stored).settings?.appearance : undefined;
     })).toBe("dark");
     await openTab(page, "Home");

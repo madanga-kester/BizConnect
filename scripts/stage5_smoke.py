@@ -2,11 +2,11 @@
 """Stage 5 API smoke check.
 
 Run it against a disposable database: the create/publish/upload flow writes rows, so the connection
-string of the API process under test should name bizconnect_test (never bizconnect_dev). Start the API
+string of the API process under test should name Mabiz_test (never Mabiz_dev). Start the API
 with Database__ApplyMigrationsOnStartup=false and Storage__Provider=local, then:
 
     python3 scripts/stage5_smoke.py
-    BIZCONNECT_API_BASE=http://127.0.0.1:5000 python3 scripts/stage5_smoke.py
+    Mabiz_API_BASE=http://127.0.0.1:5000 python3 scripts/stage5_smoke.py
 
 It asserts on status codes and response bodies and exits non-zero on the first mismatching check,
 printing a PASS/FAIL line per check.
@@ -14,7 +14,7 @@ printing a PASS/FAIL line per check.
 import base64, json, os, sys, uuid
 import requests
 
-BASE = os.environ.get("BIZCONNECT_API_BASE", "http://127.0.0.1:5199")
+BASE = os.environ.get("Mabiz_API_BASE", "http://127.0.0.1:5199")
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==")
 results = []
 

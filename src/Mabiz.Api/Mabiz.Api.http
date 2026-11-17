@@ -1,0 +1,6 @@
+@Mabiz.Api_HostAddress = http://localhost:5155
+
+GET {{Mabiz.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

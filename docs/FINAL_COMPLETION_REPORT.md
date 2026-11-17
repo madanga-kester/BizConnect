@@ -1,4 +1,4 @@
-# BizConnect final completion report
+# Mabiz final completion report
 
 ## Pages completed
 

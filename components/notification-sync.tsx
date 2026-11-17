@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState, Platform } from "react-native";
 import { useAppStore } from "@/hooks/use-app-store";
 import { MessagingRealtimeClient } from "@/lib/api/messaging-realtime";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import { navigateToNotification } from "@/lib/notifications/navigation";
 
 interface NotificationSyncValue {
@@ -18,8 +18,8 @@ export function useNotificationSync(): NotificationSyncValue {
 
 export function NotificationSyncProvider({ children }: { children: React.ReactNode }) {
   const app = useAppStore();
-  const mode = useBizConnectServiceMode();
-  const services = useBizConnectServices();
+  const mode = useMabizServiceMode();
+  const services = useMabizServices();
   const [unreadCount, setUnreadCount] = useState(0);
   const [eventVersion, setEventVersion] = useState(0);
   const lastPushResponseId = useRef<string | null>(null);

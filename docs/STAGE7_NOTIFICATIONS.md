@@ -1,6 +1,6 @@
 # Stage 7 — Persistent notifications and delivery
 
-Stage 7 extends the existing BizConnect Expo/React Native client and ASP.NET Core .NET 10, EF Core 10, PostgreSQL backend with a persistent notification inbox, authenticated SignalR delivery, optional Expo Push Service delivery, and account-level notification preferences. The existing Stage 2–6 modules remain in place. `mock-local` remains a separate mode: it keeps the existing seeded local inbox and does not call the Stage 7 API or register a push device.
+Stage 7 extends the existing Mabiz Expo/React Native client and ASP.NET Core .NET 10, EF Core 10, PostgreSQL backend with a persistent notification inbox, authenticated SignalR delivery, optional Expo Push Service delivery, and account-level notification preferences. The existing Stage 2–6 modules remain in place. `mock-local` remains a separate mode: it keeps the existing seeded local inbox and does not call the Stage 7 API or register a push device.
 
 ## Event coverage and persistence
 
@@ -8,7 +8,7 @@ The backend creates notification records in the same EF unit of work as the sour
 
 `user_notifications` stores the recipient, optional actor, bounded title/body, event and target identifiers, creation/read/dismiss timestamps, visibility and the idempotency key. `notification_deliveries` is a durable outbox. It creates realtime rows for in-app-visible notifications and push rows for each eligible registered device when push is enabled. The outbox worker claims rows with a time-limited lease, sends outside the claim operation, and records accepted, suppressed, retryable or terminal states. Retries are bounded. Push is at-least-once around provider acceptance; an accepted Expo ticket is not a device-delivery receipt.
 
-The `20261113035329_Stage7Notifications` migration is additive: it adds notification preference/device columns, notification and delivery tables, constraints and indexes. The migration has not been applied to `bizconnect_dev` or production. The integration test fixture validates the database name and recreates only `bizconnect_test` before applying the migration.
+The `20261113035329_Stage7Notifications` migration is additive: it adds notification preference/device columns, notification and delivery tables, constraints and indexes. The migration has not been applied to `Mabiz_dev` or production. The integration test fixture validates the database name and recreates only `Mabiz_test` before applying the migration.
 
 ## Authenticated REST API
 
@@ -72,7 +72,7 @@ To use the API mode, set `EXPO_PUBLIC_API_MODE=api` and `EXPO_PUBLIC_API_BASE_UR
 
 ## Verification commands
 
-Use the repository's pinned Node/pnpm and .NET 10 versions. The PostgreSQL integration fixture destructively recreates only `bizconnect_test` and fails closed for any other database name.
+Use the repository's pinned Node/pnpm and .NET 10 versions. The PostgreSQL integration fixture destructively recreates only `Mabiz_test` and fails closed for any other database name.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -80,20 +80,20 @@ pnpm check
 pnpm test
 pnpm exec expo export --platform web
 
-dotnet build BizConnect.sln
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=...'
-dotnet test BizConnect.sln
+dotnet build Mabiz.sln
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=...'
+dotnet test Mabiz.sln
 ```
 
-For the enhanced live realtime smoke test, run the API with its `ConnectionStrings__BizConnect` set to the same `bizconnect_test` database, then run:
+For the enhanced live realtime smoke test, run the API with its `ConnectionStrings__Mabiz` set to the same `Mabiz_test` database, then run:
 
 ```bash
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=...'
-export BIZCONNECT_TEST_API_URL='http://127.0.0.1:5199'
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=...'
+export Mabiz_TEST_API_URL='http://127.0.0.1:5199'
 node scripts/stage6_signalr_smoke.mjs
 ```
 
-The script refuses to run without the explicit `bizconnect_test` guard. It checks hub authorization, message receipt and persistence, outbox-driven `NotificationReceived`, notification inbox persistence/unread count, and recipient isolation. The Stage 7 implementation report records the verification actually completed for this source package.
+The script refuses to run without the explicit `Mabiz_test` guard. It checks hub authorization, message receipt and persistence, outbox-driven `NotificationReceived`, notification inbox persistence/unread count, and recipient isolation. The Stage 7 implementation report records the verification actually completed for this source package.
 
 ## Boundaries
 

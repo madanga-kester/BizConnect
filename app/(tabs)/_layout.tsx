@@ -8,7 +8,7 @@ import { colors, getTabBarColors } from "@/theme/tokens";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
 import { useThemeContext } from "@/lib/theme-provider";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { useNotificationSync } from "@/components/notification-sync";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
@@ -28,7 +28,7 @@ export default function TabLayout() {
   const app = useAppStore();
   const insets = useSafeAreaInsets();
   const { colorScheme } = useThemeContext();
-  const mode = useBizConnectServiceMode();
+  const mode = useMabizServiceMode();
   const notificationSync = useNotificationSync();
   const unreadNotifications = mode === "api" ? notificationSync.unreadCount : app.notifications.filter((item) => !item.read).length;
   const tabBarColors = getTabBarColors(colorScheme);

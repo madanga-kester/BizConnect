@@ -4,7 +4,7 @@ import { Alert, Platform, Switch, Text, View } from "react-native";
 import { ActionTile, EmptyState, LocalNote, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { getExpoPushRegistration } from "@/lib/api/push-registration";
-import { useBizConnectServices, useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import type { NotificationPreferences } from "@/lib/api/feature-contracts";
 import { colors } from "@/theme/tokens";
 
@@ -16,8 +16,8 @@ function message(text: string): void { if (Platform.OS === "web") window.alert(t
 
 export default function NotificationSettingsScreen() {
   const app = useAppStore();
-  const mode = useBizConnectServiceMode();
-  const services = useBizConnectServices();
+  const mode = useMabizServiceMode();
+  const services = useMabizServices();
   const [preferences, setPreferences] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export default function NotificationSettingsScreen() {
     {error ? <View style={styles.actionTile}><Text style={{ color: colors.danger }}>{error}</Text></View> : null}
     {loading ? <Text style={styles.caption}>Loading preferences…</Text> : <>
       <SectionTitle title="Delivery" />
-      {switchRow("inAppEnabled", "In-app notifications", "Keep activity in your BizConnect notification centre.")}
+      {switchRow("inAppEnabled", "In-app notifications", "Keep activity in your Mabiz notification centre.")}
       {switchRow("pushEnabled", "Push notifications", Platform.OS === "web" ? "Use the native iOS or Android app to register Expo push delivery." : "Ask for device permission and securely register this device with Expo Push.")}
       <SectionTitle title="Activity types" />
       {switchRow("messages", "Messages and enquiries", "New direct messages and business enquiries.")}

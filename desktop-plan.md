@@ -1,8 +1,8 @@
-# BizConnect Desktop Website — Implementation Plan
+# Mabiz Desktop Website — Implementation Plan
 
 ## Approach
 
-Add a dedicated `desktop/` React + Vite application inside the existing BizConnect repository. The mobile Expo Router app under `app/` remains unchanged and continues to use the existing service provider. The desktop site uses a browser-focused shell, responsive CSS, history routing, and a small API client that targets the existing `/api/v1` backend. It does not add a second backend, database, authentication store, or fake production API.
+Add a dedicated `desktop/` React + Vite application inside the existing Mabiz repository. The mobile Expo Router app under `app/` remains unchanged and continues to use the existing service provider. The desktop site uses a browser-focused shell, responsive CSS, history routing, and a small API client that targets the existing `/api/v1` backend. It does not add a second backend, database, authentication store, or fake production API.
 
 ## Design
 
@@ -12,7 +12,7 @@ Add a dedicated `desktop/` React + Vite application inside the existing BizConne
 
 **Core principles:** make people and businesses visible; keep search and context close to the work; separate exploration from management; show provenance and API/demo state clearly.
 
-**Color philosophy:** BizConnect green signals action and local growth; dark navy provides trust and contrast; warm paper and pale mint keep the desktop surface human rather than corporate.
+**Color philosophy:** Mabiz green signals action and local growth; dark navy provides trust and contrast; warm paper and pale mint keep the desktop surface human rather than corporate.
 
 **Layout paradigm:** persistent rail plus full-width top bar, with page-specific central compositions rather than one repeated dashboard grid. Home is a two-column community stream, Discover is search-led, Businesses is directory/profile-led, Products is catalogue-led, Messaging is split-pane, Notifications is a centre timeline, Analytics is metric-led, and Settings is section-led.
 
@@ -24,13 +24,13 @@ Add a dedicated `desktop/` React + Vite application inside the existing BizConne
 
 **Typography:** system sans stack with heavy display headings, compact eyebrow labels, and readable 15–16px body copy.
 
-**Brand essence:** BizConnect is the practical community layer where Kenyan people discover businesses and businesses build momentum. Personality: grounded, generous, energetic.
+**Brand essence:** Mabiz is the practical community layer where Kenyan people discover businesses and businesses build momentum. Personality: grounded, generous, energetic.
 
 **Brand voice:** direct, useful, locally aware. Example CTAs: “Find the next useful connection” and “Turn attention into momentum.”
 
-**Wordmark:** bold BizConnect wordmark with a paired green signal bar motif.
+**Wordmark:** bold Mabiz wordmark with a paired green signal bar motif.
 
-**Signature brand color:** BizConnect green `#0A8F62`.
+**Signature brand color:** Mabiz green `#0A8F62`.
 
 ## Structure
 

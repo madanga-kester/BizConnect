@@ -20,7 +20,7 @@ import {
   styles,
 } from "@/components/biz-ui";
 
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { COUNTY_TOWNS, KENYAN_COUNTIES } from "@/utils/kenya";
 import { MAX_INTERESTS, validateRegistration } from "@/utils/form-validation";
 import { colors } from "@/theme/tokens";
@@ -195,7 +195,7 @@ const REGISTER_API_ERRORS: Record<
 
 function registerFallbackMessage(error: { code: string; message: string }) {
   if (error.code === "NETWORK_ERROR" || error.code === "REQUEST_TIMEOUT") {
-    return "We could not reach BizConnect. Check your internet connection and try again.";
+    return "We could not reach Mabiz. Check your internet connection and try again.";
   }
   if (error.code === "RATE_LIMITED") {
     return "Too many attempts. Please wait a moment and try again.";
@@ -207,7 +207,7 @@ function registerFallbackMessage(error: { code: string; message: string }) {
 }
 
 export default function RegisterScreen() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
 
   const [step, setStep] = useState<Step>(1);
 
@@ -1264,7 +1264,7 @@ export default function RegisterScreen() {
                 lineHeight: 18,
               }}
             >
-              By creating an account, you agree to use BizConnect responsibly
+              By creating an account, you agree to use Mabiz responsibly
               and respect other members of the community.
             </Text>
           )}

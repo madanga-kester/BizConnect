@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, Platform, Text } from "react-native";
 import { Button, Field, Page, TopBar, styles } from "@/components/biz-ui";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) {
@@ -12,7 +12,7 @@ function feedback(message: string) {
 
 export default function ForgotPasswordScreen() {
   useThemeContext();
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [identifier, setIdentifier] = useState("");
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);

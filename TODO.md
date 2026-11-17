@@ -1,4 +1,4 @@
-# BizConnect implementation checklist
+# Mabiz implementation checklist
 
 This is a historical acceptance checklist containing status snapshots from earlier frontend phases; its legacy checkboxes and notes may predate Stages 2–6. Implemented backend stages are documented in [`docs/STAGE2_BACKEND.md`](docs/STAGE2_BACKEND.md), [`docs/STAGE3_BUSINESSES.md`](docs/STAGE3_BUSINESSES.md), [`docs/STAGE4_SOCIAL.md`](docs/STAGE4_SOCIAL.md), [`docs/STAGE5_CATALOG_MEDIA.md`](docs/STAGE5_CATALOG_MEDIA.md) and [`docs/STAGE6_MESSAGING.md`](docs/STAGE6_MESSAGING.md). Do not infer that unchecked historical items were re-tested in the Stage 6 task. Unconnected product backends remain unimplemented, and local mock actions must still be labeled as local demonstrations.
 
@@ -6,21 +6,21 @@ This is a historical acceptance checklist containing status snapshots from earli
 
 - **Stage 2:** Identity/authentication, profile, preferences and device APIs remain implemented.
 - **Stage 3:** Business profiles, memberships, invitations, ownership transfers, activity and server role enforcement remain implemented.
-- **Stage 4:** For You/Following feeds, posts, likes, comments/replies, polls, user/business follows, follower lists, and server-side privacy/block/hide enforcement are implemented; existing Expo screens/adapters are connected in explicit API mode. The additive migration `20261112173415_Stage4SocialContent` is generated but has not been applied to `bizconnect_dev`.
-- **Stage 5:** Products and services with draft/published/archived lifecycle, business-scoped catalogue management, ordered image galleries, real image upload, local and S3-compatible storage behind an access-controlled media proxy, and anonymous public discovery are implemented in the C# API and connected in Expo API mode. The additive migration `20261112182203_Stage5Catalog` is generated and applied from scratch by the test fixture but has not been applied to `bizconnect_dev`.
-- **Stage 6:** Persistent direct and business conversations, catalogue-linked enquiries, paginated REST history, read/delivery receipts, archive/block controls, authenticated SignalR and API-mode inbox/chat/enquiry UI are implemented. The additive migration `20261113031519_Stage6MessagingEnquiries` is included and test-applied only to `bizconnect_test`; it has not been applied to `bizconnect_dev`.
+- **Stage 4:** For You/Following feeds, posts, likes, comments/replies, polls, user/business follows, follower lists, and server-side privacy/block/hide enforcement are implemented; existing Expo screens/adapters are connected in explicit API mode. The additive migration `20261112173415_Stage4SocialContent` is generated but has not been applied to `Mabiz_dev`.
+- **Stage 5:** Products and services with draft/published/archived lifecycle, business-scoped catalogue management, ordered image galleries, real image upload, local and S3-compatible storage behind an access-controlled media proxy, and anonymous public discovery are implemented in the C# API and connected in Expo API mode. The additive migration `20261112182203_Stage5Catalog` is generated and applied from scratch by the test fixture but has not been applied to `Mabiz_dev`.
+- **Stage 6:** Persistent direct and business conversations, catalogue-linked enquiries, paginated REST history, read/delivery receipts, archive/block controls, authenticated SignalR and API-mode inbox/chat/enquiry UI are implemented. The additive migration `20261113031519_Stage6MessagingEnquiries` is included and test-applied only to `Mabiz_test`; it has not been applied to `Mabiz_dev`.
 - **Remaining boundaries:** New follow requests to private profiles, media transcoding/EXIF stripping/CDN/resumable uploads, push, reports/verification, checkout, payments, wallets, AI and desktop-web product workflows are not implemented. Stage 6 does not include message attachments or external email/SMS/push delivery.
 
-## Original BizConnect specification
+## Original Mabiz specification
 
-### [x] Original BizConnect specification setup
+### [x] Original Mabiz specification setup
 
-# PROJECT: BIZCONNECT
+# PROJECT: Mabiz
 ## Complete Mobile Application Frontend Development
 
 Act as a senior product designer, senior React Native engineer and mobile application architect.
 
-I want you to design and develop a complete, production-quality mobile application called **BizConnect**.
+I want you to design and develop a complete, production-quality mobile application called **Mabiz**.
 
 This is not a simple prototype, landing page or static UI demonstration. Build a fully navigable and interactive mobile application frontend with realistic user journeys, reusable components, consistent design patterns and a scalable project structure.
 
@@ -34,7 +34,7 @@ IMPORTANT: Develop the FRONTEND ONLY at this stage. Do not build the backend, da
 
 # 1. PRODUCT VISION
 
-BizConnect is a social business discovery and entrepreneurship platform that connects:
+Mabiz is a social business discovery and entrepreneurship platform that connects:
 
 1. Business owners who want to showcase and grow their businesses.
 2. Buyers who want to discover products, services and businesses.
@@ -104,7 +104,7 @@ Do not hardcode mock business data directly into individual screen components.
 
 # 3. BRAND IDENTITY AND DESIGN DIRECTION
 
-Brand name: BizConnect.
+Brand name: Mabiz.
 
 Brand personality:
 
@@ -116,7 +116,7 @@ Brand personality:
 - Community-driven.
 - Innovative.
 
-Design a distinctive visual identity for BizConnect.
+Design a distinctive visual identity for Mabiz.
 
 Use a premium modern design language.
 
@@ -223,7 +223,7 @@ Create a modern social feed inspired by the usability of Instagram, TikTok and o
 The home screen should include:
 
 HEADER:
-- BizConnect logo.
+- Mabiz logo.
 - Search icon.
 - Notification icon.
 - Message icon.
@@ -522,7 +522,7 @@ Use Expo-compatible media selection functionality.
 
 # 11. BUSINESS STORIES SECTION
 
-This is a signature feature of BizConnect.
+This is a signature feature of Mabiz.
 
 Create a dedicated section called "Business Stories".
 
@@ -578,7 +578,7 @@ Include a section called "Businesses You Can Learn From".
 
 # 12. VIDEO EXPERIENCE
 
-Video is an important part of BizConnect.
+Video is an important part of Mabiz.
 
 Create a dedicated vertical video discovery experience.
 
@@ -641,7 +641,7 @@ SERVICES:
 
 IMPORTANT:
 
-BizConnect is not processing payments in this first release.
+Mabiz is not processing payments in this first release.
 
 Do not implement checkout, shopping carts or payment gateways.
 
@@ -755,7 +755,7 @@ Create:
 - Security settings.
 - Change password interface.
 - Help and support.
-- About BizConnect.
+- About Mabiz.
 - Terms and conditions.
 - Privacy policy.
 - Logout.
@@ -961,17 +961,17 @@ The finished application should look and feel like a serious, modern, launch-rea
 
 **FINAL PRODUCT PRINCIPLE:**
 
-BizConnect should make it easy for someone to discover a business, understand its story, see what it offers, connect with its owner and become inspired to start something of their own.
+Mabiz should make it easy for someone to discover a business, understand its story, see what it offers, connect with its owner and become inspired to start something of their own.
 
 Build the complete frontend with this vision as the guiding principle.
 
-## Additional BizConnect requirements
+## Additional Mabiz requirements
 
-### [x] Additional BizConnect requirements setup
+### [x] Additional Mabiz requirements setup
 
-# ADDITIONAL PRODUCT AND TECHNICAL REQUIREMENTS – BIZCONNECT
+# ADDITIONAL PRODUCT AND TECHNICAL REQUIREMENTS – Mabiz
 
-These requirements extend the original BizConnect specification. They are mandatory and must be incorporated into the existing application without removing any previously specified functionality.
+These requirements extend the original Mabiz specification. They are mandatory and must be incorporated into the existing application without removing any previously specified functionality.
 
 ### [x] 1. MULTIPLE BUSINESS OWNERSHIP
 
@@ -1225,7 +1225,7 @@ Provide a complete README, installation instructions, environment configuration 
 
 IMPORTANT: Preserve every feature from the original specification. Do not simplify the application by removing modules to make development easier.
 
-The objective is to deliver a comprehensive, coherent and extensible BizConnect mobile frontend, not a collection of disconnected demonstration screens.
+The objective is to deliver a comprehensive, coherent and extensible Mabiz mobile frontend, not a collection of disconnected demonstration screens.
 
 _Status: Partial. TypeScript, ESLint, all 44 tests, Expo dependency compatibility and Web/Android/iOS bundle exports pass. In addition to the feed, Discover and management-route checks already noted, a real-input Preview walkthrough now covers invalid/valid local OTP, profile setup, text-post preview/publish and the six-step business form. Remaining: exhaustive interaction coverage plus physical-device checks for camera, location, notifications, SecureStore and video playback. Native release builds were not run; keep this outcome open._
 
@@ -1233,7 +1233,7 @@ _Status: Partial. TypeScript, ESLint, all 44 tests, Expo dependency compatibilit
 
 ### [x] Phase 2 scope and preservation constraints
 
-## PROJECT INSTRUCTIONContinue development of the existing BizConnect React Native application.You are working on an existing project, not starting a new one.Your responsibility is to inspect, improve, complete and test the current implementation based on the requirements below.**CRITICAL: DO NOT REBUILD THE APPLICATION FROM SCRATCH.**Preserve all existing functionality, screens, navigation, business logic, design components, branding, mock data, and implemented features unless a change is necessary to correct a confirmed issue.Do not remove existing functionality to simplify implementation. Do not replace completed features with static mockups or placeholder screens.The objective is to turn the current feature-rich prototype into a reliable, fully functional frontend that is ready for future ASP.NET Core backend integration.---
+## PROJECT INSTRUCTIONContinue development of the existing Mabiz React Native application.You are working on an existing project, not starting a new one.Your responsibility is to inspect, improve, complete and test the current implementation based on the requirements below.**CRITICAL: DO NOT REBUILD THE APPLICATION FROM SCRATCH.**Preserve all existing functionality, screens, navigation, business logic, design components, branding, mock data, and implemented features unless a change is necessary to correct a confirmed issue.Do not remove existing functionality to simplify implementation. Do not replace completed features with static mockups or placeholder screens.The objective is to turn the current feature-rich prototype into a reliable, fully functional frontend that is ready for future ASP.NET Core backend integration.---
 _Status: Complete. The existing Expo project and features were inspected and retained; implementation continues in place without a rebuild._
 
 ### [x] Phase 2.1: FIRST: INSPECT THE EXISTING PROJECT
@@ -1578,7 +1578,7 @@ _Status: Complete for frontend integration readiness. Central API configuration,
 ### [ ] Phase 2.10: USER EXPERIENCE AND INTERFACE QUALITY
 
 
-Preserve the established BizConnect visual identity.
+Preserve the established Mabiz visual identity.
 
 Do not redesign the entire application unnecessarily.
 
@@ -1612,12 +1612,12 @@ Maintain English and Swahili localisation readiness.
 Maintain Kenyan phone number formatting, Kenyan locations and KSh currency formatting.
 
 
-_Status: Partial. Existing BizConnect design system and accessible shared forms/components are preserved; validation, route guards, explicit local-demo copy and empty/error/fallback states were improved. Real-input browser checks exercised onboarding, OTP rejection/acceptance, text-post preview/publish and the six-step business form. Full Android/iOS screen-size, camera/location permission, keyboard and accessibility device checks remain; keep open._
+_Status: Partial. Existing Mabiz design system and accessible shared forms/components are preserved; validation, route guards, explicit local-demo copy and empty/error/fallback states were improved. Real-input browser checks exercised onboarding, OTP rejection/acceptance, text-post preview/publish and the six-step business form. Full Android/iOS screen-size, camera/location permission, keyboard and accessibility device checks remain; keep open._
 
 ### [x] Phase 2.11: AUTOMATED TESTING
 
 
-Add meaningful tests for the actual BizConnect application.
+Add meaningful tests for the actual Mabiz application.
 
 Do not rely exclusively on tests inherited from the starter project.
 
@@ -1704,7 +1704,7 @@ Update the project documentation.
 
 README.md must explain:
 
-- What BizConnect does.
+- What Mabiz does.
 - Current frontend capabilities.
 - What is still a local demonstration.
 - Installation.
@@ -1776,7 +1776,7 @@ At the end, provide a clear report containing:
 9. Features that still require a backend.
 10. Recommended next development phase.
 
-**FINAL PRIORITY: Deliver a stable, thoroughly tested BizConnect frontend while preserving the existing project and all of its implemented functionality.**
+**FINAL PRIORITY: Deliver a stable, thoroughly tested Mabiz frontend while preserving the existing project and all of its implemented functionality.**
 
 
 ## Phase 3 — Native Mobile Completion and Frontend Stabilisation
@@ -1823,9 +1823,9 @@ _Status: Partial. Existing media cancellation/permission/error regression tests 
 
 - Remove unnecessary generated files and review starter infrastructure.
 - Exclude Expo caches/device state and build output from clean source-control delivery.
-- Distinguish the managed starter `server/`, Drizzle schema/config and database libraries from the future BizConnect ASP.NET Core backend; do not treat them as the business backend, route product actions through them, or delete required starter infrastructure without validating the Mobile template.
+- Distinguish the managed starter `server/`, Drizzle schema/config and database libraries from the future Mabiz ASP.NET Core backend; do not treat them as the business backend, route product actions through them, or delete required starter infrastructure without validating the Mobile template.
 
-_Status: Complete. `.expo/` and `dist/` are ignored; `git ls-files` found no tracked Expo cache/device-state, Android/iOS generated directories, bundles or APK/AAB/IPA artifacts. Reviewed the existing `server/`, Drizzle config/schema, database dependencies and tRPC links; retained them because they are managed-starter infrastructure. README and API integration docs explicitly distinguish them from the future BizConnect ASP.NET Core backend._
+_Status: Complete. `.expo/` and `dist/` are ignored; `git ls-files` found no tracked Expo cache/device-state, Android/iOS generated directories, bundles or APK/AAB/IPA artifacts. Reviewed the existing `server/`, Drizzle config/schema, database dependencies and tRPC links; retained them because they are managed-starter infrastructure. README and API integration docs explicitly distinguish them from the future Mabiz ASP.NET Core backend._
 
 ### [ ] Phase 3.6: Finalise Android/iOS application identity
 
@@ -1849,7 +1849,7 @@ _Status: Partial. Lockfile-pinned setup and Dashboard native-build guidance rema
 - Do not start ASP.NET Core backend development or connect the mobile screens to that backend in Phase 3.
 - Preserve the frontend local-demo behavior and clearly disclose that actions are not server-synced.
 - Keep the API architecture as proposed integration contracts; the HTTP transport and typed service adapters exist but remain disconnected from interactive screens, and this is not evidence of a live backend.
-- Do not confuse the Manus starter server/Drizzle infrastructure with the intended BizConnect ASP.NET Core service.
+- Do not confuse the Manus starter server/Drizzle infrastructure with the intended Mabiz ASP.NET Core service.
 
 _Status: Complete for Phase 3 scope. No ASP.NET Core backend was started and no screen was connected to the starter API or database. Local-demo actions remain device-local; `API_INTEGRATION.md` stays a proposal. The HTTP transport supports CRUD and all 19 typed service domains now have adapter structures, but the Create screens still use the local app store and no remote endpoint is available. The starter API/Drizzle setup is documented separately._
 
@@ -1860,7 +1860,7 @@ Report: features improved; defects corrected; new functionality; files/modules c
 
 ### [x] Phase 3.9: Upgrade the existing app for Expo Go SDK 58 compatibility
 
-- Upgrade the existing BizConnect project from Expo SDK 57 to SDK 58 so it matches the user's installed Expo Go SDK 58.
+- Upgrade the existing Mabiz project from Expo SDK 57 to SDK 58 so it matches the user's installed Expo Go SDK 58.
 - Align Expo-managed packages to the SDK 58-compatible versions and update the package manifest and lockfile using the project's pnpm workflow.
 - Apply only the Expo Router and React Native API migrations required by SDK 58; preserve existing routes, design, local-demo behavior, generated Android/iOS identifiers, app scheme and static Web behavior.
 - Preserve the fixed Metro/Web Preview port 8081 and starter API port 3000; do not add or connect a backend, do not create native release builds and do not publish.
@@ -1901,7 +1901,7 @@ _Progress: Complete. The CRUD/auth transport, standardized error handling, cance
 ### [ ] 3.12.2 Add upload transport and central service registration
 _Progress: Partial. All 19 typed production and deterministic mock service domains, the mode-aware provider, secure session storage and progress/cancellation upload transport exist. Current screens still use `hooks/use-app-store.tsx`; UI/service migration and live backend connection remain open. Upload retry resends the whole file; byte-resume is not implemented or claimed._
 - Support multipart and direct-to-object-storage transport for business profile images, business cover images, user profile images, post images, videos, product images, business story media and verification documents. Support metadata, progress where the selected React Native networking layer supports it, cancellation, failure handling and retry integration. Do not claim resumable upload unless the compatible server upload protocol exists and is implemented.
-- Provide a centralized, React-Native-compatible `BizConnectServices` registration/factory so mode changes do not require editing individual screens. Screens must use feature services/hooks rather than calling the HTTP client directly. Keep API configuration centralized.
+- Provide a centralized, React-Native-compatible `MabizServices` registration/factory so mode changes do not require editing individual screens. Screens must use feature services/hooks rather than calling the HTTP client directly. Keep API configuration centralized.
 - Provide contract-conforming mock and production implementations for authentication, users, business management/memberships, discovery, feeds/posts, comments/reactions, catalogue, stories/opportunities, messaging, notifications, verification, moderation and media uploads. Preserve the mock-first local demo; production adapters must not fake successful responses or convert an API error into local success. Proposed routes remain proposals until implemented by the backend.
 
 ### [ ] 3.12.3 Expand deterministic user-journey coverage
@@ -1921,7 +1921,7 @@ _Progress: Partial. The audit found and fixed nested business-card navigation/fo
 
 ### [ ] 3.12.5 Finish native configuration
 _Progress: Partial. SDK 58 app configuration, permissions/plugins, SecureStore and Web/Android/iOS JavaScript exports are in place. The generated iOS/Android identifiers remain as supplied by the fixed Mobile starter; native release builds, fresh physical-device checks and signing/map-key validation were not performed._
-- Review Android application ID and iOS bundle identifier; replace temporary Manus-generated identifiers with consistent documented BizConnect placeholders in reverse-domain format, without claiming ownership of a real domain. Keep them easy to replace before production publishing.
+- Review Android application ID and iOS bundle identifier; replace temporary Manus-generated identifiers with consistent documented Mabiz placeholders in reverse-domain format, without claiming ownership of a real domain. Keep them easy to replace before production publishing.
 - Document the required Android Google Maps API key and environment-based configuration; never commit a private key. Explain restriction by application identifier and signing certificate; handle missing/invalid configuration gracefully.
 - Verify Android permissions, iOS usage descriptions, camera/media/location/notification permissions, SecureStore, deep links, app/adaptive icons, splash screen and orientation. Do not request permissions unnecessarily and do not claim physical-device testing unless performed.
 
@@ -1931,7 +1931,7 @@ _Progress: Static code review complete; physical low-end Android profiling remai
 - Improve virtualized lists, image loading/cache, video loading/playback and off-screen pausing, memory usage, unnecessary rerenders, navigation responsiveness, reduced-data mode, network recovery and media selection. Avoid unnecessary large downloads and complicated abstractions without a measurable benefit.
 
 ### [ ] 3.12.7 Prepare a clean reproducible source project
-_Progress: In progress. A sanitized 200-file source ZIP is available at `/home/ubuntu/bizconnect-phase3-source.zip`; it excludes `.expo`, dependencies, build output, Playwright artifacts and local environment files. The archive was extracted; with pnpm 9.12.0, `pnpm install --frozen-lockfile --prefer-offline`, TypeScript and 70 unit tests passed. The required server/Drizzle starter infrastructure was retained. Metro startup was verified on the working project, but startup from the clean extraction remains unverified._
+_Progress: In progress. A sanitized 200-file source ZIP is available at `/home/ubuntu/Mabiz-phase3-source.zip`; it excludes `.expo`, dependencies, build output, Playwright artifacts and local environment files. The archive was extracted; with pnpm 9.12.0, `pnpm install --frozen-lockfile --prefer-offline`, TypeScript and 70 unit tests passed. The required server/Drizzle starter infrastructure was retained. Metro startup was verified on the working project, but startup from the clean extraction remains unverified._
 - Exclude `.expo` cache/device-state files, build output, temporary logs and local environment secrets from the final delivery ZIP. Preserve application source, lockfiles, required assets, API contracts, tests and documentation.
 - Review starter server/Drizzle infrastructure and remove it only if proven unnecessary; do not remove required mobile infrastructure.
 - Verify a clean checkout can install from the committed lockfile and start using documented commands. Create a clean source ZIP that excludes generated/private files.
@@ -1947,8 +1947,8 @@ _Progress: Complete for the documented adapter boundary. `API_INTEGRATION.md`, `
 - Clearly mark each route as a proposed contract until it exists in the ASP.NET Core backend. Update README and TODO to reflect actual implementation, checks, native limitations and remaining requirements.
 
 ### [x] 3.13.1 Compact the Home header and consolidate secondary navigation
-_Progress: Complete. Home now uses a styled BizConnect wordmark with no logo mark or greeting; Search stays visible, Videos/Notifications/Messages are in a compact More menu with unread state, and the profile shortcut remains. The menu dismisses by outside press, Escape and native back, uses theme tokens, and leaves bottom navigation unchanged. TypeScript, lint, all 70 unit tests, six Playwright journey steps and `git diff --check` passed._
-- Remove the Home greeting and its supporting greeting copy. Show the styled BizConnect name without the logo mark in the Home header.
+_Progress: Complete. Home now uses a styled Mabiz wordmark with no logo mark or greeting; Search stays visible, Videos/Notifications/Messages are in a compact More menu with unread state, and the profile shortcut remains. The menu dismisses by outside press, Escape and native back, uses theme tokens, and leaves bottom navigation unchanged. TypeScript, lint, all 70 unit tests, six Playwright journey steps and `git diff --check` passed._
+- Remove the Home greeting and its supporting greeting copy. Show the styled Mabiz name without the logo mark in the Home header.
 - Keep Search as the visible primary header action. Move Videos, Notifications and Messages into a compact More dropdown; keep each destination working and retain an unread-notification indicator.
 - Make the dropdown dismissible, accessible by labels and keyboard/native back behavior, and visually consistent with both light and neutral-black dark themes. Preserve the existing bottom navigation.
 
@@ -1966,17 +1966,17 @@ _Progress: In progress; all shipped scope remains local-demo-only. Added a 24-ho
 
 #### Original acceptance brief (verbatim)
 
-# BIZCONNECT — COMPLETE CREATE PAGE FEATURE UPGRADE
+# Mabiz — COMPLETE CREATE PAGE FEATURE UPGRADE
 
 ## OBJECTIVE
 
-Upgrade the existing BizConnect Create page into a comprehensive content creation and business publishing system.
+Upgrade the existing Mabiz Create page into a comprehensive content creation and business publishing system.
 
 The current Create page already supports basic text posts, photo posts, video posts, product showcases, business announcements, founder stories, identity selection, hashtags, locations, previews, drafts and other existing functionality.
 
 Your task is to COMPLETE the remaining functionality, not rebuild the application.
 
-**IMPORTANT: Work directly inside the existing BizConnect project. Do not generate a new project, replace the application architecture, redesign unrelated screens or remove existing functionality.**
+**IMPORTANT: Work directly inside the existing Mabiz project. Do not generate a new project, replace the application architecture, redesign unrelated screens or remove existing functionality.**
 
 First inspect the existing project structure, Create page, navigation, state management, storage, media handling, business management, products, services, opportunities, events and existing APIs. Understand how everything currently works before making changes.
 
@@ -2229,7 +2229,7 @@ Each opportunity should support:
 
 For investment-related opportunities, include appropriate disclosures, moderation and restrictions on misleading financial promises. Do not imply guaranteed returns.
 
-Connect opportunity creation to the existing BizConnect opportunities discovery system.
+Connect opportunity creation to the existing Mabiz opportunities discovery system.
 
 # 9. EXPAND BUSINESS STORYTELLING
 
@@ -2429,7 +2429,7 @@ Respect existing account privacy and moderation systems.
 
 Ensure:
 - Responsive layouts.
-- Consistent design with the existing BizConnect application.
+- Consistent design with the existing Mabiz application.
 - Accessible controls.
 - Clear form labels.
 - Keyboard handling.
@@ -2496,7 +2496,7 @@ When complete:
 
 ## STRICT IMPLEMENTATION RULES
 
-1. Do not rebuild BizConnect from scratch.
+1. Do not rebuild Mabiz from scratch.
 2. Do not remove existing functionality.
 3. Do not replace working screens with simplified versions.
 4. Do not introduce duplicate business, product, event or opportunity systems.
@@ -2507,7 +2507,7 @@ When complete:
 9. Do not break existing navigation, authentication or business permissions.
 10. Do not claim completion without testing.
 
-**The final objective is to make BizConnect's Create page a complete creation hub for social content, business content, entrepreneurial storytelling, products, services, opportunities, events, promotions and interactive community content.**
+**The final objective is to make Mabiz's Create page a complete creation hub for social content, business content, entrepreneurial storytelling, products, services, opportunities, events, promotions and interactive community content.**
 
 Implement the functionality fully, integrate it with existing modules and preserve the rest of the application.
 
@@ -2517,11 +2517,11 @@ _Progress: Phase 3.15 Create frontend scope is implemented and verified in local
 
 ### Source specification preserved verbatim
 
-# BIZCONNECT — CREATE PAGE FINAL FRONTEND COMPLETION
+# Mabiz — CREATE PAGE FINAL FRONTEND COMPLETION
 
 ## PROJECT INSTRUCTION
 
-Continue developing the existing BizConnect application using the latest project files provided.
+Continue developing the existing Mabiz application using the latest project files provided.
 
 The previous Create Page upgrade has already implemented many features. Your task is to identify and implement ALL remaining frontend functionality, improve incomplete experiences and polish the entire creation system.
 
@@ -3024,7 +3024,7 @@ Use meaningful visual differences between social posts, Stories, products, servi
 
 Make the creation experience intuitive, visually engaging and enjoyable.
 
-Maintain the established BizConnect brand identity and consistency with the rest of the application.
+Maintain the established Mabiz brand identity and consistency with the rest of the application.
 
 Do not redesign unrelated application screens.
 
@@ -3076,7 +3076,7 @@ Fix regressions introduced by the upgrade.
 
 ## 17. FINAL DELIVERABLE
 
-Return the complete updated BizConnect project.
+Return the complete updated Mabiz project.
 
 Provide a detailed implementation report showing:
 
@@ -3102,4 +3102,4 @@ Provide a detailed implementation report showing:
 - Do not claim that a feature works unless it has been tested.
 - Prioritise completing the entire Create experience before moving to unrelated development.
 
-**FINAL GOAL: Deliver a complete, polished and highly functional BizConnect frontend creation ecosystem. Users should be able to create, edit, preview, save and manage every supported type of social and business content through a cohesive application experience.**
+**FINAL GOAL: Deliver a complete, polished and highly functional Mabiz frontend creation ecosystem. Users should be able to create, edit, preview, save and manage every supported type of social and business content through a cohesive application experience.**

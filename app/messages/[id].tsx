@@ -8,11 +8,11 @@ import { colors } from "@/theme/tokens";
 import { PEOPLE } from "@/data/seed";
 import { evaluateMessagePermission } from "@/utils/privacy-policy";
 import { ApiChatScreen } from "@/components/api-messaging-screens";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 
 function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Messages", message); }
 export default function ChatScreen() {
-  const mode = useBizConnectServiceMode();
+  const mode = useMabizServiceMode();
   return mode === "api" ? <ApiChatScreen /> : <LocalChatScreen />;
 }
 

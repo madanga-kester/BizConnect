@@ -5,7 +5,7 @@ import { useThemeContext } from "@/lib/theme-provider";
 function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Help centre", message); }
 const FAQ = [
   ["How do I create a business profile?", "Open Profile → Create business. Complete the six-step form and save locally. In this frontend demo the profile is not sent to a backend."],
-  ["Does BizConnect process payments?", "No. Contact sellers directly through the profile or product page. No checkout, cart or payment gateway is implemented."],
+  ["Does Mabiz process payments?", "No. Contact sellers directly through the profile or product page. No checkout, cart or payment gateway is implemented."],
   ["What does a verified badge mean here?", "Only a sample explicitly marked approved shows a badge. Submitting a demo request never verifies a business; real review requires the future backend team."],
   ["How do I control location privacy?", "Use Account privacy to hide precise location. Nearby discovery uses a selected county/town and requests device permission only when that feature is invoked."],
 ];

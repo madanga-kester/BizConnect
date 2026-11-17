@@ -1,4 +1,4 @@
-# BizConnect Stage 2 Backend
+# Mabiz Stage 2 Backend
 
 **Scope:** this guide documents the preserved Stage 2 backend foundation, authentication and user/profile/preferences/device APIs. Stage 3 adds business profiles, teams, roles, invitations, ownership transfers, activity and Expo integration; see [`STAGE3_BUSINESSES.md`](STAGE3_BUSINESSES.md). The C# solution remains separate from the repository's managed Node starter scaffold and uses PostgreSQL, not the starter database.
 
@@ -6,12 +6,12 @@
 
 The backend uses the approved stack: C#, ASP.NET Core Web API, .NET 10, EF Core 10, PostgreSQL/Npgsql, ASP.NET Core Identity, JWT access tokens, rotating opaque refresh tokens, OpenAPI, and xUnit.
 
-- `src/BizConnect.Api`: HTTP controllers, JWT/session validation, browser refresh-cookie/CSRF handling, CORS, rate limiting, health checks, OpenAPI and safe Problem Details.
-- `src/BizConnect.Application`: contracts, validated options, service interfaces and API errors.
-- `src/BizConnect.Domain`: account, profile, preference, device, session, refresh-token and verification/reset entities.
-- `src/BizConnect.Infrastructure`: Identity, EF Core/Npgsql mappings, migrations, authentication/security services and profile persistence.
-- `tests/BizConnect.UnitTests`: token utility tests.
-- `tests/BizConnect.IntegrationTests`: API/database integration tests against isolated PostgreSQL.
+- `src/Mabiz.Api`: HTTP controllers, JWT/session validation, browser refresh-cookie/CSRF handling, CORS, rate limiting, health checks, OpenAPI and safe Problem Details.
+- `src/Mabiz.Application`: contracts, validated options, service interfaces and API errors.
+- `src/Mabiz.Domain`: account, profile, preference, device, session, refresh-token and verification/reset entities.
+- `src/Mabiz.Infrastructure`: Identity, EF Core/Npgsql mappings, migrations, authentication/security services and profile persistence.
+- `tests/Mabiz.UnitTests`: token utility tests.
+- `tests/Mabiz.IntegrationTests`: API/database integration tests against isolated PostgreSQL.
 
 ## Implemented HTTP routes
 
@@ -69,19 +69,19 @@ Confirmed against a running API and PostgreSQL by `scripts/stage2_smoke.py`:
 
 EF Core persists ASP.NET Identity users/password hashes plus user profiles, preferences, notification preferences, device registrations, sessions, hashed refresh tokens, email/phone verification challenges and password-reset challenges. Constraints and indexes protect unique usernames, identifiers and token lookup.
 
-The initial PostgreSQL schema contains Identity tables `AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, `AspNetUserClaims`, `AspNetUserLogins`, `AspNetRoleClaims` and `AspNetUserTokens`, plus BizConnect tables `user_profiles`, `user_preferences`, `user_notification_preferences`, `user_sessions`, `refresh_tokens`, `email_verification_challenges`, `phone_verification_challenges`, `password_reset_requests` and `user_devices`, and EF's `__EFMigrationsHistory`. Profiles/preferences/notification preferences are one-to-one with a user. Sessions own refresh-token records; challenge/device rows are user-scoped. Normalized usernames, Identity email, non-null phone numbers, refresh-token hashes and per-user device identifiers have uniqueness constraints/indexes. Refresh-token values and verification/reset codes are not stored in plaintext.
+The initial PostgreSQL schema contains Identity tables `AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, `AspNetUserClaims`, `AspNetUserLogins`, `AspNetRoleClaims` and `AspNetUserTokens`, plus Mabiz tables `user_profiles`, `user_preferences`, `user_notification_preferences`, `user_sessions`, `refresh_tokens`, `email_verification_challenges`, `phone_verification_challenges`, `password_reset_requests` and `user_devices`, and EF's `__EFMigrationsHistory`. Profiles/preferences/notification preferences are one-to-one with a user. Sessions own refresh-token records; challenge/device rows are user-scoped. Normalized usernames, Identity email, non-null phone numbers, refresh-token hashes and per-user device identifiers have uniqueness constraints/indexes. Refresh-token values and verification/reset codes are not stored in plaintext.
 
-Initial migration: `src/BizConnect.Infrastructure/Persistence/Migrations/20261112133346_InitialStage2.cs`. Stage 3 adds the additive `20261112163325_AddBusinessesTeamsAndOwnershipTransfers` migration. Both are applied to the local `bizconnect_dev` database in this development environment; see [`STAGE3_BUSINESSES.md`](STAGE3_BUSINESSES.md) for the pre/post data-count verification. Review and apply migrations deliberately in each environment; startup migration is off by default.
+Initial migration: `src/Mabiz.Infrastructure/Persistence/Migrations/20261112133346_InitialStage2.cs`. Stage 3 adds the additive `20261112163325_AddBusinessesTeamsAndOwnershipTransfers` migration. Both are applied to the local `Mabiz_dev` database in this development environment; see [`STAGE3_BUSINESSES.md`](STAGE3_BUSINESSES.md) for the pre/post data-count verification. Review and apply migrations deliberately in each environment; startup migration is off by default.
 
-Design-time EF tooling reads `ConnectionStrings__BizConnect` or `BIZCONNECT_CONNECTION_STRING`. Example command from the repository root:
+Design-time EF tooling reads `ConnectionStrings__Mabiz` or `Mabiz_CONNECTION_STRING`. Example command from the repository root:
 
 ```bash
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$HOME/.dotnet:$PATH"
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=bizconnect_dev;Password=REPLACE_ME'
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=Mabiz_dev;Password=REPLACE_ME'
 "$HOME/.dotnet/tools/dotnet-ef" database update \
-  --project src/BizConnect.Infrastructure \
-  --startup-project src/BizConnect.Infrastructure
+  --project src/Mabiz.Infrastructure \
+  --startup-project src/Mabiz.Infrastructure
 ```
 
 For deployed environments, prefer a controlled migration step in the release process over `Database__ApplyMigrationsOnStartup=true` unless the deployment's database migration policy explicitly permits startup migration.
@@ -90,7 +90,7 @@ For deployed environments, prefer a controlled migration step in the release pro
 
 Copy `.env.backend.example` as a reference; do not commit actual values. Supply server-only environment variables through a secret manager or protected local environment. At minimum, configure:
 
-- `ConnectionStrings__BizConnect`: PostgreSQL connection string.
+- `ConnectionStrings__Mabiz`: PostgreSQL connection string.
 - `Jwt__SigningKey`: random server-only key of at least 32 characters; never an Expo/public variable.
 - `Auth__ChallengePepper`: separate random server-only secret of at least 32 characters.
 - `Jwt__Issuer`, `Jwt__Audience`: deployment-specific token validation values.
@@ -102,13 +102,13 @@ Defaults: access JWT 10 minutes (allowed range 2–60), refresh lifetime 30 days
 ```bash
 export DOTNET_ROOT="$HOME/.dotnet"
 # Supply the secret variables above before starting.
-"${HOME}/.dotnet/dotnet" run --project src/BizConnect.Api
+"${HOME}/.dotnet/dotnet" run --project src/Mabiz.Api
 ```
 
-`src/BizConnect.Api/Properties/launchSettings.json` binds `http://localhost:5155` when the `http` launch profile is used. To pin a different local address, skip that profile:
+`src/Mabiz.Api/Properties/launchSettings.json` binds `http://localhost:5155` when the `http` launch profile is used. To pin a different local address, skip that profile:
 
 ```bash
-"${HOME}/.dotnet/dotnet" run --project src/BizConnect.Api --no-launch-profile \
+"${HOME}/.dotnet/dotnet" run --project src/Mabiz.Api --no-launch-profile \
   --urls http://127.0.0.1:5080
 ```
 
@@ -144,12 +144,12 @@ The current API rate limiter keys on `Connection.RemoteIpAddress`; forwarded-hea
 
 ## Tests
 
-Install the .NET 10 SDK and PostgreSQL, create a dedicated disposable test database/role, and set `BIZCONNECT_TEST_DB` to that database's connection string before integration tests. The integration fixture **deletes and recreates the database supplied in `BIZCONNECT_TEST_DB`**, then applies migrations. Never point it at `bizconnect_dev`, production, shared, or any database containing wanted data.
+Install the .NET 10 SDK and PostgreSQL, create a dedicated disposable test database/role, and set `Mabiz_TEST_DB` to that database's connection string before integration tests. The integration fixture **deletes and recreates the database supplied in `Mabiz_TEST_DB`**, then applies migrations. Never point it at `Mabiz_dev`, production, shared, or any database containing wanted data.
 
 ```bash
 export DOTNET_ROOT="$HOME/.dotnet"
-export BIZCONNECT_TEST_DB='Host=localhost;Port=5432;Database=bizconnect_test;Username=bizconnect_test;Password=REPLACE_ME'
-"$HOME/.dotnet/dotnet" test BizConnect.sln
+export Mabiz_TEST_DB='Host=localhost;Port=5432;Database=Mabiz_test;Username=Mabiz_test;Password=REPLACE_ME'
+"$HOME/.dotnet/dotnet" test Mabiz.sln
 ```
 
 From the repository root, `pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm test` run the mobile dependency install, TypeScript check and frontend tests. The latest complete run after Stage 3 backend changes passed 36 .NET unit/PostgreSQL integration tests, and the frontend passed 90 tests across 14 files. Expo Web export is run with `pnpm exec expo export --platform web`; see the Stage 3 guide for the export result and live Stage 2/3 smoke coverage. These checks do not replace PostgreSQL integration tests.
@@ -160,7 +160,7 @@ From the repository root, `pnpm install --frozen-lockfile`, `pnpm check`, and `p
 ```bash
 # terminal 1: start the API as described above, sending logs to a file
 export ASPNETCORE_ENVIRONMENT=Development
-"${HOME}/.dotnet/dotnet" run --project src/BizConnect.Api --no-launch-profile \
+"${HOME}/.dotnet/dotnet" run --project src/Mabiz.Api --no-launch-profile \
   --urls http://127.0.0.1:5080 2>&1 | tee /tmp/bc2-api.log
 
 # terminal 2: run the checks (about four minutes; it waits out the 1-minute rate-limit windows)

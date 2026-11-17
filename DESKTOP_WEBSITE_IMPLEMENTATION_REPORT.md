@@ -1,8 +1,8 @@
-# BizConnect desktop implementation report
+# Mabiz desktop implementation report
 
 ## Final implementation pass
 
-The existing `desktop/` React/Vite client was completed without changing the Expo mobile app or the .NET 10/PostgreSQL backend. The supplied green BizConnect reference-derived layout remains the light/reference mode, with the approved black/grey dark theme preserved as an optional persisted theme. Existing reference-derived imagery, the circular portrait fix, inline SVG icon system, screenshot wording, and Home ordering remain in place.
+The existing `desktop/` React/Vite client was completed without changing the Expo mobile app or the .NET 10/PostgreSQL backend. The supplied green Mabiz reference-derived layout remains the light/reference mode, with the approved black/grey dark theme preserved as an optional persisted theme. Existing reference-derived imagery, the circular portrait fix, inline SVG icon system, screenshot wording, and Home ordering remain in place.
 
 Completed desktop routes are `/`, `/discover`, `/businesses`, `/products-services`, `/opportunities`, `/messages`, `/notifications`, `/analytics`, `/settings`, `/auth/login`, and `/auth/register`. Direct route rendering is represented in `desktop/public/manus-routes.json`. Discover search now carries the query into the results route; business, product/service, and opportunity cards open typed detail surfaces; follow/unfollow, create flows, enquiry, messaging, notification read/dismiss, settings, theme, logout, and route navigation have explicit actions. Forms validate before saving. Demo transitions are local and explicitly labeled; API transitions only report success after a confirmed request succeeds.
 

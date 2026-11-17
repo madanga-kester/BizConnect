@@ -1,4 +1,4 @@
-# BizConnect Stage 3: Business Profiles, Teams and Ownership
+# Mabiz Stage 3: Business Profiles, Teams and Ownership
 
 Stage 3 extends the existing Stage 2 ASP.NET Core/EF Core/PostgreSQL backend and Expo app. It does not replace Stage 2 authentication or the local-demo mode. The server is authoritative for API-mode business profiles, memberships, invitations, roles, ownership transfers and activity records. Checkout, payments, wallet, AI and Stage 4 are not included.
 
@@ -15,7 +15,7 @@ All responses are JSON DTOs. Requests that require identity need a Stage 2 beare
 | `DELETE /businesses/{businessId}` | Owner only; archives rather than hard-deletes the profile. |
 | `GET /businesses/{businessId}/members` | Active business members; Owner, Admin, Editor or Viewer. |
 | `GET /businesses/{businessId}/activity` | Owner or Admin; paged audit/activity records. |
-| `POST /businesses/{businessId}/invitations` | Owner/Admin; invite an existing active BizConnect user as an assignable role. |
+| `POST /businesses/{businessId}/invitations` | Owner/Admin; invite an existing active Mabiz user as an assignable role. |
 | `GET /businesses/{businessId}/invitations` | Owner/Admin; business invitation history. |
 | `GET /businesses/me/invitations` | Authenticated recipient's pending invitations. |
 | `POST /businesses/{businessId}/invitations/{invitationId}/accept` | Only the addressed recipient; accepts and grants membership. |
@@ -56,20 +56,20 @@ The server's `BusinessAccessControl` permission matrix is authoritative. Expo ch
 
 Migration `20261112163325_AddBusinessesTeamsAndOwnershipTransfers` is additive. Its `Up` creates `businesses`, `business_memberships`, `business_invitations`, `business_ownership_transfers` and `business_activity`, with foreign keys, check constraints, query indexes, uniqueness indexes and active Owner/pending invitation/pending transfer guards. It does not alter or replace Stage 2 tables. Its `Down` drops these Stage 3 tables; do not run a migration downgrade against wanted data.
 
-The migration was applied to `bizconnect_dev` after checking the actual database name and existing history. Before applying, `__EFMigrationsHistory` contained only `20261112133346_InitialStage2`; there were 9 `AspNetUsers` and 9 `user_profiles`. Immediately after applying, both migration IDs were present, the Stage 2 counts remained 9/9 and the new Stage 3 tables were empty. Subsequent live smoke testing created two clearly synthetic development accounts and one uniquely named business; the business was archived by the API. Those smoke-test accounts and the archived smoke business remain in `bizconnect_dev`. No Stage 2 records were deleted or reset.
+The migration was applied to `Mabiz_dev` after checking the actual database name and existing history. Before applying, `__EFMigrationsHistory` contained only `20261112133346_InitialStage2`; there were 9 `AspNetUsers` and 9 `user_profiles`. Immediately after applying, both migration IDs were present, the Stage 2 counts remained 9/9 and the new Stage 3 tables were empty. Subsequent live smoke testing created two clearly synthetic development accounts and one uniquely named business; the business was archived by the API. Those smoke-test accounts and the archived smoke business remain in `Mabiz_dev`. No Stage 2 records were deleted or reset.
 
 Apply migrations deliberately with the development connection string only after verifying the database name:
 
 ```bash
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH"
-export ConnectionStrings__BizConnect='Host=localhost;Port=5432;Database=bizconnect_dev;Username=bizconnect_dev;Password=REPLACE_ME'
+export ConnectionStrings__Mabiz='Host=localhost;Port=5432;Database=Mabiz_dev;Username=Mabiz_dev;Password=REPLACE_ME'
 # Review pending migrations first; then apply through EF Core.
-dotnet ef migrations list --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Infrastructure
-dotnet ef database update --project src/BizConnect.Infrastructure --startup-project src/BizConnect.Infrastructure
+dotnet ef migrations list --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Infrastructure
+dotnet ef database update --project src/Mabiz.Infrastructure --startup-project src/Mabiz.Infrastructure
 ```
 
-Startup migration is disabled by default. Do not point integration tests at this database: the fixture drops/recreates only the database configured as `BIZCONNECT_TEST_DB`.
+Startup migration is disabled by default. Do not point integration tests at this database: the fixture drops/recreates only the database configured as `Mabiz_TEST_DB`.
 
 ## Expo integration status and boundaries
 
@@ -83,16 +83,16 @@ Business catalogue/products/services, posts/feed, verification, milestones, anal
 
 Latest verification after the focused Stage 3 changes:
 
-- `dotnet test BizConnect.sln --verbosity minimal`: build succeeded; 36 tests passed, 0 failed (unit and PostgreSQL integration). The PostgreSQL test fixture used `bizconnect_test`, confirmed distinct from `bizconnect_dev`.
+- `dotnet test Mabiz.sln --verbosity minimal`: build succeeded; 36 tests passed, 0 failed (unit and PostgreSQL integration). The PostgreSQL test fixture used `Mabiz_test`, confirmed distinct from `Mabiz_dev`.
 - `pnpm check`: TypeScript check passed.
 - `pnpm test`: 14 files, 90 tests passed.
 - `pnpm exec expo export --platform web`: succeeded after the final team-role UI refinement and emitted the static Expo Web export to `dist/` (69 static routes).
-- Live HTTP smoke against a local API process connected to `bizconnect_dev`: Stage 2 registration, login, profile update, preferences, refresh rotation and logout/session revocation passed; Stage 3 private profile/list, membership and activity, invitation acceptance, Viewer write denial, two-party ownership acceptance, role change from Owner to Admin, and transfer audit checks passed. The API process was stopped afterward. The smoke business was archived. Two synthetic smoke-test accounts remain in the development database.
+- Live HTTP smoke against a local API process connected to `Mabiz_dev`: Stage 2 registration, login, profile update, preferences, refresh rotation and logout/session revocation passed; Stage 3 private profile/list, membership and activity, invitation acceptance, Viewer write denial, two-party ownership acceptance, role change from Owner to Admin, and transfer audit checks passed. The API process was stopped afterward. The smoke business was archived. Two synthetic smoke-test accounts remain in the development database.
 - Concurrent duplicate invitation integration test: two simultaneous API requests resulted in one `201`, one `409`, one pending invitation and one `team.invited` activity record. There is no separate stress test for simultaneous transfer creation/acceptance or high-volume membership changes; database uniqueness and serializable acceptance are safeguards, not a claim that every race has been exhaustively tested.
 
 ## Local run
 
-Configure `ConnectionStrings__BizConnect`, `Jwt__SigningKey` and `Auth__ChallengePepper` as described in [`STAGE2_BACKEND.md`](STAGE2_BACKEND.md); never use Expo-public variables for backend secrets. Start the API, then configure the app with a reachable API origin:
+Configure `ConnectionStrings__Mabiz`, `Jwt__SigningKey` and `Auth__ChallengePepper` as described in [`STAGE2_BACKEND.md`](STAGE2_BACKEND.md); never use Expo-public variables for backend secrets. Start the API, then configure the app with a reachable API origin:
 
 ```bash
 export EXPO_PUBLIC_API_MODE=api

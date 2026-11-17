@@ -30,8 +30,8 @@ import { PEOPLE, STORIES } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
-  useBizConnectServices,
-  useBizConnectServiceMode,
+  useMabizServices,
+  useMabizServiceMode,
 } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { hasBusinessRole } from "@/utils/business-permissions";
@@ -128,7 +128,7 @@ function ProfileAction({
 
 export default function BusinessProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
 
   return apiMode ? (
     <ApiBusinessProfile businessId={id ?? ""} />
@@ -140,8 +140,8 @@ export default function BusinessProfileScreen() {
 function MockBusinessProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const app = useAppStore();
-  const services = useBizConnectServices();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const services = useMabizServices();
+  const apiMode = useMabizServiceMode() === "api";
   const requireAuth = useRequireAuth();
 
   const [remoteBusiness, setRemoteBusiness] = useState<
@@ -261,7 +261,7 @@ function MockBusinessProfileScreen() {
             }}
           />
           <Text style={styles.body}>
-            Loading business profile from BizConnect...
+            Loading business profile from Mabiz...
           </Text>
         </View>
       </Page>
@@ -309,7 +309,7 @@ function MockBusinessProfileScreen() {
   const share = async () => {
     try {
       await Share.share({
-        message: `Explore ${business.name} on BizConnect — ${business.description}`,
+        message: `Explore ${business.name} on Mabiz — ${business.description}`,
       });
     } catch {}
   };

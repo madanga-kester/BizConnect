@@ -1,4 +1,4 @@
-# BizConnect Phase 3 Handoff
+# Mabiz Phase 3 Handoff
 
 > **Current status note:** This is a historical frontend handoff from an earlier phase. The Stage 2 ASP.NET Core/PostgreSQL backend and the Stage 3 business/team APIs are now implemented; see [`STAGE2_BACKEND.md`](STAGE2_BACKEND.md) and [`STAGE3_BUSINESSES.md`](STAGE3_BUSINESSES.md). This report's unrelated local-demo product features remain outside the API integration.
 
@@ -52,7 +52,7 @@ The user-provided iPhone-shaped Preview screenshot showed the Dynamic Island ove
 | Web Preview interaction | Passed at a 390 × 844 viewport after hydration: opened Discover, switched to map mode, checked the web disclosure/list, and opened Kivuli Studio from a mapped row. Route reached `/business/b-kivuli`. This validates the browser fallback, not native map rendering. |
 | Source cleanup review | Passed: no tracked `.expo` cache/device-state, generated Android/iOS project directories, bundles or APK/AAB/IPA artifacts. `.expo/` and `dist/` are ignored. |
 
-Metro's `/status` endpoint and the live Web root return HTTP 200 on port 8081 after the SDK 58 restart and final theme changes. The starter API listener remains on port 3000, where `/` returns its expected placeholder 404; no BizConnect backend or database feature was exercised. Existing `server/`, Drizzle files and database dependencies were reviewed and retained as managed-starter infrastructure, separate from the future ASP.NET Core service.
+Metro's `/status` endpoint and the live Web root return HTTP 200 on port 8081 after the SDK 58 restart and final theme changes. The starter API listener remains on port 3000, where `/` returns its expected placeholder 404; no Mabiz backend or database feature was exercised. Existing `server/`, Drizzle files and database dependencies were reviewed and retained as managed-starter infrastructure, separate from the future ASP.NET Core service.
 
 ## Not verified / release blockers
 
@@ -62,7 +62,7 @@ Standalone Android Google Maps tiles require an Android Maps SDK key restricted 
 
 ## Backend boundary and next step
 
-At the time this handoff was written, ASP.NET Core development and interactive API wiring were deferred. Stage 2 auth/account and Stage 3 business/team/ownership flows have since been connected to the C# API; social, messaging, reporting and moderation actions remain local-demo operations. The managed starter's server/Drizzle setup is still separate from the BizConnect backend.
+At the time this handoff was written, ASP.NET Core development and interactive API wiring were deferred. Stage 2 auth/account and Stage 3 business/team/ownership flows have since been connected to the C# API; social, messaging, reporting and moderation actions remain local-demo operations. The managed starter's server/Drizzle setup is still separate from the Mabiz backend.
 
 Before release, the owner should supply and approve permanent Android/iOS IDs and the deep-link scheme. Then configure a restricted `GOOGLE_MAPS_API_KEY`, run the Expo Dashboard Android and iOS builds, and complete the outstanding permission, media, native-map and accessibility journeys on physical devices. Do not claim native or production readiness until those results exist.
 
@@ -110,11 +110,11 @@ Poll posts accept options and expiry, support one or multiple selections, record
 | `pnpm test -- --reporter=dot` | Passed: 11 test files, 78 tests. Includes direct Story lookup privacy/expiry, offer date/status, API route mapping, local poll vote, Story expiry and Highlight/listing adapter cases. Vitest still prints its non-failing Vite CJS API deprecation advisory. |
 | `pnpm e2e:journeys` | Passed: 1 consolidated Playwright spec with the core discovery, registration, post, business, messaging and theme journeys, plus Story/Highlight, poll/vote, direct product/service creation, offer, event and opportunity creation. |
 | Expo exports | `pnpm exec expo export --platform web`, `--platform android`, and `--platform ios` all passed under Expo SDK 58. Android and iOS results are JavaScript bundles, not APK/AAB or IPA/native release builds. |
-| Expo Preview root | After clearing stale Metro metadata, the root page returned HTTP 200 and included BizConnect rather than the transient cold-start error overlay; Expo Go token synchronization returned `runtime_sync: applied`. The initial readiness probe during cold rebuild briefly saw HTTP 500 and an Expo Router/Font server bundle error; that was not reproducible after warm rebuild and the expanded Playwright test passed. |
+| Expo Preview root | After clearing stale Metro metadata, the root page returned HTTP 200 and included Mabiz rather than the transient cold-start error overlay; Expo Go token synchronization returned `runtime_sync: applied`. The initial readiness probe during cold rebuild briefly saw HTTP 500 and an Expo Router/Font server bundle error; that was not reproducible after warm rebuild and the expanded Playwright test passed. |
 | Static Android performance review | Home initially renders three feed posts and reveals two at a time; the video feed uses a virtualized `FlatList`, three-screen window, two-item batches and Android clipping; image caching and reduced-data/autoplay gates are present. This is source inspection, not a performance benchmark. |
 
 ### Remaining work and limitations
 
 No low-end Android or iOS physical device was available for camera/gallery permission, actual media selection, video playback, map gestures, memory/frame-time, keyboard, accessibility or network-recovery measurements. The Android performance audit therefore remains open for on-device profiling. Selected media stays on-device; the image/video uploads and retry/resume path are not connected to these screens, and byte/chunk-resumable upload is not implemented. There is no live API backend: selecting API mode alone does not connect the local Create UI to the proposed routes. AI assistance and scheduled publishing remain unavailable. Full editing/curation of Story Highlight collections, cover and emoji controls, and the remaining catalog/editor field combinations still need a requirements-by-requirements audit. The combined Playwright test is not a substitute for every requested negative, native-media, remote-API and recovery case. Do not describe the whole 544-line Phase 3.14 acceptance brief as complete until these remaining items are implemented, tested or explicitly descoped.
 
-The updated source and documentation remain in the existing BizConnect project; no native APK/AAB/IPA or backend deployment was produced. Run `pnpm dev:metro` for Expo Web/Go Preview and keep the managed starter API on port 3000 separate from the future BizConnect backend. Refer to `TODO.md` for the original verbatim brief and evidence-based status, and to `API_INTEGRATION.md` for proposed endpoint and migration contracts.
+The updated source and documentation remain in the existing Mabiz project; no native APK/AAB/IPA or backend deployment was produced. Run `pnpm dev:metro` for Expo Web/Go Preview and keep the managed starter API on port 3000 separate from the future Mabiz backend. Refer to `TODO.md` for the original verbatim brief and evidence-based status, and to `API_INTEGRATION.md` for proposed endpoint and migration contracts.

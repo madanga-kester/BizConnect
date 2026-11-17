@@ -4,7 +4,7 @@ import { Text, View } from "react-native";
 import { ApiCatalogManagement } from "@/components/api-catalog-screens";
 import { Button, Chip, ConfirmModal, EmptyState, LocalNote, MediaImage, Page, SectionTitle, TopBar, VideoPreview, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServiceMode } from "@/lib/services/service-provider";
+import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { formatKes } from "@/utils/kenya";
 import { BUSINESS_CONTENT_ROLES, getBusinessRole, hasBusinessRole } from "@/utils/business-permissions";
 import type { Business, Product, Service } from "@/types/domain";
@@ -13,7 +13,7 @@ type ItemKind = "Products" | "Services";
 
 export default function CatalogManagementScreen() {
   const app = useAppStore();
-  const apiMode = useBizConnectServiceMode() === "api";
+  const apiMode = useMabizServiceMode() === "api";
   const business = app.businesses.find((item) => item.id === app.activeBusinessId);
 
   if (!app.isAuthenticated) return <Page><TopBar title="Manage catalogue" back /><EmptyState title="Sign in to manage a catalogue" detail="Product and service changes stay on this device in the local demo." action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;

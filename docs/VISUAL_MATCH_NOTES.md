@@ -1,4 +1,4 @@
-# BizConnect visual match notes
+# Mabiz visual match notes
 
 The desktop correction pass follows the supplied 1431×806 reference sheets rather than introducing a new layout concept. The shell uses a 246px fixed white sidebar, a 70px white top bar, pale `#e6ebe9` dividers, compact 12–14px UI text, emerald `#0a9a67` selected states, and a 230px contextual rail. Cards use 10–12px radii, one-pixel borders, compact badges, and restrained shadows.
 

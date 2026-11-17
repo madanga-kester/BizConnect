@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { Button, Chip, EmptyState, Field, LoadingState, MediaImage, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useBizConnectServices } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { BUSINESS_CONTENT_ROLES, getBusinessRole, hasBusinessRole } from "@/utils/business-permissions";
 import { KENYAN_COUNTIES, formatKes } from "@/utils/kenya";
@@ -76,7 +76,7 @@ function AlertBlock({ message, onRetry }: { message: string; onRetry?: () => voi
 
 /** Stage 5 management list: server offset paging, status filters and explicit lifecycle actions. */
 export function ApiCatalogManagement({ businessId }: { businessId: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const [kind, setKind] = useState<"Products" | "Services">("Products");
   const [status, setStatus] = useState<CatalogStatusFilter | "all">("all");
@@ -130,7 +130,7 @@ export function ApiCatalogManagement({ businessId }: { businessId: string }) {
   return <Page onRefresh={() => void load({ refresh: true })} refreshing={refreshing}>
     <TopBar title="Manage catalogue" back subtitle={business ? `${business.name}${role ? ` · ${role}` : ""}` : undefined} />
     <View style={{ padding: 13, borderRadius: 15, backgroundColor: colors.emeraldTint }}>
-      <Text style={styles.body}>Stage 5 catalogue · products, services, ordered galleries and publishing are stored by the BizConnect API. Archive is a status change, not a deletion.</Text>
+      <Text style={styles.body}>Stage 5 catalogue · products, services, ordered galleries and publishing are stored by the Mabiz API. Archive is a status change, not a deletion.</Text>
     </View>
     <View style={styles.row}>
       <Chip label="Products" selected={kind === "Products"} onPress={() => setKind("Products")} />
@@ -181,7 +181,7 @@ export function ApiCatalogManagement({ businessId }: { businessId: string }) {
 
 /** Stage 5 editor: real multipart image upload, ordered gallery with an explicit primary, server lifecycle rules. */
 export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "service"; itemId?: string }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const app = useAppStore();
   const manageable = app.businesses.filter((entry) => hasBusinessRole(entry, app.user.id, BUSINESS_CONTENT_ROLES));
   const [businessId, setBusinessId] = useState<string | undefined>(itemId
@@ -443,7 +443,7 @@ export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "serv
   return <Page>
     <TopBar title={`${itemId ? "Edit" : "Create"} ${kind}`} back />
     <View style={{ padding: 13, borderRadius: 15, backgroundColor: colors.emeraldTint }}>
-      <Text style={styles.body}>Stage 5 catalogue editor · chosen images are uploaded to the BizConnect media store and the item is written to the server. Nothing here is stored only on this device.</Text>
+      <Text style={styles.body}>Stage 5 catalogue editor · chosen images are uploaded to the Mabiz media store and the item is written to the server. Nothing here is stored only on this device.</Text>
     </View>
     {error ? <AlertBlock message={error} onRetry={() => void load()} /> : null}
     {loading ? <LoadingState label="Loading item from the server" /> : null}
@@ -482,7 +482,7 @@ export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "serv
     <Button title="Choose images" icon="images-outline" variant="outline" small disabled={!businessId} onPress={() => void chooseImages()} />
     {actionError ? <AlertBlock message={actionError} /> : null}
     {images.length ? <View style={{ gap: 10 }}>{images.map((image, index) => <View key={image.key} style={[styles.card, { padding: 12, gap: 7 }]}>
-      <Text style={styles.caption}>{index === 0 ? "Primary image" : `Image ${index + 1}`} · {image.state === "uploaded" ? "uploaded to BizConnect" : image.state === "uploading" ? "uploading…" : image.state === "failed" ? `upload failed: ${image.error}` : "not uploaded yet"}</Text>
+      <Text style={styles.caption}>{index === 0 ? "Primary image" : `Image ${index + 1}`} · {image.state === "uploaded" ? "uploaded to Mabiz" : image.state === "uploading" ? "uploading…" : image.state === "failed" ? `upload failed: ${image.error}` : "not uploaded yet"}</Text>
       <MediaImage uri={image.uri} height={160} label={image.altText || `${title || kind} image ${index + 1}`} />
       <Field label="Alt text" value={image.altText} onChangeText={(value) => setAltText(image.key, value)} maxLength={200} placeholder="Describe this image" />
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
@@ -504,7 +504,7 @@ export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "serv
 
 /** Stage 5 public discovery: anonymous, server-filtered, offset-paged. */
 export function ApiCatalogueDiscovery() {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [kind, setKind] = useState<"Products" | "Services">("Products");
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -635,7 +635,7 @@ export function ApiCatalogueDiscovery() {
 
 /** Stage 5 public detail: ordered gallery with an explicit primary, and 404 mapped to the not-found state. */
 export function ApiCatalogItemDetail({ slugOrId, kind }: { slugOrId: string; kind?: "product" | "service" }) {
-  const services = useBizConnectServices();
+  const services = useMabizServices();
   const [item, setItem] = useState<CatalogItem | null>(null);
   const [resolvedKind, setResolvedKind] = useState<"product" | "service">(kind ?? "product");
   const [loading, setLoading] = useState(true);
@@ -686,7 +686,7 @@ export function ApiCatalogItemDetail({ slugOrId, kind }: { slugOrId: string; kin
   const product = kind === "product" || (resolvedKind === "product" && "price" in item) ? item as Product : undefined;
   const service = product ? undefined : item as Service;
   return <Page>
-    <TopBar title={`${resolvedKind === "product" ? "Product" : "Service"} details`} back right={<Button title="Share" icon="share-social-outline" variant="quiet" small onPress={() => void Share.share({ message: `${item.name} · ${item.businessName ?? "BizConnect business"} · ${itemPriceLine(item)}` })} />} />
+    <TopBar title={`${resolvedKind === "product" ? "Product" : "Service"} details`} back right={<Button title="Share" icon="share-social-outline" variant="quiet" small onPress={() => void Share.share({ message: `${item.name} · ${item.businessName ?? "Mabiz business"} · ${itemPriceLine(item)}` })} />} />
     {error ? <AlertBlock message={error} onRetry={() => void load()} /> : null}
     {gallery.length ? <View style={{ gap: 7 }}>{gallery.map((image, index) => <View key={`${image.mediaAssetId}-${index}`} style={{ gap: 4 }}>
       <MediaImage uri={image.url} height={index === 0 ? 260 : 180} label={image.altText || `${item.name} ${index === 0 ? "primary image" : `image ${index + 1}`}`} />
@@ -715,6 +715,6 @@ export function ApiCatalogItemDetail({ slugOrId, kind }: { slugOrId: string; kin
       {item.businessId ? <Button title="Visit business" icon="storefront-outline" variant="outline" onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.businessId } })} /> : null}
       <Button title="Browse catalogue" icon="grid-outline" variant="quiet" onPress={() => router.push("/products")} />
     </View>
-    <Text style={styles.caption}>BizConnect connects buyers and sellers directly. No checkout or payment is processed in this app.</Text>
+    <Text style={styles.caption}>Mabiz connects buyers and sellers directly. No checkout or payment is processed in this app.</Text>
   </Page>;
 }

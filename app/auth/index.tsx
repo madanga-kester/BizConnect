@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
       }}
     >
       <View style={{ gap: 22 }}>
-        <TopBar title="BizConnect" />
+        <TopBar title="Mabiz" />
 
         <View
           style={{

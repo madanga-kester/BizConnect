@@ -1,4 +1,4 @@
-# BizConnect API Integration Contract
+# Mabiz API Integration Contract
 
 **Status:** Stages 2–6 are implemented in the existing C# ASP.NET Core/PostgreSQL backend. Stage 6 adds private direct conversations, catalogue-linked business enquiries, server-side messaging permissions, REST history/send/read routes and authenticated SignalR. See [`docs/STAGE6_MESSAGING.md`](docs/STAGE6_MESSAGING.md), plus [`docs/STAGE2_BACKEND.md`](docs/STAGE2_BACKEND.md), [`docs/STAGE3_BUSINESSES.md`](docs/STAGE3_BUSINESSES.md), [`docs/STAGE4_SOCIAL.md`](docs/STAGE4_SOCIAL.md) and [`docs/STAGE5_CATALOG_MEDIA.md`](docs/STAGE5_CATALOG_MEDIA.md) for setup and exact contracts. Later domains remain proposals/local demos unless explicitly marked implemented below.
 
@@ -6,7 +6,7 @@
 
 The app defaults to `mock-local`. `app.config.ts` and `lib/api/config.ts` read public, non-secret endpoint settings; `EXPO_PUBLIC_API_MODE=api` explicitly selects API adapters, while the default and any unrecognized mode selects local mock services. Native auth/account screens use Stage 2 APIs; business profile/team flows use Stage 3 APIs; feed, posts, personal/business profiles, follows, comments, polls and moderation screens use Stage 4 APIs; catalogue/media screens use Stage 5 APIs; and inbox, chat and enquiry screens use Stage 6 REST/SignalR APIs. Browser cookie/CSRF handling is implemented server-side but browser login/registration is not wired to it. Setting API mode without a non-empty base URL returns `API_NOT_CONFIGURED`; an API failure is never replaced with a mock success.
 
-`BizConnectServicesProvider` is registered at the Expo root and supplies a mode-specific typed service registry. Stage 2 auth/account, Stage 3 business/team, Stage 4 social, Stage 5 catalogue/media and Stage 6 messaging/enquiry screens are connected to the C# API. Other product screens continue to use `hooks/use-app-store.tsx` for interactive local-demo state unless documented as connected; changing API mode does not make unrelated domains server-backed.
+`MabizServicesProvider` is registered at the Expo root and supplies a mode-specific typed service registry. Stage 2 auth/account, Stage 3 business/team, Stage 4 social, Stage 5 catalogue/media and Stage 6 messaging/enquiry screens are connected to the C# API. Other product screens continue to use `hooks/use-app-store.tsx` for interactive local-demo state unless documented as connected; changing API mode does not make unrelated domains server-backed.
 
 Stage 5 implements catalogue image uploads and configurable local/S3-compatible storage. Stage 6 implements text messaging over REST and authenticated SignalR; push delivery, payment processing, reports and verification are not connected. Stage 4 post media references still require hosted HTTPS URLs. No success message should imply an unimplemented domain was remotely delivered, verified or reviewed.
 
@@ -18,7 +18,7 @@ Stage 5 implements catalogue image uploads and configurable local/S3-compatible 
 - `lib/api/secure-session.ts` stores API access/refresh session credentials with Expo SecureStore on native platforms and keeps browser credentials memory-only. It does not persist the local-demo password or convert the eight-hour demo marker into an API credential. A web cookie/CSRF session strategy is not implemented.
 - `lib/api/feature-contracts.ts` defines 19 service domains: authentication, users/social graph, businesses, business memberships, feed, posts/interactions, catalogues, founder stories/ideas, ephemeral Social Stories/Highlights, business offers/events/community opportunities, milestones/analytics, messaging, search/history, notifications, verification, moderation, media uploads, data rights and preferences.
 - `lib/api/production-services.ts` maps implemented Stage 2–6 routes to typed adapters and returns `source: "api"`. `lib/services/mock-services.ts` preserves in-memory local mode (`source: "mock-local"`); its state is separate from server state.
-- `lib/services/service-provider.tsx` constructs the mode-specific registry and exposes `useBizConnectServices()` / `useBizConnectServiceMode()`. API-mode messaging screens and enquiry entry points use this provider; SignalR is isolated in `lib/api/messaging-realtime.ts` and REST remains authoritative.
+- `lib/services/service-provider.tsx` constructs the mode-specific registry and exposes `useMabizServices()` / `useMabizServiceMode()`. API-mode messaging screens and enquiry entry points use this provider; SignalR is isolated in `lib/api/messaging-realtime.ts` and REST remains authoritative.
 - `hooks/use-app-store.tsx` remains the local demo store. In API mode, connected Stage 2–6 screens use their typed services; other product screens remain local or proposed.
 
 ## Configuration
@@ -149,7 +149,7 @@ Local verification requests never approve a business. Stage 4 block/unblock and 
 3. Consider approved push services only as a later stage, after privacy and notification-preference review. Stage 6 does not send push.
 4. Run backend integration, accessibility, Android/iOS device and privacy/security tests before describing any capability as production-ready.
 
-Stages 2–6 are implemented locally, and the connected native account, business/team, social, catalogue/media and messaging screens can use the backend in explicit API mode. Stage 4–6 migrations are included but have not been automatically applied to `bizconnect_dev`; this source tree and the stage-specific docs are not evidence of a deployed public API. Other seeded data and unrelated product actions remain illustrative, local or unimplemented.
+Stages 2–6 are implemented locally, and the connected native account, business/team, social, catalogue/media and messaging screens can use the backend in explicit API mode. Stage 4–6 migrations are included but have not been automatically applied to `Mabiz_dev`; this source tree and the stage-specific docs are not evidence of a deployed public API. Other seeded data and unrelated product actions remain illustrative, local or unimplemented.
 
 
 ## Stage 8 business growth integration
