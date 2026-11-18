@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Image, Pressable, Share, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, Image, Pressable, Share, Text, View, useWindowDimensions } from "react-native";
 import { ActionTile, Avatar, Button, LocalNote, Page, SectionTitle, Stat, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
@@ -62,6 +62,38 @@ function PostTile({ post, size }: { post: AnyPost; size: number }) {
         <Ionicons name="repeat" size={16} color={colors.white} style={{ position: "absolute", top: 6, right: 6 }} />
       ) : null}
     </Pressable>
+  );
+}
+function SkeletonBlock({ width, height, radius = 8 }: { width?: number; height: number; radius?: number }) {
+  const opacity = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+
+  return <Animated.View style={{ width: width ?? "100%", height, borderRadius: radius, backgroundColor: colors.border, opacity }} />;
+}
+
+function BusinessListSkeleton() {
+  return (
+    <View style={{ gap: 9 }}>
+      {[0, 1].map((i) => (
+        <View key={i} style={styles.actionTile}>
+          <SkeletonBlock width={38} height={38} radius={19} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <SkeletonBlock width={160} height={14} />
+            <SkeletonBlock width={110} height={10} />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -278,7 +310,7 @@ function MockProfileScreen() {
           <SectionTitle title="Switch business" action="Add business" onAction={() => router.push("/create-business")} />
           {switcherOpen ? (
             businessLoading ? (
-              <Text style={styles.caption}>Loading managed businesses…</Text>
+              <BusinessListSkeleton />
             ) : managed.length ? (
               managed.map((business) => (
                 <Pressable
@@ -347,7 +379,7 @@ function MockProfileScreen() {
         <View style={{ gap: 9 }}>
           <SectionTitle title="Your businesses" action="Create business" onAction={() => router.push("/create-business")} />
           {businessLoading ? (
-            <Text style={styles.caption}>Loading managed businesses…</Text>
+            <BusinessListSkeleton />
           ) : managed.length ? (
             managed.map((business) => (
               <Pressable

@@ -1,15 +1,36 @@
 ﻿import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Platform, Share, Switch, Text, View } from "react-native";
-import { ActionTile, Button, ConfirmModal, LocalNote, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
+import {
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ConfirmModal } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
 import { colors } from "@/theme/tokens";
-import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
+import { useMabizServices } from "@/lib/services/service-provider";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
-type Item = { title: string; detail?: string; icon: IconName; route?: string; onPress?: () => void };
+type MenuItem = {
+  title: string;
+  icon: IconName;
+  route?: string;
+  onPress?: () => void;
+};
+
+type MenuSection = {
+  header?: string;
+  items: MenuItem[];
+};
 
 function feedback(message: string) {
   if (Platform.OS === "web") window.alert(message);
@@ -19,7 +40,6 @@ function feedback(message: string) {
 export default function MenuScreen() {
   const app = useAppStore();
   const services = useMabizServices();
-  const serviceMode = useMabizServiceMode();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const language = app.settings.language;
 
@@ -34,151 +54,204 @@ export default function MenuScreen() {
     router.replace("/auth");
   };
 
-  const switchRow = (label: string, detail: string, value: boolean, onValueChange: (value: boolean) => void) => (
-    <View style={styles.actionTile}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>{label}</Text>
-        <Text style={styles.caption}>{detail}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: colors.border, true: colors.emerald }}
-        thumbColor={colors.white}
-      />
-    </View>
-  );
-
-  const renderItems = (items: Item[]) =>
-    items.map((item) => (
-      <ActionTile
-        key={item.title}
-        title={item.title}
-        detail={item.detail}
-        icon={item.icon}
-        onPress={item.onPress ?? (() => router.push(item.route as never))}
-      />
-    ));
-
-  if (!app.isAuthenticated) {
-    return (
-      <Page>
-        <TopBar title="Menu" back />
-        <LocalNote text={t("appearanceLocalOnly", language)} />
-        {renderItems([
-          { title: "Appearance", detail: "Light or dark mode", icon: "contrast-outline", route: "/menu/app-media/appearance" },
-        ])}
-        <ActionTile
-          title={t("signIn", language)}
-          detail={t("accountSettingsRequireSignIn", language)}
-          icon="log-in-outline"
-          onPress={() => router.push("/auth/login")}
-        />
-      </Page>
-    );
-  }
-
-  const account: Item[] = [
-    { title: "Personal details", detail: "Name, username, bio, town & county", icon: "person-circle-outline", route: "/menu/account/personal-details" },
-  ];
-
-  const howYouUse: Item[] = [
-    { title: "Saved", detail: `${app.savedPosts.length + app.savedStories.length} posts & stories saved`, icon: "bookmark-outline", route: "/menu/activity/saved" },
-    { title: "Saved businesses", detail: "Places and founders to revisit", icon: "heart-outline", route: "/menu/activity/saved-businesses" },
-    { title: "Archive & drafts", detail: `${app.drafts.length} drafts stored on this device`, icon: "archive-outline", route: "/menu/activity/drafts" },
-    { title: "Your activity", detail: "Recently viewed posts, profiles & interactions", icon: "time-outline", route: "/menu/activity/your-activity" },
-    { title: "Business ideas & opportunities", detail: "Saved opportunities and founder resources", icon: "bulb-outline", route: "/menu/activity/opportunities" },
-    { title: "Notifications", detail: "View alerts and activity updates", icon: "notifications-outline", route: "/menu/activity/notifications" },
-  ];
-
-  const subscription: Item[] = [
-    { title: "Subscriptions & Mabiz Pro", detail: "Manage creator and business verification plans", icon: "card-outline", route: "/menu/subscriptions" },
-  ];
-
-  const whoCanSee: Item[] = [
-    { title: "Profile privacy", detail: "Account visibility and data controls", icon: "lock-closed-outline", route: "/menu/privacy/profile-privacy" },
-    { title: "Blocked", detail: "Manage accounts you have restricted or blocked", icon: "ban-outline", route: "/menu/privacy/blocked" },
-    { title: "Hide story", detail: "Control who can view your business & personal stories", icon: "eye-off-outline", route: "/menu/privacy/hide-story" },
-  ];
-
-  const interact: Item[] = [
-    { title: "Messages and story replies", detail: "Control who can message you or reply to stories", icon: "chatbubble-ellipses-outline", route: "/menu/privacy/messages-replies" },
-    { title: "Tags and mentions", detail: "Choose who can tag or @mention your profile", icon: "at-outline", route: "/menu/privacy/tags-mentions" },
-    { title: "Comments", detail: "Manage comment filters and permissions", icon: "chatbox-outline", route: "/menu/privacy/comments" },
-    { title: "Sharing", detail: "Allow others to reshare your posts and stories", icon: "share-social-outline", route: "/menu/privacy/sharing" },
-    { title: "Followers & following", detail: "People and businesses you connect with", icon: "people-outline", route: "/menu/followers" },
+  // ─── Menu Data Structure (Mapped to match the visual design) ───────────
+  const authenticatedSections: MenuSection[] = [
     {
-      title: "Follow and invite friends",
-      detail: "Connect with founders and invite contacts to Mabiz",
-      icon: "person-add-outline",
-      onPress: () => {
-        void Share.share({
-          message: `Join me on Mabiz (@${app.user.username}) to connect with local businesses and founders!`,
-        });
-      },
+      items: [
+        {
+          title: "Edit Profile",
+          icon: "person-outline",
+          route: "/menu/account/personal-details",
+        },
+        {
+          title: "Privacy Policy",
+          icon: "shield-checkmark-outline",
+          route: "/menu/support/privacy-centre",
+        },
+      ],
+    },
+    {
+      header: "Preferences",
+      items: [
+        {
+          title: "Notifications",
+          icon: "notifications-outline",
+          route: "/menu/activity/notifications",
+        },
+        {
+          title: "Appearance",
+          icon: "contrast-outline",
+          route: "/menu/app-media/appearance",
+        },
+        {
+          title: "Language",
+          icon: "language-outline",
+          route: "/menu/app-media/language",
+        },
+      ],
+    },
+    {
+      header: "Activity",
+      items: [
+        {
+          title: "Saved",
+          icon: "bookmark-outline",
+          route: "/menu/activity/saved",
+        },
+        {
+          title: "Archive & drafts",
+          icon: "archive-outline",
+          route: "/menu/activity/drafts",
+        },
+        {
+          title: "Your activity",
+          icon: "time-outline",
+          route: "/menu/activity/your-activity",
+        },
+      ],
+    },
+    {
+      header: "Connections",
+      items: [
+        {
+          title: "Followers & following",
+          icon: "people-outline",
+          route: "/menu/followers",
+        },
+        {
+          title: "Invite friends",
+          icon: "person-add-outline",
+          onPress: () => {
+            void Share.share({
+              message: `Join me on Mabiz (@${app.user.username}) to connect with local businesses and founders!`,
+            });
+          },
+        },
+      ],
+    },
+    {
+      header: "Support",
+      items: [
+        {
+          title: "Help",
+          icon: "help-circle-outline",
+          route: "/menu/support/help",
+        },
+        {
+          title: "About",
+          icon: "information-circle-outline",
+          route: "/menu/support/about",
+        },
+      ],
     },
   ];
 
-  const appAndMedia: Item[] = [
-    { title: "Appearance", detail: "Light or dark mode", icon: "contrast-outline", route: "/menu/app-media/appearance" },
-    { title: "Language", detail: "English / Kiswahili", icon: "language-outline", route: "/menu/app-media/language" },
-    { title: "Reduced data", detail: "Use fewer background loads and defer media", icon: "cellular-outline", route: "/menu/app-media/reduced-data" },
-    { title: "Video autoplay", detail: "Choose whether videos start on their own", icon: "play-circle-outline", route: "/menu/app-media/video-autoplay" },
-    { title: "Device permissions", detail: "Camera, photos, location and notifications access", icon: "phone-portrait-outline", route: "/menu/app-media/device-permissions" },
-    { title: "Accessibility", detail: "Text sizing, contrast and motion preferences", icon: "accessibility-outline", route: "/menu/app-media/accessibility" },
+  const guestSections: MenuSection[] = [
+    {
+      items: [
+        {
+          title: "Appearance",
+          icon: "contrast-outline",
+          route: "/menu/app-media/appearance",
+        },
+      ],
+    },
   ];
 
-  const support: Item[] = [
-    { title: "Help", detail: "Help centre & community guidelines", icon: "help-circle-outline", route: "/menu/support/help" },
-    { title: "Privacy Centre", detail: "Learn how Mabiz protects and manages your information", icon: "shield-checkmark-outline", route: "/menu/support/privacy-centre" },
-    { title: "Profile status", detail: "Check account standing and community guideline status", icon: "checkmark-circle-outline", route: "/menu/support/profile-status" },
-    { title: "About", detail: "Version 1.0 - Mabiz information & terms", icon: "information-circle-outline", route: "/menu/support/about" },
-  ];
+  const sections = app.isAuthenticated ? authenticatedSections : guestSections;
 
+  // ─── Renderers ─────────────────────────────────────────────────────────
+  const renderMenuItem = (item: MenuItem, isLast: boolean) => (
+    <TouchableOpacity
+      key={item.title}
+      style={[localStyles.menuItem, isLast && localStyles.menuItemLast]}
+      onPress={item.onPress ?? (() => router.push(item.route as never))}
+      activeOpacity={0.6}
+    >
+      <View style={localStyles.menuItemLeft}>
+        <Ionicons name={item.icon} size={20} color="#6B7280" />
+        <Text style={localStyles.menuItemTitle}>{item.title}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+    </TouchableOpacity>
+  );
+
+  const renderSection = (section: MenuSection, sectionIndex: number) => (
+    <View key={sectionIndex} style={localStyles.section}>
+      {section.header && (
+        <Text style={localStyles.sectionHeader}>{section.header}</Text>
+      )}
+      <View style={localStyles.menuGroup}>
+        {section.items.map((item, i) =>
+          renderMenuItem(item, i === section.items.length - 1)
+        )}
+      </View>
+    </View>
+  );
+
+  // ─── Main Render ───────────────────────────────────────────────────────
   return (
-    <Page>
-      <TopBar title="Menu" back />
-      <LocalNote text="Preferences and account state are stored on this device." />
+    <SafeAreaView style={localStyles.safeArea} edges={["top"]}>
+      <View style={localStyles.container}>
+        {/* Header */}
+        <View style={localStyles.header}>
+          <Text style={localStyles.headerTitle}>Settings</Text>
+        </View>
 
-      <SectionTitle title="Account" />
-      {renderItems(account)}
+        <ScrollView
+          contentContainerStyle={localStyles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Profile Section */}
+          <View style={localStyles.profileSection}>
+            <View style={localStyles.avatarContainer}>
+              {app.isAuthenticated && app.user.avatarUri ? (
+                <Image
+                  source={{ uri: app.user.avatarUri }}
+                  style={localStyles.avatar}
+                />
+              ) : (
+                <View style={localStyles.avatarFallback}>
+                  <Ionicons name="person" size={36} color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+            <Text style={localStyles.profileName}>
+              {app.isAuthenticated
+                ? app.user.name || app.user.username
+                : "Guest"}
+            </Text>
+            {!app.isAuthenticated && (
+              <TouchableOpacity
+                style={localStyles.signInLink}
+                onPress={() => router.push("/auth/login")}
+              >
+                <Text style={localStyles.signInLinkText}>
+                  {t("signIn", language)}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-      <SectionTitle title="How you use the app" />
-      {renderItems(howYouUse)}
-      {serviceMode === "api"
-        ? renderItems([
-            {
-              title: "Notification delivery preferences",
-              detail: "Manage in-app, activity and Expo push settings for your account",
-              icon: "options-outline",
-              route: "/menu/activity/notification-settings",
-            },
-          ])
-        : switchRow(
-            "Sample notifications",
-            "Local demo preference; no push device is registered in mock mode",
-            app.settings.notifications,
-            (value) => app.updateSettings({ notifications: value })
+          {/* Menu Sections */}
+          {sections.map((section, i) => renderSection(section, i))}
+
+          {/* Sign Out Button */}
+          {app.isAuthenticated && (
+            <TouchableOpacity
+              style={localStyles.signOutButton}
+              onPress={() => setLogoutConfirm(true)}
+              activeOpacity={0.6}
+            >
+              <Text style={localStyles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
           )}
-    
 
-      <SectionTitle title="Subscription" />
-      {renderItems(subscription)}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
 
-      <SectionTitle title="Who can see your content" />
-      {renderItems(whoCanSee)}
-
-      <SectionTitle title="How others can interact with you" />
-      {renderItems(interact)}
-
-      <SectionTitle title="Your app and media" />
-      {renderItems(appAndMedia)}
-
-      <SectionTitle title="More info and support" />
-      {renderItems(support)}
-      <Button title="Log out" icon="log-out-outline" variant="outline" onPress={() => setLogoutConfirm(true)} />
-      <Text style={styles.caption}>Signing out ends your session on this device and, when reachable, on the server.</Text>
-
+      {/* Logout Confirmation Modal */}
       <ConfirmModal
         visible={logoutConfirm}
         title="Sign out?"
@@ -190,6 +263,131 @@ export default function MenuScreen() {
           void signOut();
         }}
       />
-    </Page>
+    </SafeAreaView>
   );
 }
+
+// ─── Styles ────────────────────────────────────────────────────────────────
+const localStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
+  // Header
+  header: {
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#F3F4F6",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#111827",
+    letterSpacing: -0.2,
+  },
+
+  // Scroll
+  scrollContent: {
+    paddingHorizontal: 0,
+    paddingBottom: 40,
+  },
+
+  // Profile
+  profileSection: {
+    alignItems: "center",
+    paddingVertical: 28,
+  },
+  avatarContainer: {
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+  },
+  avatarFallback: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: colors.emerald,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  signInLink: {
+    marginTop: 8,
+  },
+  signInLinkText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.emerald,
+  },
+
+  // Sections
+  section: {
+    marginBottom: 12,
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#9CA3AF",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  menuGroup: {
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "#F3F4F6",
+  },
+
+  // Menu Item
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#F3F4F6",
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  menuItemTitle: {
+    fontSize: 15,
+    fontWeight: "400",
+    color: "#1F2937",
+    marginLeft: 14,
+  },
+
+  // Sign Out
+  signOutButton: {
+    alignItems: "center",
+    paddingVertical: 20,
+    marginTop: 16,
+  },
+  signOutText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#EF4444",
+  },
+});
