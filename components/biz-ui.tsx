@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent, type TextInputProps, type ViewStyle } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent, type TextInputProps, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useClock } from "@/hooks/use-clock";
@@ -39,14 +39,14 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
     viewportWidth: width,
     embeddedPreview: Platform.OS === "web" && isRunningInPreviewIframe(),
   });
-  return <View style={{ flex: 1, backgroundColor: colors.canvas, paddingTop: topInset }}>
+  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.canvas, paddingTop: topInset }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
     {scroll ? <ScrollView style={{ flex: 1, backgroundColor: colors.canvas }} contentContainerStyle={[styles.page, style]} keyboardShouldPersistTaps="handled" refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={colors.emerald} /> : undefined} onScroll={onScroll} scrollEventThrottle={onScroll ? 180 : undefined}>{content}</ScrollView> : <View style={[styles.page, { flex: 1, backgroundColor: colors.canvas }, style]}><ConnectivityBanner />{children}</View>}
-  </View>;
+  </KeyboardAvoidingView>;
 }
 
 export function TopBar({ title, back, right, subtitle, brandNameOnly = false }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean }) {
   return <View style={styles.topbar}>
-    {back ? <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.iconButton}><Ionicons name="arrow-back" size={22} color={colors.ink} /></Pressable> : brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
+    {back || brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
     <View style={{ flex: 1 }}>
       {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : <Text style={styles.topTitle}>{title ?? "Mabiz"}</Text>}
       {subtitle ? <Text style={styles.caption}>{subtitle}</Text> : null}
@@ -76,7 +76,7 @@ export function Chip({ label, selected, onPress, icon }: { label: string; select
 
 export function Avatar({ name, image, size = 42, ring = false }: { name: string; image?: string; size?: number; ring?: boolean }) {
   const { settings } = useAppStore();
-  const initials = name.split(" ").slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+  const initials = (name ?? "").split(" ").slice(0, 2).map((x) => x[0]).join("").toUpperCase();
   const validImage = Boolean(image && /^(https?:|file:|content:|data:|asset:|\/seed-images\/)/i.test(image));
   const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !image?.startsWith("/seed-images/"));
   return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: ring ? colors.orangeTint : colors.emeraldTint, borderWidth: ring ? 2 : 0, borderColor: colors.orange, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -156,7 +156,7 @@ export function PostCard({ post }: { post: Post }) {
     {post.productId ? (() => { const product = store.businesses.flatMap((business) => business.products).find((item) => item.id === post.productId); return product ? <ProductCard product={product} /> : null; })() : null}
     {(post.kind === "video" || post.video) ? <Button title="Watch in business videos" icon="play-outline" variant="soft" small onPress={() => router.push("/videos")} /> : null}
     <View style={[styles.rowBetween, { paddingHorizontal: 14, paddingVertical: 13, flexWrap: "wrap" }]}>
-      {biz ? <Button title="Contact" icon="chatbubble-outline" variant="outline" small onPress={() => requireAuth(() => { if (store.settings.messagePermissions === "nobody" || (store.settings.messagePermissions === "following" && !store.followedBusinesses.includes(biz.id)) || store.blockedUsers.includes(biz.ownerId)) { router.push("/privacy"); return; } const id = store.startConversation(biz.ownerId, biz.founder, biz.id); if (!id) return; router.push({ pathname: "/messages/[id]", params: { id } }); })} /> : null}
+      {biz ? <Button title="Contact" icon="chatbubble-outline" variant="outline" small onPress={() => requireAuth(() => { if (store.settings.messagePermissions === "nobody" || (store.settings.messagePermissions === "following" && !store.followedBusinesses.includes(biz.id)) || store.blockedUsers.includes(biz.ownerId)) { router.push("/menu/privacy/profile-privacy"); return; } const id = store.startConversation(biz.ownerId, biz.founder, biz.id); if (!id) return; router.push({ pathname: "/messages/[id]", params: { id } }); })} /> : null}
       <Pressable accessibilityRole="button" accessibilityLabel={liked ? "Unlike post" : "Like post"} onPress={() => requireAuth(() => store.toggleLike(post.id))} style={styles.action}><Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? colors.orange : colors.ink} /><Text style={styles.actionText}>{post.likes + (liked ? 1 : 0)}</Text></Pressable>
       {post.allowComments !== false ? <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} style={styles.action}><Ionicons name="chatbubble-ellipses-outline" size={19} color={colors.ink} /><Text style={styles.actionText}>{post.comments.length || "Comment"}</Text></Pressable> : <Text style={styles.caption}>Comments off</Text>}
       {post.allowSharing !== false ? <Pressable accessibilityRole="button" onPress={() => void onShare()} style={styles.action}><Ionicons name="share-social-outline" size={19} color={colors.ink} /><Text style={styles.actionText}>Share</Text></Pressable> : null}

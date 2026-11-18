@@ -100,7 +100,7 @@ export default function CreateListingScreen() {
     setBusy(true);
     const opportunity: CommunityOpportunity = { id: existingOpportunity?.id ?? newLocalId("community-opportunity"), identityKind, identityId: business?.id ?? app.user.id, title: title.trim(), description: description.trim(), category: category as CommunityOpportunity["category"], location: location.trim(), requirements: requirements.trim(), contactInstructions: contact.trim(), image, ...(opportunityExpiry ? { expiresAt: opportunityExpiry } : {}), ...(category === "investment" ? { investmentDisclosure: disclosure.trim() } : {}), createdAt: existingOpportunity?.createdAt ?? new Date().toISOString() };
     if (existingOpportunity) app.updateCommunityOpportunity(opportunity.id, opportunity); else app.addCommunityOpportunity(opportunity);
-    unsaved.markSaved(); setBusy(false); setConfirmSave(false); tell("Opportunity saved locally. Other users cannot see or respond to it."); router.replace("/opportunities");
+    unsaved.markSaved(); setBusy(false); setConfirmSave(false); tell("Opportunity saved locally. Other users cannot see or respond to it."); router.replace("/menu/activity/opportunities");
   };
 
   if (!app.isAuthenticated) return <Page><TopBar title={`Create ${kind}`} back /><Button title="Sign in to create" icon="log-in-outline" onPress={() => router.push("/auth/login")} /></Page>;

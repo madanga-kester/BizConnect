@@ -63,7 +63,7 @@ export default function NotificationSettingsScreen() {
   </View>;
 
   if (!app.isAuthenticated) return <Page><TopBar title="Notification settings" back /><EmptyState title="Sign in to manage preferences" detail="Notification preferences are tied to your account." action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
-  if (mode !== "api") return <Page><TopBar title="Notification settings" back /><LocalNote text="Mock-local mode keeps sample notifications on this device and does not register push devices or call the notification API." /><ActionTile title="Back to notification centre" icon="notifications-outline" onPress={() => router.replace("/notifications")} /></Page>;
+  if (mode !== "api") return <Page><TopBar title="Notification settings" back /><LocalNote text="Mock-local mode keeps sample notifications on this device and does not register push devices or call the notification API." /><ActionTile title="Back to notification centre" icon="notifications-outline" onPress={() => router.replace("/menu/activity/notifications")} /></Page>;
 
   return <Page>
     <TopBar title="Notification settings" back />

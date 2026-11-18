@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Image, Pressable, ScrollView, Share, Switch, Text, TextInput, View, useWindowDimensions } from "react-native";
 import {
+  ActionTile,
   Avatar,
   Button,
   Chip,
@@ -101,7 +102,7 @@ export function ApiHomeFeed() {
       </View>
       {quickMenu ? (
         <View style={[styles.row, { flexWrap: "wrap" }]}>
-          <Button title="Notifications" small variant="outline" onPress={() => router.push("/notifications")} />
+          <Button title="Notifications" small variant="outline" onPress={() => router.push("/menu/activity/notifications")} />
           <Button title="Messages" small variant="outline" onPress={() => router.push("/messages")} />
           <Button title="Profile" small variant="outline" onPress={() => router.push("/(tabs)/profile")} />
           <Text style={styles.caption}>{hasUnread ? "You have unread notifications" : ""}</Text>
@@ -371,7 +372,7 @@ export function ApiPostComposer() {
           <Ionicons name="arrow-back" size={22} color={colors.navy} />
         </Pressable>
         <Text style={{ color: colors.navy, fontSize: 17, fontWeight: "800" }}>{step === 1 ? "Create something" : step === 2 ? `Create ${selectedType.toLowerCase()}` : "Preview post"}</Text>
-        <Pressable onPress={() => router.push("/drafts")}><Text style={{ color: colors.emeraldDark, fontSize: 14, fontWeight: "700" }}>Drafts</Text></Pressable>
+        <Pressable onPress={() => router.push("/menu/activity/drafts")}><Text style={{ color: colors.emeraldDark, fontSize: 14, fontWeight: "700" }}>Drafts</Text></Pressable>
       </View>
 
       {!app.isAuthenticated ? <EmptyState title="Sign in to publish" detail="Publishing requires an authenticated API session." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /> : null}
@@ -757,7 +758,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
                 Follow error: {actionError}
               </Text>
             ) : null}
-            <Button title="Followers & following" variant="outline" onPress={() => router.push("/followers")} />
+            <Button title="Followers & following" variant="outline" onPress={() => router.push("/menu/followers")} />
           </View>
           <SectionTitle title="Posts" />
           {posts.length ? (
@@ -885,7 +886,7 @@ export function ApiBusinessProfile({ businessId }: { businessId: string }) {
             <Button
               title="View followers"
               variant="outline"
-              onPress={() => router.push({ pathname: "/followers", params: { businessId } })}
+              onPress={() => router.push({ pathname: "/menu/followers", params: { businessId } })}
             />
           </View>
           <SectionTitle title={`Posts · ${posts.length}`} />
@@ -1007,14 +1008,79 @@ export function ApiFollowersScreen({ selectedBusinessId }: { selectedBusinessId?
     </Page>
   );
 }
+type ProfileTab = "all" | "videos" | "reshared" | "saved";
+
+const PROFILE_TABS: { key: ProfileTab; icon: React.ComponentProps<typeof Ionicons>["name"]; label: string }[] = [
+  { key: "all", icon: "grid-outline", label: "All posts" },
+  { key: "videos", icon: "play-circle-outline", label: "Videos" },
+  { key: "reshared", icon: "repeat-outline", label: "Reshared" },
+  { key: "saved", icon: "bookmark-outline", label: "Saved" },
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LoosePost = Record<string, any>;
+const mediaListOf = (p: LoosePost): LoosePost[] => p.mediaReferences ?? p.media ?? [];
+const postIsVideo = (p: LoosePost) =>
+  p.kind === "video" || p.mediaType === "video" || mediaListOf(p).some((m) => m.mediaType === "video");
+const postIsReshared = (p: LoosePost) =>
+  Boolean(p.resharedFromId || p.originalPostId || p.isReshare || p.reshared || p.kind === "reshare");
+const postThumb = (p: LoosePost): string | undefined => {
+  const first = mediaListOf(p).find((m) => m.mediaType !== "video") ?? mediaListOf(p)[0];
+  return p.thumbnail ?? p.image ?? p.imageUrl ?? first?.thumbnailUrl ?? first?.url ?? first?.uri;
+};
+
+function ApiProfileTile({ post, size }: { post: Post; size: number }) {
+  const loose = post as LoosePost;
+  const uri = postThumb(loose);
+  const video = postIsVideo(loose);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Open post"
+      onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: colors.subtle,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 6,
+        overflow: "hidden",
+      }}
+    >
+      {uri && !video ? (
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="cover" />
+      ) : video ? (
+        <Ionicons name="videocam" size={28} color={colors.muted} />
+      ) : (
+        <Text numberOfLines={5} style={[styles.caption, { textAlign: "center" }]}>
+          {loose.caption ?? loose.text ?? ""}
+        </Text>
+      )}
+      {video ? (
+        <Ionicons name="play" size={16} color={colors.navy} style={{ position: "absolute", top: 6, right: 6 }} />
+      ) : postIsReshared(loose) ? (
+        <Ionicons name="repeat" size={16} color={colors.navy} style={{ position: "absolute", top: 6, right: 6 }} />
+      ) : null}
+    </Pressable>
+  );
+}
 
 export function ApiPersonalProfile() {
   const services = useMabizServices();
   const app = useAppStore();
+  const { width } = useWindowDimensions();
   const [person, setPerson] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [businessPosts, setBusinessPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<ProfileTab>("all");
+  const [businessMode, setBusinessMode] = useState(false);
+  const [businessLoading, setBusinessLoading] = useState(true);
+  const [businessError, setBusinessError] = useState("");
+  const replaceApiBusinesses = app.replaceApiBusinesses;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -1034,9 +1100,98 @@ export function ApiPersonalProfile() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!app.isAuthenticated) return;
+    let active = true;
+    setBusinessLoading(true);
+    void services.businesses
+      .list({ limit: 100 })
+      .then((result) => {
+        if (!active) return;
+        if (result.ok) {
+          replaceApiBusinesses(result.data.items);
+          setBusinessError("");
+        } else setBusinessError(errorText(result.error));
+        setBusinessLoading(false);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setBusinessError(cause instanceof Error ? cause.message : "Could not load managed businesses.");
+        setBusinessLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [app.isAuthenticated, services, replaceApiBusinesses]);
+
+  const managed = app.businesses.filter((b) => Boolean(b.currentUserRole || b.ownerId === app.user.id));
+  const activeBusiness = app.businesses.find((b) => b.id === app.activeBusinessId);
+  const inBusiness = businessMode && Boolean(activeBusiness);
+  const activeBusinessId = activeBusiness?.id;
+
+  useEffect(() => {
+    if (!businessMode || !activeBusinessId) {
+      setBusinessPosts([]);
+      return;
+    }
+    let active = true;
+    void services.posts.listBusinessPosts(activeBusinessId, pageRequest()).then((result) => {
+      if (!active) return;
+      if (result.ok) setBusinessPosts(result.data.items);
+      else setBusinessError(errorText(result.error));
+    });
+    return () => {
+      active = false;
+    };
+  }, [businessMode, activeBusinessId, services]);
+
+  const shownPosts = inBusiness ? businessPosts : posts;
+  const tabPosts = useMemo(
+    () =>
+      tab === "videos"
+        ? shownPosts.filter((p) => postIsVideo(p as LoosePost))
+        : tab === "reshared"
+          ? shownPosts.filter((p) => postIsReshared(p as LoosePost))
+          : shownPosts,
+    [tab, shownPosts]
+  );
+
+  const tileSize = Math.floor((width - 32 - 4) / 3);
+  const emptyText: Record<ProfileTab, string> = {
+    all: "No posts yet.",
+    videos: "No videos yet.",
+    reshared: "Nothing reshared yet.",
+    saved: "",
+  };
+
+  const displayName = inBusiness && activeBusiness ? activeBusiness.name : person?.name ?? "";
+  const displayHandle = inBusiness && activeBusiness ? activeBusiness.slug : person?.username ?? "";
+  const displayAbout = inBusiness && activeBusiness ? activeBusiness.description : person?.bio;
+
+  const shareProfile = () => {
+    if (!person) return;
+    void Share.share({
+      message: `Check out ${displayName} (@${displayHandle}) on Mabiz - connect with local businesses and founders!`,
+    });
+  };
+
   return (
     <Page onRefresh={() => void load()} refreshing={loading}>
-      <TopBar title="Profile" />
+      <TopBar
+        title={person ? `@${displayHandle}` : "Profile"}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Menu"
+            onPress={() => router.push("/menu")}
+            hitSlop={8}
+            style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
+          >
+            <Ionicons name="menu-outline" size={26} color={colors.navy} />
+          </Pressable>
+        }
+      />
       {error ? (
         <View accessibilityRole="alert">
           <Text style={styles.body}>Profile error: {error}</Text>
@@ -1046,100 +1201,210 @@ export function ApiPersonalProfile() {
       {loading ? <LoadingState label="Loading your profile from server" /> : null}
       {!loading && !error && person ? (
         <>
-          <View style={{ alignItems: "center", gap: 10, paddingTop: 4, paddingBottom: 8 }}>
-            <View style={{ alignSelf: "stretch", alignItems: "flex-end" }}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Open settings"
-                onPress={() => router.push("/settings")}
-                hitSlop={8}
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 21,
-                  backgroundColor: colors.surface,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="settings-outline" size={21} color={colors.navy} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+            <Avatar
+              name={displayName}
+              image={inBusiness && activeBusiness ? activeBusiness.logo : person.avatar}
+              size={82}
+              ring
+            />
+            <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
+              <Stat value={shownPosts.length} label="Posts" />
+              <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                <Stat
+                  value={inBusiness && activeBusiness ? activeBusiness.followers : person.followers}
+                  label="Followers"
+                />
               </Pressable>
-            </View>
-            <Avatar name={person.name} image={person.avatar} size={112} ring />
-            <Text style={{ color: colors.navy, fontSize: 28, fontWeight: "800", textAlign: "center" }}>
-              {person.name}
-            </Text>
-            <Text style={{ color: colors.muted, fontSize: 14 }}>@{person.username}</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-              <Ionicons name="location-outline" size={15} color={colors.muted} />
-              <Text style={{ color: colors.muted, fontSize: 13 }}>
-                {person.town}, {person.county}
-              </Text>
-            </View>
-            {person.bio ? <Text style={[styles.body, { textAlign: "center", paddingHorizontal: 24 }]}>{person.bio}</Text> : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Followers and following"
-              onPress={() => router.push("/followers")}
-              style={{ flexDirection: "row", gap: 22, paddingVertical: 6 }}
-            >
-              <Text style={{ color: colors.muted, fontSize: 14 }}>
-                <Text style={{ color: colors.navy, fontWeight: "800" }}>{person.followers}</Text> followers
-              </Text>
-              <Text style={{ color: colors.muted, fontSize: 14 }}>
-                <Text style={{ color: colors.navy, fontWeight: "800" }}>{person.following}</Text> following
-              </Text>
-              <Text style={{ color: colors.muted, fontSize: 14 }}>
-                <Text style={{ color: colors.navy, fontWeight: "800" }}>{posts.length}</Text> posts
-              </Text>
-            </Pressable>
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Edit profile"
-                onPress={() => router.push("/edit-profile")}
-                style={{
-                  height: 46,
-                  paddingHorizontal: 26,
-                  borderRadius: 23,
-                  backgroundColor: colors.navy,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ color: colors.white, fontSize: 14, fontWeight: "800" }}>Edit profile</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Followers and following"
-                onPress={() => router.push("/followers")}
-                style={{
-                  height: 46,
-                  paddingHorizontal: 26,
-                  borderRadius: 23,
-                  backgroundColor: colors.surface,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ color: colors.navy, fontSize: 14, fontWeight: "800" }}>People</Text>
-              </Pressable>
+              {inBusiness ? null : (
+                <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                  <Stat value={person.following} label="Following" />
+                </Pressable>
+              )}
             </View>
           </View>
-          <SectionTitle title="Posts" />
-          {posts.length ? (
-            posts.map((post) => <ApiPostCard key={post.id} post={post} />)
-          ) : (
-            <EmptyState
-              title="No posts yet"
-              detail="Your published posts will appear here."
-              icon="albums-outline"
+
+          <View style={{ gap: 2 }}>
+            <Text style={styles.sectionHeading}>{displayName}</Text>
+            <Text style={styles.caption}>
+              {inBusiness && activeBusiness
+                ? `${activeBusiness.category} - ${activeBusiness.town}`
+                : `${person.town}, ${person.county}`}
+            </Text>
+            {displayAbout ? <Text style={styles.body}>{displayAbout}</Text> : null}
+          </View>
+
+          <View style={{ flexDirection: "row", gap: 9 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                title={inBusiness ? "Manage business" : "Edit profile"}
+                icon={inBusiness ? "settings-outline" : "create-outline"}
+                variant="outline"
+                small
+                onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/personal-details")}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button title="Share profile" icon="share-outline" variant="outline" small onPress={shareProfile} />
+            </View>
+          </View>
+
+          <View style={{ flexDirection: "row", gap: 9 }}>
+            <Button
+              title="Personal profile"
+              icon="person-outline"
+              variant={!businessMode ? "primary" : "outline"}
+              small
+              onPress={() => {
+                setBusinessMode(false);
+                app.switchIdentity(undefined);
+              }}
             />
+            <Button
+              title="Business identity"
+              icon="business-outline"
+              variant={businessMode ? "primary" : "outline"}
+              small
+              onPress={() => {
+                setBusinessMode(true);
+                app.switchIdentity(activeBusiness?.id ?? managed[0]?.id);
+              }}
+            />
+          </View>
+
+          {businessMode ? (
+            <View style={{ gap: 8 }}>
+              <SectionTitle title="Switch business" action="Add business" onAction={() => router.push("/create-business")} />
+              {businessLoading ? (
+                <Text style={styles.caption}>Loading managed businesses...</Text>
+              ) : managed.length ? (
+                managed.map((business) => (
+                  <Pressable
+                    key={business.id}
+                    accessibilityRole="button"
+                    onPress={() => app.switchIdentity(business.id)}
+                    style={[
+                      styles.actionTile,
+                      { borderColor: app.activeBusinessId === business.id ? colors.emerald : colors.border },
+                    ]}
+                  >
+                    <View style={styles.tileIcon}>
+                      <Ionicons name="business-outline" size={18} color={colors.emeraldDark} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>{business.name}</Text>
+                      <Text style={styles.caption}>
+                        {business.category} - {business.town} - {business.currentUserRole ?? "Team member"}
+                      </Text>
+                    </View>
+                    {app.activeBusinessId === business.id ? (
+                      <Ionicons name="checkmark-circle" size={19} color={colors.emerald} />
+                    ) : null}
+                  </Pressable>
+                ))
+              ) : (
+                <Button title="Create your first business" onPress={() => router.push("/create-business")} />
+              )}
+              {businessError ? <Text style={styles.caption}>{businessError}</Text> : null}
+              {activeBusiness ? (
+                <>
+                  <ActionTile
+                    title="Manage business"
+                    detail="Server-backed profile, team, invitations and ownership"
+                    icon="settings-outline"
+                    onPress={() => router.push("/business-management")}
+                  />
+                  <ActionTile
+                    title="Growth dashboard"
+                    detail="Reviews, trends, milestones and next opportunities"
+                    icon="trending-up-outline"
+                    onPress={() =>
+                      router.push({ pathname: "/business-growth", params: { businessId: activeBusiness.id } })
+                    }
+                  />
+                </>
+              ) : null}
+            </View>
+          ) : managed.length ? (
+            <View style={{ gap: 9 }}>
+              <SectionTitle title="Your businesses" action="Create business" onAction={() => router.push("/create-business")} />
+              {managed.map((business) => (
+                <Pressable
+                  key={business.id}
+                  accessibilityRole="button"
+                  onPress={() => router.push({ pathname: "/business/[id]", params: { id: business.id } })}
+                  style={styles.actionTile}
+                >
+                  <View style={styles.tileIcon}>
+                    <Ionicons name="storefront-outline" size={19} color={colors.emerald} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{business.name}</Text>
+                    <Text style={styles.caption}>
+                      {business.category} - {business.town} - {business.currentUserRole ?? "Owner"}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
+          <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            {PROFILE_TABS.map((item) => {
+              const selected = tab === item.key;
+              return (
+                <Pressable
+                  key={item.key}
+                  accessibilityRole="tab"
+                  accessibilityLabel={item.label}
+                  accessibilityState={{ selected }}
+                  onPress={() => setTab(item.key)}
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    paddingVertical: 10,
+                    borderBottomWidth: 2,
+                    borderBottomColor: selected ? colors.emerald : "transparent",
+                  }}
+                >
+                  <Ionicons name={item.icon} size={22} color={selected ? colors.emeraldDark : colors.muted} />
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={[styles.caption, { textAlign: "center" }]}>
+            {PROFILE_TABS.find((item) => item.key === tab)?.label}
+          </Text>
+
+          {tab === "saved" ? (
+            <View style={{ gap: 8 }}>
+              <ActionTile
+                title="Saved posts and stories"
+                detail={`${app.savedPosts.length + app.savedStories.length} items saved`}
+                icon="bookmark-outline"
+                onPress={() => router.push("/menu/activity/saved")}
+              />
+              <ActionTile
+                title="Saved businesses"
+                detail="Places and founders to revisit"
+                icon="heart-outline"
+                onPress={() => router.push("/menu/activity/saved-businesses")}
+              />
+            </View>
+          ) : tabPosts.length ? (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 2 }}>
+              {tabPosts.map((post) => (
+                <ApiProfileTile key={post.id} post={post} size={tileSize} />
+              ))}
+            </View>
+          ) : (
+            <EmptyState title={emptyText[tab]} detail="Posts you publish will appear here." icon="albums-outline" />
           )}
         </>
       ) : null}
       <Text style={styles.caption}>
-        Signed in as {app.user.username} · profile and post visibility are determined by server responses.
+        Signed in as {app.user.username} - profile and post visibility are determined by server responses.
       </Text>
     </Page>
   );

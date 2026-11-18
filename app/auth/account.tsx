@@ -61,7 +61,7 @@ export default function Stage2AccountScreen() {
     await app.setAuthenticated(false);
     setBusy(false);
     if (!result.ok) feedback("The server may not have received logout, but this device cleared its API session. Please sign in again if needed.");
-    router.replace("/auth/login");
+    router.replace("/auth");
   };
 
   return (

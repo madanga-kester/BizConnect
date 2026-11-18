@@ -1,0 +1,5 @@
+import { router } from "expo-router";
+import { BusinessCard, EmptyState, Page, TopBar } from "@/components/biz-ui";
+import { useAppStore } from "@/hooks/use-app-store";
+import { filterVisibleBusinesses } from "@/utils/privacy-policy";
+export default function SavedBusinessesScreen() { const app = useAppStore(); const items = filterVisibleBusinesses(app.businesses, app.blockedUsers).filter((business) => app.savedBusinesses.includes(business.id)); if (!app.isAuthenticated) return <Page><TopBar title="Saved businesses" back /><EmptyState title="Sign in to see saved businesses" detail="Your saved business list is personal to this local demo profile." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>; return <Page><TopBar title="Saved businesses" back />{items.length ? items.map((business) => <BusinessCard key={business.id} business={business} />) : <EmptyState title="No saved businesses" detail="Bookmark a business profile to keep it here." action="Discover businesses" onAction={() => router.replace("/(tabs)/discover")} />}</Page>; }

@@ -92,7 +92,7 @@ export default function NotificationsScreen() {
   return <Page>
     <TopBar title="Notifications" back right={<View style={styles.row}>
       {hasUnread ? <Button title="Mark all read" variant="quiet" small onPress={() => void markAllRead()} /> : null}
-      <Pressable accessibilityRole="button" accessibilityLabel="Notification settings" onPress={() => router.push(apiMode ? "/notification-settings" : "/settings")} style={styles.iconButton}><Ionicons name="options-outline" size={20} color={colors.ink} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Notification settings" onPress={() => router.push(apiMode ? "/menu/activity/notification-settings" : "/menu")} style={styles.iconButton}><Ionicons name="options-outline" size={20} color={colors.ink} /></Pressable>
     </View>} />
     {!apiMode ? <LocalNote text="Notification items are sample events stored locally." /> : null}
     {loading && !displayedItems.length ? <View style={{ padding: 24, alignItems: "center", gap: 8 }}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>Loading notifications…</Text></View> : null}
@@ -107,6 +107,6 @@ export default function NotificationsScreen() {
     </View>)}
     {apiMode && nextCursor ? <Button title={loadingMore ? "Loading…" : "Load more"} variant="outline" disabled={loadingMore} onPress={() => void load(true)} /> : null}
     {!loading && !error && !displayedItems.length ? <EmptyState title="You’re all caught up" detail="New follows, replies, messages and business activity will show here." icon="notifications-outline" /> : null}
-    <Pressable accessibilityRole="button" onPress={() => router.push(apiMode ? "/notification-settings" : "/settings")} style={{ padding: 10, alignItems: "center" }}><Text style={styles.link}>Manage notification preferences</Text></Pressable>
+    <Pressable accessibilityRole="button" onPress={() => router.push(apiMode ? "/menu/activity/notification-settings" : "/menu")} style={{ padding: 10, alignItems: "center" }}><Text style={styles.link}>Manage notification preferences</Text></Pressable>
   </Page>;
 }

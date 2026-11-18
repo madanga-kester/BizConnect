@@ -24,7 +24,7 @@ function LocalChatScreen() {
   const conversationId = conversation?.id;
   useEffect(() => { if (conversationId && messagingAllowed) markConversationRead(conversationId); }, [conversationId, messagingAllowed, markConversationRead]);
   if (!app.isAuthenticated) return <Page><TopBar title="Messages" back /><EmptyState title="Sign in to open messages" detail="Private conversations require an authenticated account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
-  if (conversation && !messagingAllowed) return <Page><TopBar title="Messages" back /><EmptyState title="Messaging is limited" detail="Your privacy or block settings do not allow this conversation." icon="lock-closed-outline" action="Review privacy" onAction={() => router.push("/privacy")} /></Page>;
+  if (conversation && !messagingAllowed) return <Page><TopBar title="Messages" back /><EmptyState title="Messaging is limited" detail="Your privacy or block settings do not allow this conversation." icon="lock-closed-outline" action="Review privacy" onAction={() => router.push("/menu/privacy/profile-privacy")} /></Page>;
   if (!conversation) return <Page><TopBar title="Conversation" back /><EmptyState title="Conversation not found" detail="Start a new business enquiry from a business or product page." action="Discover businesses" onAction={() => router.replace("/(tabs)/discover")} /></Page>;
   const business = app.businesses.find((b) => b.id === conversation.businessId);
   const send = () => { if (!app.isAuthenticated) return router.push("/auth/login"); if (!text.trim() && !image) return; app.sendMessage(conversation.id, text.trim() || "Image attachment selected in the local demo", image); setText(""); setImage(undefined); };

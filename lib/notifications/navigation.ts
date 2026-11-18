@@ -26,5 +26,5 @@ export function navigateToNotification(item: NotificationDestination | Notificat
   else if (postId) router.push({ pathname: "/post/[id]", params: { id: postId } });
   else if (catalogItemId) router.push({ pathname: "/product/[id]", params: { id: catalogItemId } });
   else if (businessId) router.push({ pathname: "/business/[id]", params: { id: businessId } });
-  else router.push("/notifications");
+  else router.push("/menu/activity/notifications");
 }

@@ -29,7 +29,7 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-const PRIVATE_ROUTES = ["/messages", "/drafts", "/privacy", "/search-history", "/saved", "/saved-businesses", "/saved-opportunities", "/business-management", "/business-growth", "/catalog-management", "/team", "/verification", "/analytics", "/notifications", "/notification-settings", "/report", "/edit-profile", "/followers", "/data-export", "/delete-account", "/create-business", "/moderation-status", "/recently-viewed", "/create", "/(tabs)/create"];
+const PRIVATE_ROUTES = ["/messages", "/drafts", "/privacy", "/search-history", "/saved", "/saved-businesses", "/saved-opportunities", "/business-management", "/business-growth", "/catalog-management", "/team", "/verification", "/analytics", "/notifications", "/notification-settings", "/report", "/edit-profile", "/followers", "/data-export", "/delete-account", "/create-business", "/moderation-status", "/recently-viewed","/menu/privacy", "/menu/activity/drafts", "/menu/activity/saved", "/menu/activity/saved-businesses", "/menu/activity/notifications", "/menu/activity/notification-settings", "/menu/activity/your-activity", "/menu/account/personal-details", "/menu/account/export-data", "/menu/account/delete-account", "/menu/followers", "/create", "/(tabs)/create"];
 
 function GuardedStack() {
   const app = useAppStore();
@@ -38,8 +38,8 @@ function GuardedStack() {
   useEffect(() => {
     if (!app.hasHydrated) return;
 
-    if (PRIVATE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) && !app.isAuthenticated) { router.replace("/auth/login"); return; }
-    if (app.isAuthenticated && ["/auth/login", "/auth/register"].includes(pathname)) router.replace("/(tabs)");
+    if (!app.isAuthenticated && pathname !== "/auth" && !pathname.startsWith("/auth/")) { router.replace("/auth"); return; }
+    if (app.isAuthenticated && ["/auth", "/auth/login", "/auth/register"].includes(pathname)) router.replace("/(tabs)");
   }, [app.hasHydrated, app.isAuthenticated, pathname, router]);
   return <Stack screenOptions={{ headerShown: false }}><Stack.Screen name="(tabs)" /></Stack>;
 }

@@ -7,7 +7,7 @@ import { colors } from "@/theme/tokens";
 
 const MENU_ITEMS = [
   { label: "Business videos", icon: "videocam-outline", path: "/videos" },
-  { label: "Notifications", icon: "notifications-outline", path: "/notifications" },
+  { label: "Notifications", icon: "notifications-outline", path: "/menu/activity/notifications" },
   { label: "Messages", icon: "chatbubble-ellipses-outline", path: "/messages" },
 ] as const;
 
@@ -74,7 +74,7 @@ export function HomeQuickMenu({ visible, onClose, hasUnreadNotifications }: Home
             Quick access
           </Text>
           {MENU_ITEMS.map((item, index) => {
-            const unread = item.path === "/notifications" && hasUnreadNotifications;
+            const unread = item.path === "/menu/activity/notifications" && hasUnreadNotifications;
             const accessibleLabel = unread ? "Notifications, unread" : item.label;
 
             return (
