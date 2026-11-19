@@ -9,7 +9,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { colors } from "@/theme/tokens";
 import { isPostVisible, profileRestriction } from "@/utils/privacy-policy";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
-import { ApiPostDetail } from "@/components/api-social-screens";
+import { ApiPostDetail } from "@/components/api-screens";
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const apiMode = useMabizServiceMode() === "api";

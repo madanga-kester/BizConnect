@@ -6,7 +6,7 @@ import { PEOPLE } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { filterVisibleBusinesses, profileRestriction } from "@/utils/privacy-policy";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
-import { ApiFollowersScreen } from "@/components/api-social-screens";
+import { ApiFollowersScreen } from "@/components/api-screens";
 export default function FollowersScreen() {
   const params = useLocalSearchParams<{ businessId?: string }>();
   const apiMode = useMabizServiceMode() === "api";

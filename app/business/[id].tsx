@@ -36,7 +36,7 @@ import {
 import { colors } from "@/theme/tokens";
 import { hasBusinessRole } from "@/utils/business-permissions";
 import { filterVisiblePosts } from "@/utils/privacy-policy";
-import { ApiBusinessProfile } from "@/components/api-social-screens";
+import { ApiBusinessProfile } from "@/components/api-screens";
 
 const TABS = [
   "Overview",

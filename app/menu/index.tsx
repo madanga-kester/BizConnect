@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -16,19 +17,26 @@ import { ConfirmModal } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
 import { colors } from "@/theme/tokens";
-import { useMabizServices } from "@/lib/services/service-provider";
+import {
+  useMabizServices,
+  useMabizServiceMode,
+} from "@/lib/services/service-provider";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type MenuItem = {
   title: string;
+  detail?: string;
   icon: IconName;
   route?: string;
   onPress?: () => void;
+  isSwitch?: boolean;
+  switchValue?: boolean;
+  onSwitchChange?: (value: boolean) => void;
 };
 
 type MenuSection = {
-  header?: string;
+  title: string;
   items: MenuItem[];
 };
 
@@ -40,6 +48,7 @@ function feedback(message: string) {
 export default function MenuScreen() {
   const app = useAppStore();
   const services = useMabizServices();
+  const serviceMode = useMabizServiceMode();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const language = app.settings.language;
 
@@ -54,72 +63,145 @@ export default function MenuScreen() {
     router.replace("/auth");
   };
 
-  // ─── Menu Data Structure (Mapped to match the visual design) ───────────
+  // ─── Build Menu Sections with ORIGINAL LINKS ───────────────────────────
   const authenticatedSections: MenuSection[] = [
     {
+      title: "Account",
       items: [
         {
-          title: "Edit Profile",
-          icon: "person-outline",
+          title: "Personal details",
+          detail: "Name, username, bio, town & county",
+          icon: "person-circle-outline",
           route: "/menu/account/personal-details",
         },
-        {
-          title: "Privacy Policy",
-          icon: "shield-checkmark-outline",
-          route: "/menu/support/privacy-centre",
-        },
       ],
     },
     {
-      header: "Preferences",
-      items: [
-        {
-          title: "Notifications",
-          icon: "notifications-outline",
-          route: "/menu/activity/notifications",
-        },
-        {
-          title: "Appearance",
-          icon: "contrast-outline",
-          route: "/menu/app-media/appearance",
-        },
-        {
-          title: "Language",
-          icon: "language-outline",
-          route: "/menu/app-media/language",
-        },
-      ],
-    },
-    {
-      header: "Activity",
+      title: "How you use the app",
       items: [
         {
           title: "Saved",
+          detail: `${app.savedPosts.length + app.savedStories.length} posts & stories saved`,
           icon: "bookmark-outline",
           route: "/menu/activity/saved",
         },
         {
+          title: "Saved businesses",
+          detail: "Places and founders to revisit",
+          icon: "heart-outline",
+          route: "/menu/activity/saved-businesses",
+        },
+        {
           title: "Archive & drafts",
+          detail: `${app.drafts.length} drafts stored on this device`,
           icon: "archive-outline",
           route: "/menu/activity/drafts",
         },
         {
           title: "Your activity",
+          detail: "Recently viewed posts, profiles & interactions",
           icon: "time-outline",
           route: "/menu/activity/your-activity",
+        },
+        {
+          title: "Business ideas & opportunities",
+          detail: "Saved opportunities and founder resources",
+          icon: "bulb-outline",
+          route: "/menu/activity/opportunities",
+        },
+        {
+          title: "Notifications",
+          detail: "View alerts and activity updates",
+          icon: "notifications-outline",
+          route: "/menu/activity/notifications",
+        },
+        serviceMode === "api"
+          ? {
+              title: "Notification delivery preferences",
+              detail: "Manage in-app, activity and Expo push settings for your account",
+              icon: "options-outline",
+              route: "/menu/activity/notification-settings",
+            }
+          : {
+              title: "Sample notifications",
+              detail: "Local demo preference; no push device is registered in mock mode",
+              icon: "notifications-outline",
+              isSwitch: true,
+              switchValue: app.settings.notifications,
+              onSwitchChange: (value: boolean) => app.updateSettings({ notifications: value }),
+            },
+      ].filter(Boolean) as MenuItem[],
+    },
+    {
+      title: "Subscription",
+      items: [
+        {
+          title: "Subscriptions & Mabiz Pro",
+          detail: "Manage creator and business verification plans",
+          icon: "card-outline",
+          route: "/menu/subscriptions",
         },
       ],
     },
     {
-      header: "Connections",
+      title: "Who can see your content",
       items: [
         {
+          title: "Profile privacy",
+          detail: "Account visibility and data controls",
+          icon: "lock-closed-outline",
+          route: "/menu/privacy/profile-privacy",
+        },
+        {
+          title: "Blocked",
+          detail: "Manage accounts you have restricted or blocked",
+          icon: "ban-outline",
+          route: "/menu/privacy/blocked",
+        },
+        {
+          title: "Hide story",
+          detail: "Control who can view your business & personal stories",
+          icon: "eye-off-outline",
+          route: "/menu/privacy/hide-story",
+        },
+      ],
+    },
+    {
+      title: "How others can interact with you",
+      items: [
+        {
+          title: "Messages and story replies",
+          detail: "Control who can message you or reply to stories",
+          icon: "chatbubble-ellipses-outline",
+          route: "/menu/privacy/messages-replies",
+        },
+        {
+          title: "Tags and mentions",
+          detail: "Choose who can tag or @mention your profile",
+          icon: "at-outline",
+          route: "/menu/privacy/tags-mentions",
+        },
+        {
+          title: "Comments",
+          detail: "Manage comment filters and permissions",
+          icon: "chatbox-outline",
+          route: "/menu/privacy/comments",
+        },
+        {
+          title: "Sharing",
+          detail: "Allow others to reshare your posts and stories",
+          icon: "share-social-outline",
+          route: "/menu/privacy/sharing",
+        },
+        {
           title: "Followers & following",
+          detail: "People and businesses you connect with",
           icon: "people-outline",
           route: "/menu/followers",
         },
         {
-          title: "Invite friends",
+          title: "Follow and invite friends",
+          detail: "Connect with founders and invite contacts to Mabiz",
           icon: "person-add-outline",
           onPress: () => {
             void Share.share({
@@ -130,15 +212,70 @@ export default function MenuScreen() {
       ],
     },
     {
-      header: "Support",
+      title: "Your app and media",
+      items: [
+        {
+          title: "Appearance",
+          detail: "Light or dark mode",
+          icon: "contrast-outline",
+          route: "/menu/app-media/appearance",
+        },
+        {
+          title: "Language",
+          detail: "English / Kiswahili",
+          icon: "language-outline",
+          route: "/menu/app-media/language",
+        },
+        {
+          title: "Reduced data",
+          detail: "Use fewer background loads and defer media",
+          icon: "cellular-outline",
+          route: "/menu/app-media/reduced-data",
+        },
+        {
+          title: "Video autoplay",
+          detail: "Choose whether videos start on their own",
+          icon: "play-circle-outline",
+          route: "/menu/app-media/video-autoplay",
+        },
+        {
+          title: "Device permissions",
+          detail: "Camera, photos, location and notifications access",
+          icon: "phone-portrait-outline",
+          route: "/menu/app-media/device-permissions",
+        },
+        {
+          title: "Accessibility",
+          detail: "Text sizing, contrast and motion preferences",
+          icon: "accessibility-outline",
+          route: "/menu/app-media/accessibility",
+        },
+      ],
+    },
+    {
+      title: "More info and support",
       items: [
         {
           title: "Help",
+          detail: "Help centre & community guidelines",
           icon: "help-circle-outline",
           route: "/menu/support/help",
         },
         {
+          title: "Privacy Centre",
+          detail: "Learn how Mabiz protects and manages your information",
+          icon: "shield-checkmark-outline",
+          route: "/menu/support/privacy-centre",
+        },
+        {
+          title: "Profile status",
+          detail: "Check account standing and community guideline status",
+          icon: "checkmark-circle-outline",
+          route: "/menu/support/profile-status",
+        },
+        {
           title: "About",
+          detail: "Version 1.0 - Mabiz information & terms",
           icon: "information-circle-outline",
           route: "/menu/support/about",
         },
@@ -148,9 +285,11 @@ export default function MenuScreen() {
 
   const guestSections: MenuSection[] = [
     {
+      title: "Appearance",
       items: [
         {
           title: "Appearance",
+          detail: "Light or dark mode",
           icon: "contrast-outline",
           route: "/menu/app-media/appearance",
         },
@@ -165,22 +304,42 @@ export default function MenuScreen() {
     <TouchableOpacity
       key={item.title}
       style={[localStyles.menuItem, isLast && localStyles.menuItemLast]}
-      onPress={item.onPress ?? (() => router.push(item.route as never))}
-      activeOpacity={0.6}
+      onPress={
+        item.isSwitch
+          ? undefined
+          : item.onPress ?? (() => router.push(item.route as never))
+      }
+      activeOpacity={item.isSwitch ? 1 : 0.6}
     >
       <View style={localStyles.menuItemLeft}>
-        <Ionicons name={item.icon} size={20} color="#6B7280" />
-        <Text style={localStyles.menuItemTitle}>{item.title}</Text>
+        <Ionicons name={item.icon} size={20} color="#6B7280" style={localStyles.menuItemIcon} />
+        <View style={localStyles.menuItemTextContainer}>
+          <Text style={localStyles.menuItemTitle}>{item.title}</Text>
+          {item.detail && !item.isSwitch && (
+            <Text style={localStyles.menuItemDetail} numberOfLines={1}>
+              {item.detail}
+            </Text>
+          )}
+        </View>
       </View>
-      <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+      
+      {item.isSwitch ? (
+        <Switch
+          value={item.switchValue}
+          onValueChange={item.onSwitchChange}
+          trackColor={{ false: "#E5E7EB", true: colors.emerald }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor="#E5E7EB"
+        />
+      ) : (
+        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+      )}
     </TouchableOpacity>
   );
 
   const renderSection = (section: MenuSection, sectionIndex: number) => (
     <View key={sectionIndex} style={localStyles.section}>
-      {section.header && (
-        <Text style={localStyles.sectionHeader}>{section.header}</Text>
-      )}
+      <Text style={localStyles.sectionHeader}>{section.title}</Text>
       <View style={localStyles.menuGroup}>
         {section.items.map((item, i) =>
           renderMenuItem(item, i === section.items.length - 1)
@@ -205,9 +364,9 @@ export default function MenuScreen() {
           {/* Profile Section */}
           <View style={localStyles.profileSection}>
             <View style={localStyles.avatarContainer}>
-              {app.isAuthenticated && app.user.avatarUri ? (
+              {app.isAuthenticated && app.user.avatar ? (
                 <Image
-                  source={{ uri: app.user.avatarUri }}
+                  source={{ uri: app.user.avatar }}
                   style={localStyles.avatar}
                 />
               ) : (
@@ -335,7 +494,7 @@ const localStyles = StyleSheet.create({
 
   // Sections
   section: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionHeader: {
     fontSize: 13,
@@ -360,7 +519,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#F3F4F6",
   },
@@ -372,11 +531,23 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
+  menuItemIcon: {
+    marginRight: 14,
+    width: 20,
+    textAlign: "center",
+  },
+  menuItemTextContainer: {
+    flex: 1,
+  },
   menuItemTitle: {
     fontSize: 15,
     fontWeight: "400",
     color: "#1F2937",
-    marginLeft: 14,
+  },
+  menuItemDetail: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 2,
   },
 
   // Sign Out

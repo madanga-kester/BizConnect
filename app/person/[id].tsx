@@ -7,7 +7,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { colors } from "@/theme/tokens";
 import { filterVisiblePosts } from "@/utils/privacy-policy";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
-import { ApiPersonProfile } from "@/components/api-social-screens";
+import { ApiPersonProfile } from "@/components/api-screens";
 
 export default function PersonProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

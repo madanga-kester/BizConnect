@@ -7,7 +7,7 @@ import { HomeQuickMenu } from "@/components/home-quick-menu";
 import { BUSINESSES, PEOPLE, STORIES } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
-import { ApiHomeFeed } from "@/components/api-social-screens";
+import { ApiHomeFeed } from "@/components/api-screens";
 import { colors } from "@/theme/tokens";
 import { t } from "@/i18n/translations";
 import type { Post } from "@/types/domain";

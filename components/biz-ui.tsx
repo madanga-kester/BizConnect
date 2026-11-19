@@ -44,11 +44,11 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
   </KeyboardAvoidingView>;
 }
 
-export function TopBar({ title, back, right, subtitle, brandNameOnly = false }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean }) {
+export function TopBar({ title, back, right, subtitle, brandNameOnly = false, onTitlePress }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean; onTitlePress?: () => void }) {
   return <View style={styles.topbar}>
     {back || brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
     <View style={{ flex: 1 }}>
-      {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : <Text style={styles.topTitle}>{title ?? "Mabiz"}</Text>}
+      {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : onTitlePress ? <Pressable accessibilityRole="button" accessibilityLabel="Switch profile" onPress={onTitlePress} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}><Text style={styles.topTitle}>{title ?? "Mabiz"}</Text><Ionicons name="chevron-down" size={18} color={colors.ink} /></Pressable> : <Text style={styles.topTitle}>{title ?? "Mabiz"}</Text>}
       {subtitle ? <Text style={styles.caption}>{subtitle}</Text> : null}
     </View>
     {right}
