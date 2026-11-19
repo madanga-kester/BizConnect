@@ -7,6 +7,7 @@ import { Button, Chip, ConfirmModal, EmptyState, Field, LocalNote, Page, TopBar,
 import { CONTENT_LENGTHS, CONTENT_PURPOSES, CONTENT_TONES, CONTENT_TYPES, createMockSuggestion, deleteAssistantHistoryEntry, readAssistantHistory, saveAssistantHistory, type AssistantHistoryEntry, type AssistantLength, type AssistantTone, type AssistantContentType, type ContentPurpose } from "@/lib/services/mock-content-assistant";
 import { colors } from "@/theme/tokens";
 import { newLocalId } from "@/utils/ids";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function announce(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Writing assistant", message); }
 function routeKind(contentType: AssistantContentType, purpose: ContentPurpose): string {
@@ -20,6 +21,7 @@ function routeKind(contentType: AssistantContentType, purpose: ContentPurpose): 
 }
 
 export default function CreateAssistantScreen() {
+  useThemeContext();
   const { initial, kind: initialKind } = useLocalSearchParams<{ initial?: string; kind?: string }>();
   const [prompt, setPrompt] = useState(typeof initial === "string" ? initial : "");
   const [purpose, setPurpose] = useState<ContentPurpose>("Caption");

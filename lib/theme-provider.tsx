@@ -14,6 +14,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>("light");
+  setMabizColorScheme(colorScheme);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
     setMabizColorScheme(scheme);

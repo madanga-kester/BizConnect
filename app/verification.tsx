@@ -7,6 +7,7 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
 import type { VerificationStatus } from "@/types/domain";
 import { hasBusinessRole } from "@/utils/business-permissions";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) {
   if (Platform.OS === "web") window.alert(message);
@@ -18,6 +19,7 @@ const STATUS_COPY: Record<VerificationStatus, string> = {
 };
 
 export default function VerificationScreen() {
+  useThemeContext();
   const app = useAppStore();
   const { businessId } = useLocalSearchParams<{ businessId?: string }>();
   const business = app.businesses.find((item) => item.id === businessId)

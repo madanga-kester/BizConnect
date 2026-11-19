@@ -12,10 +12,12 @@ import { formatKes } from "@/utils/kenya";
 import { profileRestriction } from "@/utils/privacy-policy";
 import { newLocalId } from "@/utils/ids";
 import { canViewSocialStory } from "@/utils/social-story-privacy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const CATEGORIES = ["All", "How I Started", "Startup Capital", "My First Customer", "Business Challenges", "Lessons Learned", "Business Growth", "Behind the Business", "Business Opportunities"];
 
 export default function StoriesScreen() {
+  useThemeContext();
   const app = useAppStore();
   const requireAuth = useRequireAuth();
   const now = useClock();

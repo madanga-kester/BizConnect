@@ -7,11 +7,13 @@ import { PEOPLE, STORIES } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
 import { filterVisibleBusinesses, filterVisiblePosts, profileRestriction } from "@/utils/privacy-policy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const SUGGESTIONS = ["Fashion in Nairobi", "Coastal food", "Made to order furniture", "Founder stories", "Business opportunities"];
 const TYPES = ["All", "Businesses", "People", "Products", "Services", "Stories", "Posts", "Videos"];
 
 export default function SearchScreen() {
+  useThemeContext();
   const app = useAppStore();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(q ?? "");

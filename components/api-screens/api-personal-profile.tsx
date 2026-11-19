@@ -1,7 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, Share, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import {
   ActionTile,
   Avatar,
@@ -9,13 +17,13 @@ import {
   EmptyState,
   LoadingState,
   Page,
-  SectionTitle,
   Stat,
   TopBar,
   styles,
 } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
+import { useThemeContext } from "@/lib/theme-provider";
 import { errorText, pageRequest } from "@/lib/api-helpers";
 import {
   PROFILE_TABS,
@@ -26,42 +34,82 @@ import {
 } from "@/lib/profile-post-utils";
 import { colors } from "@/theme/tokens";
 import type { Post, UserProfile } from "@/types/domain";
+import { ProfileSkeleton, SkeletonGrid } from "@/components/skeleton";
 import { ApiProfileTile } from "./api-profile-tile";
 
 export function ApiPersonalProfile() {
   const services = useMabizServices();
   const app = useAppStore();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const { colorScheme } = useThemeContext();
+  const isDark = colorScheme === "dark";
+
+  // Theme-responsive palette derived from system color scheme & design tokens
+  const theme = useMemo(
+    () => ({
+      bg: colors.canvas,
+      surface: colors.surface,
+      surfaceElevated: colors.subtle,
+      border: colors.border,
+      textPrimary: colors.ink,
+      textSecondary: colors.muted,
+      accent: colors.emerald,
+      accentText: colors.emeraldDark,
+      accentSoft: colors.emeraldTint,
+      businessBadgeBg: isDark ? "rgba(56, 189, 248, 0.15)" : "rgba(14, 165, 233, 0.10)",
+      businessBadgeText: isDark ? "#38BDF8" : "#0284C7",
+      backdrop: isDark ? "rgba(0, 0, 0, 0.65)" : "rgba(15, 23, 42, 0.45)",
+      handleBar: colors.border,
+    }),
+    [isDark]
+  );
+
   const [person, setPerson] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [businessPosts, setBusinessPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [postsError, setPostsError] = useState("");
   const [tab, setTab] = useState<ProfileTab>("all");
-  const [businessMode, setBusinessMode] = useState(false);
-  const [businessLoading, setBusinessLoading] = useState(true);
+  const [businessMode, setBusinessMode] = useState(() => Boolean(app.activeBusinessId));
+  const [businessLoading, setBusinessLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [businessError, setBusinessError] = useState("");
+  const [businessPostsLoading, setBusinessPostsLoading] = useState(() => Boolean(app.activeBusinessId));
+  const [businessPostsError, setBusinessPostsError] = useState("");
+  const loadSeq = useRef(0);
+  const error = [profileError, postsError ? `Posts: ${postsError}` : ""].filter(Boolean).join("; ");
   const replaceApiBusinesses = app.replaceApiBusinesses;
 
   const load = useCallback(async () => {
+    loadSeq.current += 1;
+    const seq = loadSeq.current;
     setLoading(true);
-    setError("");
-    const [profile, page] = await Promise.all([
-      services.users.getProfile("me"),
-      services.posts.listUserPosts("me", pageRequest()),
-    ]);
-    if (!profile.ok) setError(errorText(profile.error));
-    else setPerson(profile.data);
-    if (!page.ok)
-      setError((current) =>
-        current ? `${current}; posts: ${errorText(page.error)}` : `Posts: ${errorText(page.error)}`
-      );
-    else setPosts(page.data.items);
-    setLoading(false);
+    setProfileError("");
+    setPostsError("");
+    try {
+      const [profile, page] = await Promise.all([
+        services.users.getProfile("me"),
+        services.posts.listUserPosts("me", pageRequest()),
+      ]);
+      if (seq !== loadSeq.current) return;
+      if (!profile.ok) setProfileError(errorText(profile.error));
+      else setPerson(profile.data);
+      if (!page.ok) setPostsError(errorText(page.error));
+      else setPosts(page.data.items);
+    } catch (cause: unknown) {
+      if (seq !== loadSeq.current) return;
+      setProfileError(cause instanceof Error ? cause.message : "Could not load profile.");
+    } finally {
+      if (seq === loadSeq.current) setLoading(false);
+    }
   }, [services]);
+
   useEffect(() => {
     void load();
+    return () => {
+      loadSeq.current += 1;
+    };
   }, [load]);
 
   useEffect(() => {
@@ -96,15 +144,26 @@ export function ApiPersonalProfile() {
   useEffect(() => {
     if (!businessMode || !activeBusinessId) {
       setBusinessPosts([]);
+      setBusinessPostsLoading(false);
       return;
     }
     let active = true;
     setBusinessPosts([]);
-    void services.posts.listBusinessPosts(activeBusinessId, pageRequest()).then((result) => {
-      if (!active) return;
-      if (result.ok) setBusinessPosts(result.data.items);
-      else setBusinessError(errorText(result.error));
-    });
+    setBusinessPostsError("");
+    setBusinessPostsLoading(true);
+    void services.posts
+      .listBusinessPosts(activeBusinessId, pageRequest())
+      .then((result) => {
+        if (!active) return;
+        if (result.ok) setBusinessPosts(result.data.items);
+        else setBusinessPostsError(errorText(result.error));
+        setBusinessPostsLoading(false);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setBusinessPostsError(cause instanceof Error ? cause.message : "Could not load business posts.");
+        setBusinessPostsLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -122,6 +181,14 @@ export function ApiPersonalProfile() {
     [tab, shownPosts]
   );
 
+  const visibleTabs = useMemo(
+    () => (inBusiness ? PROFILE_TABS.filter((item) => item.key !== "saved") : PROFILE_TABS),
+    [inBusiness]
+  );
+  useEffect(() => {
+    if (inBusiness && tab === "saved") setTab("all");
+  }, [inBusiness, tab]);
+
   const tileSize = Math.floor((width - 32 - 4) / 3);
   const emptyText: Record<ProfileTab, string> = {
     all: "No posts yet.",
@@ -133,6 +200,7 @@ export function ApiPersonalProfile() {
   const displayName = inBusiness && activeBusiness ? activeBusiness.name : person?.name ?? "";
   const displayHandle = inBusiness && activeBusiness ? activeBusiness.slug : person?.username ?? "";
   const displayAbout = inBusiness && activeBusiness ? activeBusiness.description : person?.bio;
+
   const selectPersonal = () => {
     setBusinessMode(false);
     setPickerOpen(false);
@@ -155,7 +223,7 @@ export function ApiPersonalProfile() {
   };
 
   return (
-    <Page onRefresh={() => void load()} refreshing={loading}>
+    <Page onRefresh={() => void load()} refreshing={loading} style={{ backgroundColor: theme.bg }}>
       <TopBar
         title={person ? `@${displayHandle}` : "Profile"}
         onTitlePress={person ? () => setPickerOpen(true) : undefined}
@@ -167,19 +235,38 @@ export function ApiPersonalProfile() {
             hitSlop={8}
             style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
           >
-            <Ionicons name="menu-outline" size={26} color={colors.navy} />
+            <Ionicons name="menu-outline" size={26} color={theme.textPrimary} />
           </Pressable>
         }
       />
+
       {error ? (
-        <View accessibilityRole="alert">
-          <Text style={styles.body}>Profile error: {error}</Text>
+        <View
+          accessibilityRole="alert"
+          style={{
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 12,
+            gap: 8,
+          }}
+        >
+          <Text style={[styles.body, { color: theme.textPrimary }]}>Profile error: {error}</Text>
           <Button title="Retry" small variant="outline" onPress={() => void load()} />
         </View>
       ) : null}
-      {loading ? <LoadingState label="Loading your profile from server" /> : null}
-      {!loading && !error && person ? (
+
+      {loading ? (
         <>
+          <ProfileSkeleton />
+          <SkeletonGrid size={tileSize} />
+        </>
+      ) : null}
+
+      {!loading && person ? (
+        <>
+          {/* Profile Header & Stats */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
             <Avatar
               name={displayName}
@@ -189,12 +276,13 @@ export function ApiPersonalProfile() {
             />
             <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
               <Stat value={shownPosts.length} label="Posts" />
-              <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
-                <Stat
-                  value={inBusiness && activeBusiness ? activeBusiness.followers : person.followers}
-                  label="Followers"
-                />
-              </Pressable>
+              {inBusiness && activeBusiness ? (
+                <Stat value={activeBusiness.followers} label="Followers" />
+              ) : (
+                <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                  <Stat value={person.followers} label="Followers" />
+                </Pressable>
+              )}
               {inBusiness ? null : (
                 <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
                   <Stat value={person.following} label="Following" />
@@ -203,16 +291,59 @@ export function ApiPersonalProfile() {
             </View>
           </View>
 
-          <View style={{ gap: 2 }}>
-            <Text style={styles.sectionHeading}>{displayName}</Text>
-            <Text style={styles.caption}>
+          {/* Identity Info + Quick Switcher Pill */}
+          <View style={{ gap: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
+                <Text style={[styles.sectionHeading, { color: theme.textPrimary }]} numberOfLines={1}>
+                  {displayName}
+                </Text>
+                {inBusiness ? (
+                  <View
+                    style={{
+                      backgroundColor: theme.businessBadgeBg,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 999,
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: theme.businessBadgeText }}>
+                      Business
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Switch profile"
+                onPress={() => setPickerOpen(true)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 999,
+                  backgroundColor: theme.surfaceElevated,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                }}
+              >
+                <Ionicons name="swap-horizontal-outline" size={14} color={theme.accentText} />
+                <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textPrimary }}>Switch</Text>
+              </Pressable>
+            </View>
+
+            <Text style={[styles.caption, { color: theme.textSecondary }]}>
               {inBusiness && activeBusiness
-                ? `${activeBusiness.category} - ${activeBusiness.town}`
+                ? `${activeBusiness.category} · ${activeBusiness.town}`
                 : `${person.town}, ${person.county}`}
             </Text>
-            {displayAbout ? <Text style={styles.body}>{displayAbout}</Text> : null}
+            {displayAbout ? <Text style={[styles.body, { color: theme.textPrimary }]}>{displayAbout}</Text> : null}
           </View>
 
+          {/* Primary Actions */}
           <View style={{ flexDirection: "row", gap: 9 }}>
             <View style={{ flex: 1 }}>
               <Button
@@ -228,61 +359,210 @@ export function ApiPersonalProfile() {
             </View>
           </View>
 
-          <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
+          {/* Redesigned Bottom Sheet Profile Switcher */}
+          <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
             <Pressable
               onPress={() => setPickerOpen(false)}
-              style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "flex-end" }}
+              style={{ flex: 1, backgroundColor: theme.backdrop, justifyContent: "flex-end" }}
             >
               <Pressable
                 onPress={() => {}}
                 style={{
-                  backgroundColor: colors.surface,
-                  borderTopLeftRadius: 16,
-                  borderTopRightRadius: 16,
-                  padding: 16,
-                  gap: 9,
+                  backgroundColor: theme.surface,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  borderTopWidth: 1,
+                  borderColor: theme.border,
+                  paddingTop: 10,
+                  paddingHorizontal: 16,
+                  paddingBottom: 24,
+                  maxHeight: height * 0.78,
+                  gap: 14,
                 }}
               >
-                <Text style={styles.cardTitle}>Switch profile</Text>
+                {/* Sheet Drag Handle */}
+                <View style={{ alignItems: "center" }}>
+                  <View
+                    style={{
+                      width: 40,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: theme.handleBar,
+                    }}
+                  />
+                </View>
 
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={selectPersonal}
-                  style={[styles.actionTile, { borderColor: !inBusiness ? colors.emerald : colors.border }]}
-                >
-                  <Avatar name={person.name} image={person.avatar} size={38} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>{person.name}</Text>
-                    <Text style={styles.caption}>Personal profile</Text>
+                {/* Sheet Header */}
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <View>
+                    <Text style={[styles.cardTitle, { color: theme.textPrimary, fontSize: 17 }]}>
+                      Switch account
+                    </Text>
+                    <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                      Choose between your personal account and business profiles
+                    </Text>
                   </View>
-                  {!inBusiness ? <Ionicons name="checkmark-circle" size={19} color={colors.emerald} /> : null}
-                </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Close profile switcher"
+                    onPress={() => setPickerOpen(false)}
+                    hitSlop={8}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: theme.surfaceElevated,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="close" size={18} color={theme.textSecondary} />
+                  </Pressable>
+                </View>
 
-                {businessLoading ? (
-                  <Text style={styles.caption}>Loading managed businesses...</Text>
-                ) : (
-                  managed.map((business) => {
-                    const selected = inBusiness && app.activeBusinessId === business.id;
-                    return (
-                      <Pressable
-                        key={business.id}
-                        accessibilityRole="button"
-                        onPress={() => selectBusiness(business.id)}
-                        style={[styles.actionTile, { borderColor: selected ? colors.emerald : colors.border }]}
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
+                  {/* Personal Profile Section */}
+                  <View style={{ gap: 6 }}>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight: "700",
+                        letterSpacing: 0.6,
+                        textTransform: "uppercase",
+                        color: theme.textSecondary,
+                      }}
+                    >
+                      Personal Account
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={selectPersonal}
+                      style={[
+                        styles.actionTile,
+                        {
+                          backgroundColor: !inBusiness ? theme.accentSoft : theme.surfaceElevated,
+                          borderColor: !inBusiness ? theme.accent : theme.border,
+                          borderWidth: !inBusiness ? 1.5 : 1,
+                          borderRadius: 14,
+                        },
+                      ]}
+                    >
+                      <Avatar name={person.name} image={person.avatar} size={42} />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{person.name}</Text>
+                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                          @{person.username} · Personal profile
+                        </Text>
+                      </View>
+                      {!inBusiness ? (
+                        <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
+                      ) : (
+                        <Ionicons name="ellipse-outline" size={22} color={theme.textSecondary} />
+                      )}
+                    </Pressable>
+                  </View>
+
+                  {/* Business Profiles Section */}
+                  <View style={{ gap: 8 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Ionicons name="storefront-outline" size={14} color={theme.businessBadgeText} />
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: "700",
+                            letterSpacing: 0.6,
+                            textTransform: "uppercase",
+                            color: theme.textSecondary,
+                          }}
+                        >
+                          Business Profiles
+                        </Text>
+                      </View>
+                      {managed.length > 0 ? (
+                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                          {managed.length} {managed.length === 1 ? "business" : "businesses"}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    {businessLoading ? (
+                      <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                        Loading business profiles...
+                      </Text>
+                    ) : managed.length === 0 ? (
+                      <View
+                        style={{
+                          padding: 12,
+                          borderRadius: 12,
+                          borderWidth: 1,
+                          borderColor: theme.border,
+                          backgroundColor: theme.surfaceElevated,
+                        }}
                       >
-                        <Avatar name={business.name} image={business.logo} size={38} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.cardTitle}>{business.name}</Text>
-                          <Text style={styles.caption}>{business.currentUserRole ?? "Team member"}</Text>
-                        </View>
-                        {selected ? <Ionicons name="checkmark-circle" size={19} color={colors.emerald} /> : null}
-                      </Pressable>
-                    );
-                  })
-                )}
+                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                          No business profiles linked yet. Create one to manage a storefront and post as a business.
+                        </Text>
+                      </View>
+                    ) : (
+                      managed.map((business) => {
+                        const selected = inBusiness && app.activeBusinessId === business.id;
+                        return (
+                          <Pressable
+                            key={business.id}
+                            accessibilityRole="button"
+                            onPress={() => selectBusiness(business.id)}
+                            style={[
+                              styles.actionTile,
+                              {
+                                backgroundColor: selected ? theme.accentSoft : theme.surfaceElevated,
+                                borderColor: selected ? theme.accent : theme.border,
+                                borderWidth: selected ? 1.5 : 1,
+                                borderRadius: 14,
+                              },
+                            ]}
+                          >
+                            <Avatar name={business.name} image={business.logo} size={42} />
+                            <View style={{ flex: 1, gap: 3 }}>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{business.name}</Text>
+                                <View
+                                  style={{
+                                    backgroundColor: theme.businessBadgeBg,
+                                    paddingHorizontal: 7,
+                                    paddingVertical: 1.5,
+                                    borderRadius: 6,
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: "700",
+                                      color: theme.businessBadgeText,
+                                    }}
+                                  >
+                                    Business profile
+                                  </Text>
+                                </View>
+                              </View>
+                              <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                                @{business.slug} · {business.currentUserRole ?? "Team member"}
+                              </Text>
+                            </View>
+                            {selected ? (
+                              <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
+                            ) : (
+                              <Ionicons name="ellipse-outline" size={22} color={theme.textSecondary} />
+                            )}
+                          </Pressable>
+                        );
+                      })
+                    )}
+                  </View>
+                </ScrollView>
 
                 <Button
-                  title="Add business"
+                  title="Create a business profile"
                   icon="add-circle-outline"
                   variant="outline"
                   small
@@ -295,9 +575,13 @@ export function ApiPersonalProfile() {
             </Pressable>
           </Modal>
 
+          {/* Active Business Quick Actions (shown only when switched into a business profile) */}
           {businessMode ? (
             <View style={{ gap: 8 }}>
-              {businessError ? <Text style={styles.caption}>{businessError}</Text> : null}
+              {businessError ? <Text style={[styles.caption, { color: theme.textSecondary }]}>{businessError}</Text> : null}
+              {businessPostsError ? (
+                <Text style={[styles.caption, { color: theme.textSecondary }]}>{businessPostsError}</Text>
+              ) : null}
               {activeBusiness ? (
                 <>
                   <ActionTile
@@ -317,33 +601,11 @@ export function ApiPersonalProfile() {
                 </>
               ) : null}
             </View>
-          ) : managed.length ? (
-            <View style={{ gap: 9 }}>
-              <SectionTitle title="Your businesses" action="Create business" onAction={() => router.push("/create-business")} />
-              {managed.map((business) => (
-                <Pressable
-                  key={business.id}
-                  accessibilityRole="button"
-                  onPress={() => router.push({ pathname: "/business/[id]", params: { id: business.id } })}
-                  style={styles.actionTile}
-                >
-                  <View style={styles.tileIcon}>
-                    <Ionicons name="storefront-outline" size={19} color={colors.emerald} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>{business.name}</Text>
-                    <Text style={styles.caption}>
-                      {business.category} - {business.town} - {business.currentUserRole ?? "Owner"}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-                </Pressable>
-              ))}
-            </View>
           ) : null}
 
-          <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            {PROFILE_TABS.map((item) => {
+          {/* Content Tabs */}
+          <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: theme.border }}>
+            {visibleTabs.map((item) => {
               const selected = tab === item.key;
               return (
                 <Pressable
@@ -357,18 +619,19 @@ export function ApiPersonalProfile() {
                     alignItems: "center",
                     paddingVertical: 10,
                     borderBottomWidth: 2,
-                    borderBottomColor: selected ? colors.emerald : "transparent",
+                    borderBottomColor: selected ? theme.accent : "transparent",
                   }}
                 >
-                  <Ionicons name={item.icon} size={22} color={selected ? colors.emeraldDark : colors.muted} />
+                  <Ionicons name={item.icon} size={22} color={selected ? theme.accentText : theme.textSecondary} />
                 </Pressable>
               );
             })}
           </View>
-          <Text style={[styles.caption, { textAlign: "center" }]}>
+          <Text style={[styles.caption, { textAlign: "center", color: theme.textSecondary }]}>
             {PROFILE_TABS.find((item) => item.key === tab)?.label}
           </Text>
 
+          {/* Tab Content */}
           {tab === "saved" ? (
             <View style={{ gap: 8 }}>
               <ActionTile
@@ -384,6 +647,8 @@ export function ApiPersonalProfile() {
                 onPress={() => router.push("/menu/activity/saved-businesses")}
               />
             </View>
+          ) : inBusiness && businessPostsLoading ? (
+            <SkeletonGrid size={tileSize} />
           ) : tabPosts.length ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 2 }}>
               {tabPosts.map((post) => (
@@ -395,8 +660,9 @@ export function ApiPersonalProfile() {
           )}
         </>
       ) : null}
-      <Text style={styles.caption}>
-        Signed in as {app.user.username} - profile and post visibility are determined by server responses.
+
+      <Text style={[styles.caption, { color: theme.textSecondary }]}>
+        Signed in as {app.user.username} · profile and post visibility are determined by server responses.
       </Text>
     </Page>
   );

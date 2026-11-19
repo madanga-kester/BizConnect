@@ -7,10 +7,12 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import type { Post } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const errorText = (error: { message: string; code?: string }) => `${error.message}${error.code ? ` (${error.code})` : ""}`;
 
 export function ApiPostCard({ post }: { post: Post }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [liked, setLiked] = useState(Boolean(post.viewerHasLiked));

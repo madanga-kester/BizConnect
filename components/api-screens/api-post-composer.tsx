@@ -12,8 +12,10 @@ import type { ApiPollInput } from "@/lib/api/feature-contracts";
 import { ComposerForm } from "./composer-form";
 import { ComposerPreview } from "./composer-preview";
 import { ComposerTypePicker, type TypeChoice } from "./composer-type-picker";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiPostComposer() {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [step, setStep] = useState<1 | 2 | 3>(1);

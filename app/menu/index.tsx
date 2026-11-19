@@ -16,12 +16,13 @@ import {
 import { ConfirmModal } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
-import { colors } from "@/theme/tokens";
+import { colors, createThemedStyles } from "@/theme/tokens";
 import {
   useMabizServices,
   useMabizServiceMode,
 } from "@/lib/services/service-provider";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemeContext } from "@/lib/theme-provider";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type MenuItem = {
@@ -46,6 +47,7 @@ function feedback(message: string) {
 }
 
 export default function MenuScreen() {
+  useThemeContext();
   const app = useAppStore();
   const services = useMabizServices();
   const serviceMode = useMabizServiceMode();
@@ -312,7 +314,7 @@ export default function MenuScreen() {
       activeOpacity={item.isSwitch ? 1 : 0.6}
     >
       <View style={localStyles.menuItemLeft}>
-        <Ionicons name={item.icon} size={20} color="#6B7280" style={localStyles.menuItemIcon} />
+        <Ionicons name={item.icon} size={20} color={colors.muted} style={localStyles.menuItemIcon} />
         <View style={localStyles.menuItemTextContainer}>
           <Text style={localStyles.menuItemTitle}>{item.title}</Text>
           {item.detail && !item.isSwitch && (
@@ -322,17 +324,17 @@ export default function MenuScreen() {
           )}
         </View>
       </View>
-      
+
       {item.isSwitch ? (
         <Switch
           value={item.switchValue}
           onValueChange={item.onSwitchChange}
-          trackColor={{ false: "#E5E7EB", true: colors.emerald }}
+          trackColor={{ false: colors.border, true: colors.emerald }}
           thumbColor="#FFFFFF"
-          ios_backgroundColor="#E5E7EB"
+          ios_backgroundColor={colors.border}
         />
       ) : (
-        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
       )}
     </TouchableOpacity>
   );
@@ -427,14 +429,14 @@ export default function MenuScreen() {
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
-const localStyles = StyleSheet.create({
+const localStyles = createThemedStyles(() => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.canvas,
   },
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.canvas,
   },
 
   // Header
@@ -442,12 +444,12 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.ink,
     letterSpacing: -0.2,
   },
 
@@ -481,7 +483,7 @@ const localStyles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.ink,
   },
   signInLink: {
     marginTop: 8,
@@ -499,7 +501,7 @@ const localStyles = StyleSheet.create({
   sectionHeader: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#9CA3AF",
+    color: colors.muted,
     textTransform: "uppercase",
     letterSpacing: 0.4,
     paddingHorizontal: 20,
@@ -507,10 +509,10 @@ const localStyles = StyleSheet.create({
     marginTop: 4,
   },
   menuGroup: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "#F3F4F6",
+    borderColor: colors.border,
   },
 
   // Menu Item
@@ -521,7 +523,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.border,
   },
   menuItemLast: {
     borderBottomWidth: 0,
@@ -542,11 +544,11 @@ const localStyles = StyleSheet.create({
   menuItemTitle: {
     fontSize: 15,
     fontWeight: "400",
-    color: "#1F2937",
+    color: colors.ink,
   },
   menuItemDetail: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color: colors.muted,
     marginTop: 2,
   },
 
@@ -559,6 +561,6 @@ const localStyles = StyleSheet.create({
   signOutText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#EF4444",
+    color: colors.danger ?? "#EF4444",
   },
-});
+}));

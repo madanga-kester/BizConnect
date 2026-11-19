@@ -4,6 +4,7 @@ import { Pressable, Switch, Text, TextInput, View } from "react-native";
 import { Avatar, Button, Chip, Field, styles } from "@/components/biz-ui";
 import { colors } from "@/theme/tokens";
 import type { Business, UserProfile } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 type Set<T> = Dispatch<SetStateAction<T>>;
 
@@ -53,6 +54,7 @@ type Props = {
 };
 
 export function ComposerForm(p: Props) {
+  useThemeContext();
   return (
     <View style={{ gap: 14, paddingTop: 6 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>

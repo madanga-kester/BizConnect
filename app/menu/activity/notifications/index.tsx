@@ -10,6 +10,7 @@ import { navigateToNotification } from "@/lib/notifications/navigation";
 import { colors } from "@/theme/tokens";
 import { formatDate } from "@/utils/kenya";
 import type { NotificationItem } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const ICONS = {
   follow: "person-add-outline", like: "heart-outline", comment: "chatbubble-outline", reply: "return-down-forward-outline",
@@ -19,6 +20,7 @@ function errorText(error: { code: string; message: string }): string { return `$
 function say(message: string): void { if (Platform.OS === "web") window.alert(message); else Alert.alert("Notifications", message); }
 
 export default function NotificationsScreen() {
+  useThemeContext();
   const app = useAppStore();
   const services = useMabizServices();
   const mode = useMabizServiceMode();

@@ -18,8 +18,10 @@ import { useMabizServices } from "@/lib/services/service-provider";
 import { errorText, pageRequest } from "@/lib/api-helpers";
 import { colors } from "@/theme/tokens";
 import type { Post, UserProfile } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiPersonProfile({ personId }: { personId: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [person, setPerson] = useState<UserProfile | null>(null);

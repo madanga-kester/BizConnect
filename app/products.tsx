@@ -6,8 +6,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { filterVisibleBusinesses } from "@/utils/privacy-policy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function ProductsScreen() {
+  useThemeContext();
   const apiMode = useMabizServiceMode() === "api";
   // Stage 5: API mode browses the published server catalogue through anonymous discovery.
   if (apiMode) return <ApiCatalogueDiscovery />;
@@ -15,6 +17,7 @@ export default function ProductsScreen() {
 }
 
 function MockProductsScreen() {
+  useThemeContext();
   const app = useAppStore();
   const [query, setQuery] = useState("");
   const visibleBusinesses = useMemo(() => filterVisibleBusinesses(app.businesses, app.blockedUsers), [app.businesses, app.blockedUsers]);

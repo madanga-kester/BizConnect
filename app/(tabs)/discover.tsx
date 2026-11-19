@@ -10,11 +10,13 @@ import { colors } from "@/theme/tokens";
 import { COUNTY_TOWNS, KENYAN_COUNTIES } from "@/utils/kenya";
 import { t } from "@/i18n/translations";
 import { filterVisibleBusinesses } from "@/utils/privacy-policy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const CATEGORIES = ["All", "Fashion", "Food & restaurants", "Bakery & baked goods", "Natural hair salon", "Beauty & cosmetics", "Electronics", "Agriculture", "Furniture", "Construction", "Education", "Technology", "Transport", "Professional services", "Health & wellness", "Entertainment", "Home services", "Retail"];
 const SORTS = ["Recommended", "A-Z business name", "Highest rating", "Most followed", "Most popular", "Recently registered"] as const;
 
 export default function DiscoverScreen() {
+  useThemeContext();
   const app = useAppStore();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");

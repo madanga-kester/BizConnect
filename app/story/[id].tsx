@@ -8,8 +8,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { colors } from "@/theme/tokens";
 import { profileRestriction } from "@/utils/privacy-policy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function StoryDetailScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const app = useAppStore();
   const requireAuth = useRequireAuth();

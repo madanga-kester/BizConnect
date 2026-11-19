@@ -4,8 +4,10 @@ import { Avatar, Button, Field } from "@/components/biz-ui";
 import { alertUser } from "@/components/create/create-helpers";
 import type { PostComposer } from "@/components/create/use-post-composer";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function StepWrite({ composer }: { composer: PostComposer }) {
+  useThemeContext();
   const {
     app,
     identity,

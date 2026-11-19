@@ -3,8 +3,10 @@ import { Pressable, Switch, Text, View } from "react-native";
 import { Button, Chip, Field, MediaImage, VideoPreview } from "@/components/biz-ui";
 import type { PostComposer } from "@/components/create/use-post-composer";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function StepDetails({ composer }: { composer: PostComposer }) {
+  useThemeContext();
   const {
     app,
     kind,

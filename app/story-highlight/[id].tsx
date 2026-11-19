@@ -6,6 +6,7 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useClock } from "@/hooks/use-clock";
 import type { EnhancedStoryHighlight } from "@/types/create-studio";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function announce(title: string, message: string) {
   if (Platform.OS === "web") window.alert(`${title}\n\n${message}`);
@@ -13,6 +14,7 @@ function announce(title: string, message: string) {
 }
 
 export default function StoryHighlightScreen() {
+  useThemeContext();
   const app = useAppStore();
   const now = useClock();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +25,7 @@ export default function StoryHighlightScreen() {
 }
 
 function HighlightEditor({ app, highlight, now }: { app: ReturnType<typeof useAppStore>; highlight: EnhancedStoryHighlight; now: number }) {
+  useThemeContext();
   const [title, setTitle] = useState(highlight.title);
   const [coverUri, setCoverUri] = useState<string | undefined>(highlight.coverUri);
   const [removeStoryId, setRemoveStoryId] = useState<string>();

@@ -18,6 +18,7 @@ import { PEOPLE } from "@/data/seed";
 import type { Business, Post, Product } from "@/types/domain";
 
 function ConnectivityBanner() {
+  useThemeContext();
   const [offline, setOffline] = useState(false);
   useEffect(() => {
     let active = true;
@@ -45,6 +46,7 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
 }
 
 export function TopBar({ title, back, right, subtitle, brandNameOnly = false, onTitlePress }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean; onTitlePress?: () => void }) {
+  useThemeContext();
   return <View style={styles.topbar}>
     {back || brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
     <View style={{ flex: 1 }}>
@@ -56,10 +58,12 @@ export function TopBar({ title, back, right, subtitle, brandNameOnly = false, on
 }
 
 export function IconButton({ name, onPress, label, color = colors.ink, badge, compact = false }: { name: keyof typeof Ionicons.glyphMap; onPress: () => void; label: string; color?: string; badge?: boolean; compact?: boolean }) {
+  useThemeContext();
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.iconButton, compact ? { width: 34, height: 34, borderRadius: 12 } : null]}><Ionicons name={name} size={compact ? 18 : 21} color={color} />{badge ? <View style={styles.dot} /> : null}</Pressable>;
 }
 
 export function Button({ title, onPress, variant = "primary", icon, disabled, small }: { title: string; onPress: () => void; variant?: "primary" | "soft" | "outline" | "quiet" | "danger"; icon?: keyof typeof Ionicons.glyphMap; disabled?: boolean; small?: boolean }) {
+  useThemeContext();
   const palette = variant === "primary" ? [colors.emeraldFill, colors.white] : variant === "soft" ? [colors.emeraldTint, colors.emeraldDark] : variant === "danger" ? [colors.dangerTint, colors.danger] : variant === "outline" ? [colors.surface, colors.ink] : ["transparent", colors.ink];
   return <Pressable accessibilityRole="button" disabled={disabled} onPress={(event) => { event.stopPropagation(); onPress(); }} style={({ pressed }) => [styles.button, { backgroundColor: palette[0], borderColor: variant === "outline" ? colors.border : palette[0], paddingVertical: small ? 8 : 12, opacity: disabled ? 0.45 : pressed ? 0.82 : 1 }]}>
     {icon ? <Ionicons name={icon} size={16} color={palette[1]} /> : null}<Text style={[styles.buttonText, { color: palette[1], fontSize: small ? 12 : 14 }]}>{title}</Text>
@@ -67,15 +71,18 @@ export function Button({ title, onPress, variant = "primary", icon, disabled, sm
 }
 
 export function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  useThemeContext();
   return <View style={styles.sectionTitle}><Text style={styles.sectionHeading}>{title}</Text>{action && onAction ? <Pressable accessibilityRole="button" onPress={onAction}><Text style={styles.link}>{action}</Text></Pressable> : null}</View>;
 }
 
 export function Chip({ label, selected, onPress, icon }: { label: string; selected?: boolean; onPress?: () => void; icon?: keyof typeof Ionicons.glyphMap }) {
+  useThemeContext();
   return <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>{icon ? <Ionicons name={icon} size={14} color={selected ? colors.emeraldDark : colors.muted} /> : null}<Text style={[styles.chipText, selected && { color: colors.emeraldDark, fontWeight: "700" }]}>{label}</Text></Pressable>;
 }
 
 export function Avatar({ name, image, size = 42, ring = false }: { name: string; image?: string; size?: number; ring?: boolean }) {
   const { settings } = useAppStore();
+  useThemeContext();
   const initials = (name ?? "").split(" ").slice(0, 2).map((x) => x[0]).join("").toUpperCase();
   const validImage = Boolean(image && /^(https?:|file:|content:|data:|asset:|\/seed-images\/)/i.test(image));
   const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !image?.startsWith("/seed-images/"));
@@ -94,6 +101,7 @@ const NATIVE_BUSINESS_MEDIA = {
 export function MediaImage({ uri, height = 180, label }: { uri?: string; height?: number; label?: string }) {
   const { settings } = useAppStore();
   const validImage = Boolean(uri && /^(https?:|file:|content:|data:|asset:|\/seed-images\/)/i.test(uri));
+  useThemeContext();
   const nativeSource = Platform.OS !== "web" && uri && uri in NATIVE_BUSINESS_MEDIA ? NATIVE_BUSINESS_MEDIA[uri as keyof typeof NATIVE_BUSINESS_MEDIA] : undefined;
   const imageUsable = validImage && !settings.reducedData && (Platform.OS === "web" || !uri?.startsWith("/seed-images/") || Boolean(nativeSource));
   return <View style={{ height, borderRadius: radius.md, backgroundColor: colors.emeraldTint, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
@@ -103,17 +111,20 @@ export function MediaImage({ uri, height = 180, label }: { uri?: string; height?
 
 
 export function VideoPreview({ uri, height = 190 }: { uri: string; height?: number }) {
+  useThemeContext();
   const player = useVideoPlayer(uri, (instance) => { instance.loop = false; instance.pause(); });
   return <View style={{ height, borderRadius: radius.md, overflow: "hidden", backgroundColor: colors.navy }}><VideoView player={player} style={{ width: "100%", height: "100%" }} contentFit="cover" nativeControls /></View>;
 }
 
 export function VerifiedBadge({ verified }: { verified: boolean }) {
+  useThemeContext();
   return verified ? <View style={styles.verified}><Ionicons name="checkmark-circle" size={14} color={colors.emerald} /><Text style={styles.verifiedText}>Verified</Text></View> : null;
 }
 
 export function BusinessCard({ business, horizontal = false }: { business: Business; horizontal?: boolean }) {
   const store = useAppStore();
   const requireAuth = useRequireAuth();
+  useThemeContext();
   const isFollowing = store.followedBusinesses.includes(business.id);
   return <View style={[styles.card, horizontal ? { width: 270, marginRight: 12 } : null]}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Open ${business.name} business profile`} onPress={() => router.push({ pathname: "/business/[id]", params: { id: business.id } })}>
@@ -134,6 +145,7 @@ export function PostCard({ post }: { post: Post }) {
   const store = useAppStore();
   const now = useClock();
   const requireAuth = useRequireAuth();
+  useThemeContext();
   const biz = store.businesses.find((b) => b.id === post.identityId);
   const person = post.identityKind === "business" ? undefined : (post.authorId === store.user.id ? store.user : PEOPLE.find((item) => item.id === post.authorId));
   const name = biz?.name ?? person?.name ?? "Mabiz member";
@@ -166,6 +178,7 @@ export function PostCard({ post }: { post: Post }) {
 }
 
 export function ProductCard({ product }: { product: Product }) {
+  useThemeContext();
   const business = useAppStore().businesses.find((b) => b.id === product.businessId);
   return <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/product/[id]", params: { id: product.id } })} style={styles.productCard}>
     <MediaImage uri={product.image} height={125} label={product.category} />
@@ -211,16 +224,18 @@ export function EmptyState({ title, detail, icon = "sparkles-outline", action, o
 }
 
 export function Field({ label, value, onChangeText, placeholder, multiline, keyboardType, secureTextEntry, right }: TextInputProps & { label: string; right?: ReactNode }) {
+  useThemeContext();
   return <View style={{ gap: 6 }}><Text style={styles.label}>{label}</Text><View style={[styles.inputWrap, multiline ? { alignItems: "flex-start" } : null]}><TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} multiline={multiline} keyboardType={keyboardType} secureTextEntry={secureTextEntry} style={[styles.input, multiline ? { minHeight: 88, textAlignVertical: "top" } : null]} accessibilityLabel={label} />{right}</View></View>;
 }
 
-export function Stat({ value, label }: { value: string | number; label: string }) { return <View style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.caption}>{label}</Text></View>; }
-export function LocalNote({ text }: { text?: string }) { return <View style={styles.localNote}><Ionicons name="phone-portrait-outline" size={14} color={colors.navySoft} /><Text style={styles.localNoteText}>{text ?? "Demo mode · saved on this device only"}</Text></View>; }
-export function Divider() { return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 7 }} />; }
-export function ActionTile({ title, detail, icon, onPress }: { title: string; detail?: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }) { return <Pressable accessibilityRole="button" onPress={onPress} style={styles.actionTile}><View style={styles.tileIcon}><Ionicons name={icon} size={19} color={colors.emeraldDark} /></View><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{title}</Text>{detail ? <Text style={styles.caption}>{detail}</Text> : null}</View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>; }
-export function LoadingState({ label = "Loading" }: { label?: string }) { return <View style={styles.loading}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>{label}…</Text></View>; }
+export function Stat({ value, label }: { value: string | number; label: string }) { useThemeContext(); return <View style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.caption}>{label}</Text></View>; }
+export function LocalNote({ text }: { text?: string }) { useThemeContext(); return <View style={styles.localNote}><Ionicons name="phone-portrait-outline" size={14} color={colors.navySoft} /><Text style={styles.localNoteText}>{text ?? "Demo mode · saved on this device only"}</Text></View>; }
+export function Divider() { useThemeContext(); return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 7 }} />; }
+export function ActionTile({ title, detail, icon, onPress }: { title: string; detail?: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }) { useThemeContext(); return <Pressable accessibilityRole="button" onPress={onPress} style={styles.actionTile}><View style={styles.tileIcon}><Ionicons name={icon} size={19} color={colors.emeraldDark} /></View><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{title}</Text>{detail ? <Text style={styles.caption}>{detail}</Text> : null}</View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>; }
+export function LoadingState({ label = "Loading" }: { label?: string }) { useThemeContext(); return <View style={styles.loading}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>{label}…</Text></View>; }
 
 export function ConfirmModal({ visible, title, detail, confirmLabel = "Confirm", onCancel, onConfirm, destructive = false }: { visible: boolean; title: string; detail: string; confirmLabel?: string; onCancel: () => void; onConfirm: () => void; destructive?: boolean }) {
+  useThemeContext();
   return <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}><View style={styles.modalBackdrop}><View style={styles.modalCard}><Text style={styles.sectionHeading}>{title}</Text><Text style={styles.body}>{detail}</Text><View style={[styles.row, { justifyContent: "flex-end", marginTop: 10 }]}><Button title="Cancel" variant="quiet" onPress={onCancel} small /><Button title={confirmLabel} variant={destructive ? "danger" : "primary"} onPress={onConfirm} small /></View></View></View></Modal>;
 }
 

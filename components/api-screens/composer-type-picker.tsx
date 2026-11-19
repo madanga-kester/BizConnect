@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { styles } from "@/components/biz-ui";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export type TypeChoice = {
   title: string;
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export function ComposerTypePicker({ choices, selectedType, noBusinesses, onPick }: Props) {
+  useThemeContext();
   return (
     <View style={{ gap: 12, paddingTop: 8 }}>
       <Text style={{ color: colors.navy, fontSize: 21, fontWeight: "800" }}>What would you like to create?</Text>

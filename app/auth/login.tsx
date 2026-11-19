@@ -22,6 +22,7 @@ import { router, type Href } from "expo-router";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const NAVY = "#102A43";
 const BLUE = "#246BFD";
@@ -31,6 +32,7 @@ const BORDER = "#DCE3EA";
 const WHITE = "#FFFFFF";
 
 function GoogleLogo() {
+  useThemeContext();
   return (
     <Svg width={20} height={20} viewBox="0 0 48 48">
       <Path
@@ -94,6 +96,7 @@ function PasswordInput({
 }
 
 export default function LoginScreen() {
+  useThemeContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);

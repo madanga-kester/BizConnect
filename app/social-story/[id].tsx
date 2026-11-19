@@ -7,8 +7,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useClock } from "@/hooks/use-clock";
 import { colors } from "@/theme/tokens";
 import { canViewSocialStory } from "@/utils/social-story-privacy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function SocialStoryViewer() {
+  useThemeContext();
   const app = useAppStore();
   const now = useClock();
   const { id } = useLocalSearchParams<{ id: string }>();

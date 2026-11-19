@@ -8,8 +8,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { colors } from "@/theme/tokens";
 import { formatKes } from "@/utils/kenya";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function OpportunitiesScreen() {
+  useThemeContext();
   const app = useAppStore(); const requireAuth = useRequireAuth();
   const [deleteId, setDeleteId] = useState<string>();
   return <Page><TopBar title="Business ideas" back right={<Button title="Create" icon="add-outline" small onPress={() => router.push({ pathname: "/create-listing", params: { kind: "opportunity" } })} />} /><View style={{ backgroundColor: colors.navy, borderRadius: 21, padding: 17, gap: 8 }}><Text style={{ color: colors.orange, fontWeight: "800", fontSize: 11 }}>BUSINESS IDEAS & OPPORTUNITIES</Text><Text style={{ color: colors.white, fontSize: 22, fontWeight: "800", lineHeight: 28 }}>A practical first step, not a promise.</Text><Text style={{ color: "#D9E2E9", lineHeight: 20 }}>Explore starter ideas, skills, equipment and the questions to ask before you invest.</Text><Button title="Publish a community opportunity" icon="megaphone-outline" variant="soft" onPress={() => router.push({ pathname: "/create-listing", params: { kind: "opportunity" } })} /></View>

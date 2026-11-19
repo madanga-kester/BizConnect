@@ -10,6 +10,7 @@ import type { BusinessEvent, BusinessOffer, CommunityOpportunity } from "@/types
 import { getBusinessOfferStatus } from "@/utils/business-offer-status";
 import { newLocalId } from "@/utils/ids";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useThemeContext } from "@/lib/theme-provider";
 
 type ListingKind = "offer" | "event" | "opportunity";
 const OFFER_TYPES: BusinessOffer["kind"][] = ["discount", "limited-time", "seasonal", "bundle", "coupon", "free-delivery", "clearance", "special-deal"];
@@ -20,6 +21,7 @@ function parseLocalDate(value: string): string | undefined { const parsed = new 
 function titleCase(value: string) { return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
 
 export default function CreateListingScreen() {
+  useThemeContext();
   const app = useAppStore();
   const clockNow = useClock(30_000);
   const { kind: requestedKind, offerId, eventId, opportunityId } = useLocalSearchParams<{ kind?: string; offerId?: string; eventId?: string; opportunityId?: string }>();

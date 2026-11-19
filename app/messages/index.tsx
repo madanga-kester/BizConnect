@@ -10,13 +10,16 @@ import { PEOPLE } from "@/data/seed";
 import { evaluateMessagePermission } from "@/utils/privacy-policy";
 import { ApiMessagesScreen } from "@/components/api-messaging-screens";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function MessagesScreen() {
+  useThemeContext();
   const mode = useMabizServiceMode();
   return mode === "api" ? <ApiMessagesScreen /> : <LocalMessagesScreen />;
 }
 
 function LocalMessagesScreen() {
+  useThemeContext();
   const app = useAppStore(); const [query, setQuery] = useState("");
   const conversations = useMemo(() => app.conversations.filter((conversation) => {
     const participant = !conversation.businessId ? PEOPLE.find((person) => person.id === conversation.participantId) : undefined;

@@ -12,6 +12,7 @@ import { MAX_CATALOGUE_GALLERY_IMAGES, catalogUploadIssue } from "@/lib/api/cata
 import type { Result } from "@/lib/api/contracts";
 import type { CatalogGalleryEntry, CatalogSort, CatalogStatusFilter } from "@/lib/api/feature-contracts";
 import type { Business, CatalogAvailabilityStatus, CatalogVisitType, Product, Service } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const LIMIT = 20;
 const errorText = (error: { message: string; code?: string }) => `${error.message}${error.code ? ` (${error.code})` : ""}`;
@@ -68,6 +69,7 @@ function isCatalogueNotFound(result: Result<CatalogItem>): boolean {
 }
 
 function AlertBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  useThemeContext();
   return <View accessibilityRole="alert" style={{ gap: 8, padding: 12, backgroundColor: colors.orangeTint, borderRadius: 14 }}>
     <Text style={styles.body}>{message}</Text>
     {onRetry ? <Button title="Retry" small variant="outline" onPress={onRetry} /> : null}
@@ -76,6 +78,7 @@ function AlertBlock({ message, onRetry }: { message: string; onRetry?: () => voi
 
 /** Stage 5 management list: server offset paging, status filters and explicit lifecycle actions. */
 export function ApiCatalogManagement({ businessId }: { businessId: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [kind, setKind] = useState<"Products" | "Services">("Products");
@@ -181,6 +184,7 @@ export function ApiCatalogManagement({ businessId }: { businessId: string }) {
 
 /** Stage 5 editor: real multipart image upload, ordered gallery with an explicit primary, server lifecycle rules. */
 export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "service"; itemId?: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const manageable = app.businesses.filter((entry) => hasBusinessRole(entry, app.user.id, BUSINESS_CONTENT_ROLES));
@@ -504,6 +508,7 @@ export function ApiCatalogItemEditor({ kind, itemId }: { kind: "product" | "serv
 
 /** Stage 5 public discovery: anonymous, server-filtered, offset-paged. */
 export function ApiCatalogueDiscovery() {
+  useThemeContext();
   const services = useMabizServices();
   const [kind, setKind] = useState<"Products" | "Services">("Products");
   const [search, setSearch] = useState("");
@@ -635,6 +640,7 @@ export function ApiCatalogueDiscovery() {
 
 /** Stage 5 public detail: ordered gallery with an explicit primary, and 404 mapped to the not-found state. */
 export function ApiCatalogItemDetail({ slugOrId, kind }: { slugOrId: string; kind?: "product" | "service" }) {
+  useThemeContext();
   const services = useMabizServices();
   const [item, setItem] = useState<CatalogItem | null>(null);
   const [resolvedKind, setResolvedKind] = useState<"product" | "service">(kind ?? "product");

@@ -25,6 +25,7 @@ import { COUNTY_TOWNS, KENYAN_COUNTIES } from "@/utils/kenya";
 import { MAX_INTERESTS, validateRegistration } from "@/utils/form-validation";
 import { colors } from "@/theme/tokens";
 import type { County } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const INTERESTS = [
   "Shopping",
@@ -207,6 +208,7 @@ function registerFallbackMessage(error: { code: string; message: string }) {
 }
 
 export default function RegisterScreen() {
+  useThemeContext();
   const services = useMabizServices();
 
   const [step, setStep] = useState<Step>(1);

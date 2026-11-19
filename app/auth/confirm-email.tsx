@@ -11,6 +11,7 @@ import {
 import { Button, Page, TopBar, styles } from "@/components/biz-ui";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) {
   if (Platform.OS === "web") window.alert(message);
@@ -18,6 +19,7 @@ function feedback(message: string) {
 }
 
 export default function ConfirmEmailScreen() {
+  useThemeContext();
   const params = useLocalSearchParams<{
     identifier?: string;
     challengeId?: string;

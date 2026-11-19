@@ -8,9 +8,11 @@ import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-pr
 import type { BusinessGrowthSummary, GrowthDateRange } from "@/lib/api/feature-contracts";
 import { colors } from "@/theme/tokens";
 import { getBusinessRole, hasBusinessRole, OWNER_ADMIN_ROLES } from "@/utils/business-permissions";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const RANGES: { label: string; value: GrowthDateRange }[] = [{ label: "7 days", value: "7d" }, { label: "30 days", value: "30d" }, { label: "90 days", value: "90d" }];
 export default function BusinessGrowthScreen() {
+  useThemeContext();
   const app = useAppStore();
   const services = useMabizServices();
   const apiMode = useMabizServiceMode() === "api";

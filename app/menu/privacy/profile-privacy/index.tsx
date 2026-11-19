@@ -5,8 +5,10 @@ import { ActionTile, Avatar, Button, LocalNote, Page, SectionTitle, TopBar, styl
 import { PEOPLE } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 const PERMISSIONS = ["everyone", "following", "nobody"] as const;
 export default function PrivacyScreen() {
+  useThemeContext();
   const app = useAppStore(); const [messagePermission, setMessagePermission] = useState(app.settings.messagePermissions);
   const switchRow = (title: string, detail: string, value: boolean, change: (v: boolean) => void) => <View style={styles.actionTile}><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{title}</Text><Text style={styles.caption}>{detail}</Text></View><Switch value={value} onValueChange={change} trackColor={{ false: colors.border, true: colors.emerald }} thumbColor={colors.white} /></View>;
   return <Page><TopBar title="Account privacy" back /><LocalNote text="These frontend privacy controls affect this device's demo data only." />

@@ -12,12 +12,15 @@ import { colors } from "@/theme/tokens";
 import { t } from "@/i18n/translations";
 import type { Post } from "@/types/domain";
 import { filterVisiblePosts, profileRestriction } from "@/utils/privacy-policy";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function HomeScreen() {
+  useThemeContext();
   const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiHomeFeed /> : <MockHomeScreen />;
 }
 function MockHomeScreen() {
+  useThemeContext();
   const app = useAppStore();
   const [filter, setFilter] = useState<"For You" | "Following" | "Nearby">("For You");
   const [refreshing, setRefreshing] = useState(false);

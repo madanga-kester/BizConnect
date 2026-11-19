@@ -5,8 +5,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useClock } from "@/hooks/use-clock";
 import { Text, View } from "react-native";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function OffersScreen() {
+  useThemeContext();
   const app = useAppStore();
   const now = useClock();
   const [removeId, setRemoveId] = useState<string>();

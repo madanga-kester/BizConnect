@@ -8,13 +8,16 @@ import { colors } from "@/theme/tokens";
 import { filterVisiblePosts } from "@/utils/privacy-policy";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { ApiPersonProfile } from "@/components/api-screens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function PersonProfileScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiPersonProfile personId={id ?? ""} /> : <MockPersonProfile />;
 }
 function MockPersonProfile() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>(); const app = useAppStore(); const requireAuth = useRequireAuth();
   const person = id === app.user.id ? app.user : PEOPLE.find((entry) => entry.id === id);
   if (!person) return <Page><TopBar title="Founder profile" back /><EmptyState title="Profile not found" detail="This account may no longer be available." /></Page>;

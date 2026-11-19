@@ -3,8 +3,10 @@ import { Pressable, Text, View } from "react-native";
 import { Avatar, Button, MediaImage, VideoPreview } from "@/components/biz-ui";
 import type { PostComposer } from "@/components/create/use-post-composer";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function StepReview({ composer }: { composer: PostComposer }) {
+  useThemeContext();
   const {
     app,
     identity,

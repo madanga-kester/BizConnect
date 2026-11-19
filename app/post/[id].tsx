@@ -10,12 +10,15 @@ import { colors } from "@/theme/tokens";
 import { isPostVisible, profileRestriction } from "@/utils/privacy-policy";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { ApiPostDetail } from "@/components/api-screens";
+import { useThemeContext } from "@/lib/theme-provider";
 export default function PostDetailScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiPostDetail postId={id ?? ""} /> : <MockPostDetailScreen />;
 }
 function MockPostDetailScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const app = useAppStore();
   const requireAuth = useRequireAuth();

@@ -6,6 +6,7 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import type { UserProfile } from "@/types/domain";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) {
   if (Platform.OS === "web") window.alert(message);
@@ -13,6 +14,7 @@ function feedback(message: string) {
 }
 
 export default function Stage2AccountScreen() {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);

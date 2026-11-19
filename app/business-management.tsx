@@ -6,8 +6,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { BUSINESS_CONTENT_ROLES, getBusinessRole, hasBusinessRole } from "@/utils/business-permissions";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function BusinessManagementScreen() {
+  useThemeContext();
   const app = useAppStore();
   const services = useMabizServices();
   const apiMode = useMabizServiceMode() === "api";

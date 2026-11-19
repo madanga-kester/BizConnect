@@ -5,8 +5,10 @@ import { OPPORTUNITIES } from "@/data/seed";
 import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
 import { formatKes } from "@/utils/kenya";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function SavedOpportunitiesScreen() {
+  useThemeContext();
   const app = useAppStore();
   const ideas = OPPORTUNITIES.filter((item) => app.savedOpportunities.includes(item.id));
   if (!app.isAuthenticated) return <Page><TopBar title="Saved business ideas" back /><EmptyState title="Sign in to see saved ideas" detail="Bookmarks are tied to your local demo account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;

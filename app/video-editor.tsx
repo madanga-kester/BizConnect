@@ -6,6 +6,7 @@ import { colors } from "@/theme/tokens";
 import { newLocalId } from "@/utils/ids";
 import { clearVideoEdit, isSafeVideoUri, readVideoEdit, saveVideoEdit, transitionProgress, validateTrimRange, type ProgressDemo, type Subtitle, type VideoEditState, type VideoFilter } from "@/utils/video-edit-demo";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function announce(title: string, message: string) { if (Platform.OS === "web") window.alert(`${title}\n\n${message}`); else Alert.alert(title, message); }
 function parseFinite(value: string): number { return value.trim() === "" ? Number.NaN : Number(value); }
@@ -19,6 +20,7 @@ function validateSubtitles(items: Subtitle[], duration?: number): string | null 
 }
 
 export default function VideoEditorScreen() {
+  useThemeContext();
   const { source, duration: durationParam } = useLocalSearchParams<{ source?: string; duration?: string }>();
   const uri = typeof source === "string" ? source : "";
   const parsedDuration = typeof durationParam === "string" ? Number(durationParam) : Number.NaN;

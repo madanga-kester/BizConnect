@@ -1,9 +1,11 @@
-﻿import { Switch, Text, View } from "react-native";
+import { Switch, Text, View } from "react-native";
 import { Page, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function ReducedDataScreen() {
+  useThemeContext();
   const app = useAppStore();
   return (
     <Page>

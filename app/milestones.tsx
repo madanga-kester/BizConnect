@@ -8,6 +8,7 @@ import type { Milestone } from "@/types/domain";
 import { hasBusinessRole } from "@/utils/business-permissions";
 import { newLocalId } from "@/utils/ids";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Milestone", message); }
 const TYPES: { label: string; value: Milestone["kind"] }[] = [
@@ -19,6 +20,7 @@ const TYPES: { label: string; value: Milestone["kind"] }[] = [
 function validDate(value: string) { if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false; const date = new Date(`${value}T00:00:00.000Z`); return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value; }
 
 export default function MilestonesScreen() {
+  useThemeContext();
   const app = useAppStore();
   const { businessId, milestoneId } = useLocalSearchParams<{ businessId?: string; milestoneId?: string }>();
   const business = app.businesses.find((item) => item.id === businessId) ?? app.businesses.find((item) => item.id === app.activeBusinessId);

@@ -37,6 +37,7 @@ import { colors } from "@/theme/tokens";
 import { hasBusinessRole } from "@/utils/business-permissions";
 import { filterVisiblePosts } from "@/utils/privacy-policy";
 import { ApiBusinessProfile } from "@/components/api-screens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const TABS = [
   "Overview",
@@ -50,6 +51,7 @@ const TABS = [
 type ProfileTab = (typeof TABS)[number];
 
 function ProfileDivider() {
+  useThemeContext();
   return (
     <View
       style={{
@@ -127,6 +129,7 @@ function ProfileAction({
 }
 
 export default function BusinessProfileScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const apiMode = useMabizServiceMode() === "api";
 
@@ -138,6 +141,7 @@ export default function BusinessProfileScreen() {
 }
 
 function MockBusinessProfileScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const app = useAppStore();
   const services = useMabizServices();

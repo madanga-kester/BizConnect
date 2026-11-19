@@ -18,8 +18,10 @@ import { useMabizServices } from "@/lib/services/service-provider";
 import { errorText, pageRequest } from "@/lib/api-helpers";
 import { colors } from "@/theme/tokens";
 import type { Business, Post } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiBusinessProfile({ businessId }: { businessId: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [business, setBusiness] = useState<Business | null>(null);

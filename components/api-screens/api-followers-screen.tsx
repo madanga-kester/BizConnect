@@ -17,8 +17,10 @@ import { useMabizServices } from "@/lib/services/service-provider";
 import { errorText, pageRequest } from "@/lib/api-helpers";
 import { colors } from "@/theme/tokens";
 import type { UserProfile } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiFollowersScreen({ selectedBusinessId }: { selectedBusinessId?: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [list, setList] = useState<"Followers" | "Following">("Following");

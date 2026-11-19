@@ -6,8 +6,10 @@ import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import { formatKes, formatKenyanPhone } from "@/utils/kenya";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function ProductDetailScreen() {
+  useThemeContext();
   const { id, kind } = useLocalSearchParams<{ id?: string; kind?: string }>();
   const apiMode = useMabizServiceMode() === "api";
   // Stage 5: API mode reads the public catalogue detail endpoint; the same route serves both kinds.
@@ -16,6 +18,7 @@ export default function ProductDetailScreen() {
 }
 
 function MockProductDetailScreen({ id }: { id: string }) {
+  useThemeContext();
   const app = useAppStore();
   const product = app.businesses.flatMap((b) => b.products).find((p) => p.id === id && !p.archived);
   if (!product) return <Page><TopBar title="Product" back /><EmptyState title="Product not found" detail="This item may no longer be available." action="Browse businesses" onAction={() => router.replace("/(tabs)/discover")} /></Page>;

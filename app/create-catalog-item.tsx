@@ -10,10 +10,12 @@ import { BUSINESS_CONTENT_ROLES } from "@/utils/business-permissions";
 import { newLocalId } from "@/utils/ids";
 import type { Product, Service } from "@/types/domain";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function tell(title: string, message: string) { if (Platform.OS === "web") window.alert(`${title}\n\n${message}`); else Alert.alert(title, message); }
 
 export default function CreateCatalogItemScreen() {
+  useThemeContext();
   const { kind: requestedKind, itemId } = useLocalSearchParams<{ kind?: string; itemId?: string }>();
   const kind = requestedKind === "service" ? "service" : "product";
   // API mode writes to the Mabiz catalogue; the local demo path below is unchanged.
@@ -23,6 +25,7 @@ export default function CreateCatalogItemScreen() {
 }
 
 function MockCreateCatalogItemScreen({ kind, itemId }: { kind: "product" | "service"; itemId?: string }) {
+  useThemeContext();
   const app = useAppStore();
   const businesses = app.businesses.filter((item) => item.ownerId === app.user.id || item.team.some((member) => member.userId === app.user.id && BUSINESS_CONTENT_ROLES.includes(member.role)));
   const existingProduct = kind === "product" ? businesses.flatMap((item) => item.products).find((item) => item.id === itemId) : undefined;

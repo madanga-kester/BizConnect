@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { Avatar, Button, styles } from "@/components/biz-ui";
 import { colors } from "@/theme/tokens";
 import type { Business, UserProfile } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 type Props = {
   user: Pick<UserProfile, "name" | "avatar">;
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export function ComposerPreview(p: Props) {
+  useThemeContext();
   return (
     <View style={{ gap: 14, paddingTop: 6 }}>
       <View style={{ gap: 3 }}>

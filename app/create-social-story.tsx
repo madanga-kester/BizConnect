@@ -8,6 +8,7 @@ import { colors } from "@/theme/tokens";
 import type { ContentAudience, SocialStory } from "@/types/domain";
 import type { PersistedComposerDraft, StoryComposerSnapshot } from "@/types/create-studio";
 import { newLocalId } from "@/utils/ids";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const BACKGROUNDS = ["#123B42", "#142A4A", "#7A3B48", "#5A3C73", "#7A4A18", "#142A32"];
 const EMOJIS = ["✨", "🎉", "🌱", "🇰🇪", "💡", "👏", "❤️", "☀️"];
@@ -22,6 +23,7 @@ function stickerText(story: SocialStory | undefined, kind: SocialStory["overlays
 }
 
 export default function CreateSocialStoryScreen() {
+  useThemeContext();
   const app = useAppStore();
   const authenticated = app.isAuthenticated;
   const saveToStore = app.saveDraft;

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const MENU_ITEMS = [
   { label: "Business videos", icon: "videocam-outline", path: "/videos" },
@@ -20,6 +21,7 @@ type HomeQuickMenuProps = {
 };
 
 export function HomeQuickMenu({ visible, onClose, hasUnreadNotifications }: HomeQuickMenuProps) {
+  useThemeContext();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {

@@ -9,14 +9,17 @@ import { PEOPLE } from "@/data/seed";
 import { evaluateMessagePermission } from "@/utils/privacy-policy";
 import { ApiChatScreen } from "@/components/api-messaging-screens";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Messages", message); }
 export default function ChatScreen() {
+  useThemeContext();
   const mode = useMabizServiceMode();
   return mode === "api" ? <ApiChatScreen /> : <LocalChatScreen />;
 }
 
 function LocalChatScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>(); const app = useAppStore(); const conversation = app.conversations.find((c) => c.id === id); const [text, setText] = useState(""); const [image, setImage] = useState<string | undefined>();
   const participant = conversation && !conversation.businessId ? PEOPLE.find((person) => person.id === conversation.participantId) : undefined;
   const messagingAllowed = Boolean(conversation && evaluateMessagePermission({ isAuthenticated: app.isAuthenticated, participantId: conversation.participantId, privateProfile: participant?.privateProfile, businessId: conversation.businessId, businesses: app.businesses, blockedUserIds: app.blockedUsers, messagePermissions: app.settings.messagePermissions, followedPeople: app.followedPeople, followedBusinesses: app.followedBusinesses }).allowed);

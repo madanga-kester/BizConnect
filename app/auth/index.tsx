@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Button, Page, TopBar } from "@/components/biz-ui";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const SLIDES = [
   {
@@ -28,6 +29,7 @@ const SLIDES = [
 ];
 
 export default function WelcomeScreen() {
+  useThemeContext();
   const [slide, setSlide] = useState(0);
   const item = SLIDES[slide];
 

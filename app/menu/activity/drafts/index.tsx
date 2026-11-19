@@ -7,6 +7,7 @@ import { colors } from "@/theme/tokens";
 import { formatDate } from "@/utils/kenya";
 import { newLocalId } from "@/utils/ids";
 import type { PersistedComposerDraft } from "@/types/create-studio";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function cloneDraft(draft: PersistedComposerDraft): PersistedComposerDraft {
   return {
@@ -18,6 +19,7 @@ function cloneDraft(draft: PersistedComposerDraft): PersistedComposerDraft {
 }
 
 export default function DraftsScreen() {
+  useThemeContext();
   const app = useAppStore();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");

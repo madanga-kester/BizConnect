@@ -20,8 +20,10 @@ import { colors } from "@/theme/tokens";
 import type { SocialApiComment } from "@/lib/api/feature-contracts";
 import type { Post } from "@/types/domain";
 import { Replies } from "./replies";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiPostDetail({ postId }: { postId: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [post, setPost] = useState<Post | null>(null);

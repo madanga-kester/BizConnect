@@ -7,6 +7,7 @@ import { getExpoPushRegistration } from "@/lib/api/push-registration";
 import { useMabizServices, useMabizServiceMode } from "@/lib/services/service-provider";
 import type { NotificationPreferences } from "@/lib/api/feature-contracts";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const DEFAULTS: NotificationPreferences = {
   inAppEnabled: true, pushEnabled: false, messages: true, likes: true, comments: true,
@@ -15,6 +16,7 @@ const DEFAULTS: NotificationPreferences = {
 function message(text: string): void { if (Platform.OS === "web") window.alert(text); else Alert.alert("Notification settings", text); }
 
 export default function NotificationSettingsScreen() {
+  useThemeContext();
   const app = useAppStore();
   const mode = useMabizServiceMode();
   const services = useMabizServices();

@@ -8,6 +8,7 @@ import { useMabizServices } from "@/lib/services/service-provider";
 import { useAppStore } from "@/hooks/use-app-store";
 import type { ChatMessage, Conversation } from "@/types/domain";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function say(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Messages", message); }
 function errorText(error: { code: string; message: string }) { return `${error.message} (${error.code})`; }
@@ -17,6 +18,7 @@ function uniqueMessages(values: ChatMessage[]): ChatMessage[] { const map = new 
 function clientId(): string { try { return globalThis.crypto.randomUUID(); } catch { return `${Date.now()}-${Math.random().toString(16).slice(2)}-4000-8000-${Math.random().toString(16).slice(2)}`; } }
 
 export function ApiMessagesScreen() {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [items, setItems] = useState<Conversation[]>([]);
@@ -61,6 +63,7 @@ export function ApiMessagesScreen() {
 }
 
 export function ApiChatScreen() {
+  useThemeContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const conversationId = Array.isArray(id) ? id[0] : id;
   const app = useAppStore();

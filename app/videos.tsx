@@ -11,8 +11,10 @@ import { colors } from "@/theme/tokens";
 import type { Post } from "@/types/domain";
 import { filterVisiblePosts } from "@/utils/privacy-policy";
 import { canAutoplayVideo, resolveActiveVideoId } from "@/utils/video-playback";
+import { useThemeContext } from "@/lib/theme-provider";
 
 function VideoPost({ post, active }: { post: Post; active: boolean }) {
+  useThemeContext();
   const app = useAppStore();
   const requireAuth = useRequireAuth();
   const { height: windowHeight } = useWindowDimensions();
@@ -81,6 +83,7 @@ function VideoPost({ post, active }: { post: Post; active: boolean }) {
 }
 
 export default function VideosScreen() {
+  useThemeContext();
   const app = useAppStore();
   const videos = useMemo(() => filterVisiblePosts(app.posts, {
     viewerId: app.user.id,

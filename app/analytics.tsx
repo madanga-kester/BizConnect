@@ -5,11 +5,13 @@ import { Button, EmptyState, LocalNote, Page, SectionTitle, TopBar, styles } fro
 import { useAppStore } from "@/hooks/use-app-store";
 import { colors } from "@/theme/tokens";
 import { hasBusinessRole } from "@/utils/business-permissions";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const METRICS = [
   ["profileViews", "Profile views", "eye-outline"], ["postEngagement", "Post engagement", "heart-outline"], ["followersThisMonth", "New followers · month", "people-outline"], ["videoViews", "Video views", "play-circle-outline"], ["productViews", "Product views", "pricetag-outline"], ["enquiries", "Customer enquiries", "chatbubble-outline"],
 ] as const;
 export default function AnalyticsScreen() {
+  useThemeContext();
   const app = useAppStore(); const business = app.businesses.find((b) => b.id === app.activeBusinessId);
   if (!app.isAuthenticated) return <Page><TopBar title="Business analytics" back /><Text style={{ color: colors.ink }}>Sign in to manage business information.</Text><Button title="Sign in" onPress={() => router.push("/auth/login")} /></Page>;
   if (!business) return <Page><TopBar title="Business analytics" back /><Text style={styles.caption}>Select a business first.</Text></Page>;

@@ -20,8 +20,10 @@ import { LIMIT, errorText } from "@/lib/api-helpers";
 import { colors } from "@/theme/tokens";
 import type { FeedFilters } from "@/lib/api/feature-contracts";
 import type { Post } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiHomeFeed() {
+  useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
   const [mode, setMode] = useState<"for-you" | "following">("for-you");

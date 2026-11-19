@@ -5,8 +5,10 @@ import { styles } from "@/components/biz-ui";
 import { colors } from "@/theme/tokens";
 import { postIsReshared, postIsVideo, postThumb, type LoosePost } from "@/lib/profile-post-utils";
 import type { Post } from "@/types/domain";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function ApiProfileTile({ post, size }: { post: Post; size: number }) {
+  useThemeContext();
   const loose = post as LoosePost;
   const uri = postThumb(loose);
   const video = postIsVideo(loose);

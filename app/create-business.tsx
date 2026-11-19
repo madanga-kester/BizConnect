@@ -9,6 +9,7 @@ import { colors } from "@/theme/tokens";
 import { KENYAN_COUNTIES, COUNTY_TOWNS, formatKes, isValidKenyanPhone } from "@/utils/kenya";
 import type { Business, County } from "@/types/domain";
 import { newLocalId } from "@/utils/ids";
+import { useThemeContext } from "@/lib/theme-provider";
 
 const KEY = "Mabiz-business-registration-draft";
 const CATEGORIES = ["Fashion", "Food & restaurants", "Bakery & baked goods", "Natural hair salon", "Beauty & cosmetics", "Electronics", "Agriculture", "Furniture", "Construction", "Education", "Technology", "Transport", "Professional services", "Health & wellness", "Entertainment", "Home services", "Retail"];
@@ -20,6 +21,7 @@ function formFromBusiness(business: Business): Form {
 }
 
 export default function CreateBusinessScreen() {
+  useThemeContext();
   const app = useAppStore();
   const { id } = useLocalSearchParams<{ id?: string }>();
   if (!app.hasHydrated) return <Page><TopBar title="Create a business" back /><LoadingState label="Preparing your business profile" /></Page>;
@@ -27,6 +29,7 @@ export default function CreateBusinessScreen() {
 }
 
 function BusinessForm({ app, id }: { app: ReturnType<typeof useAppStore>; id?: string }) {
+  useThemeContext();
   const services = useMabizServices();
   const apiMode = useMabizServiceMode() === "api";
   const existing = app.businesses.find((business) => business.id === id);

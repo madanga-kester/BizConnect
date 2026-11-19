@@ -10,13 +10,16 @@ import { usePostComposer } from "@/components/create/use-post-composer";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServiceMode } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function CreateScreen() {
+  useThemeContext();
   const apiMode = useMabizServiceMode() === "api";
   return apiMode ? <ApiPostComposer /> : <MockCreateScreen />;
 }
 
 function MockCreateScreen() {
+  useThemeContext();
   const app = useAppStore();
   const { draftId, postId } = useLocalSearchParams<{ draftId?: string; postId?: string }>();
 
