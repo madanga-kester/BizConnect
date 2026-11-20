@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
+  PanResponder,
   Pressable,
   ScrollView,
   Share,
@@ -35,7 +36,7 @@ import {
 import { colors } from "@/theme/tokens";
 import type { Post, UserProfile } from "@/types/domain";
 import { ProfileSkeleton, SkeletonGrid } from "@/components/skeleton";
-import { ApiProfileTile } from "./api-profile-tile";
+import { ApiPostCard } from "@/components/api-post-card";
 
 export function ApiPersonalProfile() {
   const services = useMabizServices();
@@ -58,7 +59,7 @@ export function ApiPersonalProfile() {
       accentSoft: colors.emeraldTint,
       businessBadgeBg: isDark ? "rgba(56, 189, 248, 0.15)" : "rgba(14, 165, 233, 0.10)",
       businessBadgeText: isDark ? "#38BDF8" : "#0284C7",
-      backdrop: isDark ? "rgba(0, 0, 0, 0.65)" : "rgba(15, 23, 42, 0.45)",
+      backdrop: "rgba(0, 0, 0, 0.6)",
       handleBar: colors.border,
     }),
     [isDark]
@@ -188,6 +189,21 @@ export function ApiPersonalProfile() {
   useEffect(() => {
     if (inBusiness && tab === "saved") setTab("all");
   }, [inBusiness, tab]);
+
+    const swipe = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          Math.abs(gesture.dx) > 20 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
+        onPanResponderRelease: (_event, gesture) => {
+          if (Math.abs(gesture.dx) < 60) return;
+          const index = visibleTabs.findIndex((item) => item.key === tab);
+          const next = visibleTabs[index + (gesture.dx < 0 ? 1 : -1)];
+          if (next) setTab(next.key);
+        },
+      }),
+    [tab, visibleTabs]
+  );
 
   const tileSize = Math.floor((width - 32 - 4) / 3);
   const emptyText: Record<ProfileTab, string> = {
@@ -351,7 +367,7 @@ export function ApiPersonalProfile() {
                 icon={inBusiness ? "settings-outline" : "create-outline"}
                 variant="outline"
                 small
-                onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/personal-details")}
+                onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/edit-profile")}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -603,6 +619,7 @@ export function ApiPersonalProfile() {
             </View>
           ) : null}
 
+          <View {...swipe.panHandlers} style={{ gap: 16, minHeight: height * 0.5 }}>
           {/* Content Tabs */}
           <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: theme.border }}>
             {visibleTabs.map((item) => {
@@ -622,15 +639,20 @@ export function ApiPersonalProfile() {
                     borderBottomColor: selected ? theme.accent : "transparent",
                   }}
                 >
-                  <Ionicons name={item.icon} size={22} color={selected ? theme.accentText : theme.textSecondary} />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: selected ? "700" : "500",
+                      color: selected ? theme.textPrimary : theme.textSecondary,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={[styles.caption, { textAlign: "center", color: theme.textSecondary }]}>
-            {PROFILE_TABS.find((item) => item.key === tab)?.label}
-          </Text>
-
+         
           {/* Tab Content */}
           {tab === "saved" ? (
             <View style={{ gap: 8 }}>
@@ -650,20 +672,19 @@ export function ApiPersonalProfile() {
           ) : inBusiness && businessPostsLoading ? (
             <SkeletonGrid size={tileSize} />
           ) : tabPosts.length ? (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 2 }}>
+            <View style={{ gap: 12 }}>
               {tabPosts.map((post) => (
-                <ApiProfileTile key={post.id} post={post} size={tileSize} />
+                <ApiPostCard key={post.id} post={post} />
               ))}
             </View>
           ) : (
             <EmptyState title={emptyText[tab]} detail="Posts you publish will appear here." icon="albums-outline" />
           )}
+          </View>
         </>
       ) : null}
 
-      <Text style={[styles.caption, { color: theme.textSecondary }]}>
-        Signed in as {app.user.username} · profile and post visibility are determined by server responses.
-      </Text>
+     
     </Page>
   );
 }

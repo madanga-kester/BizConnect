@@ -71,7 +71,7 @@ export default function SettingsScreen() {
     <LocalNote text="Preferences and account state are stored on this device." />
     {appearanceSelector}
     <SectionTitle title="Account" />
-    <ActionTile title="Edit personal profile" icon="person-outline" onPress={() => router.push("/menu/account/personal-details")} />
+    <ActionTile title="Edit personal profile" icon="person-outline" onPress={() => router.push("/menu/account/edit-profile")} />
     <ActionTile title="Privacy & message permissions" icon="shield-checkmark-outline" onPress={() => router.push("/menu/privacy/profile-privacy")} />
     <ActionTile title="Notifications" icon="notifications-outline" onPress={() => router.push("/menu/activity/notifications")} />
     <ActionTile title="Security & password" detail="Request a code to change your password" icon="key-outline" onPress={() => router.push("/auth/forgot-password")} />

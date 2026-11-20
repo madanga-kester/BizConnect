@@ -282,6 +282,6 @@ export const styles = createThemedStyles(() => StyleSheet.create({
   themeOption: { flex: 1, minHeight: 44, paddingHorizontal: 12, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
   tileIcon: { width: 36, height: 36, borderRadius: 13, backgroundColor: colors.emeraldTint, alignItems: "center", justifyContent: "center" },
   loading: { alignItems: "center", justifyContent: "center", gap: 8, padding: 24 },
-  modalBackdrop: { flex: 1, backgroundColor: "rgba(16,42,67,0.38)", alignItems: "center", justifyContent: "center", padding: 22 },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center", padding: 22 },
   modalCard: { width: "100%", maxWidth: 420, borderRadius: radius.lg, backgroundColor: colors.surface, padding: 20, gap: 12 },
 }));

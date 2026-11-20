@@ -15,11 +15,19 @@ const extra = Constants.expoConfig?.extra ?? {};
 const configuredMode = extra.apiMode ?? process.env.EXPO_PUBLIC_API_MODE;
 const timeoutFromEnv = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS);
 const developmentBuild = typeof __DEV__ !== "undefined" && __DEV__;
+const DEFAULT_API_PORT = "5155";
 
+function resolveBaseUrl(configured: string): string {
+  if (!developmentBuild) return configured;
+  const metroHost = Constants.expoConfig?.hostUri?.split(":")[0] ?? "";
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(metroHost)) return configured;
+  if (!configured) return `http://${metroHost}:${DEFAULT_API_PORT}`;
+  return configured.replace(/^(https?:\/\/)[^/:]+/i, `$1${metroHost}`);
+}
 /** Public endpoint settings only. Credentials and server secrets never belong in Expo extra. */
 export const apiConfig: ApiClientConfig = Object.freeze({
   mode: configuredMode === "api" ? "api" : "mock-local",
-  baseUrl: String(extra.apiBaseUrl ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? "").trim(),
+  baseUrl: resolveBaseUrl(String(extra.apiBaseUrl ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? "").trim()),
   timeoutMs: Number.isFinite(timeoutFromEnv) && timeoutFromEnv >= 1_000 && timeoutFromEnv <= 120_000 ? timeoutFromEnv : 20_000,
   versionPrefix: String(extra.apiVersionPrefix ?? process.env.EXPO_PUBLIC_API_VERSION_PREFIX ?? "/api/v1").replace(/\/$/, ""),
   allowInsecureHttp: extra.apiAllowInsecureHttp === true || process.env.EXPO_PUBLIC_API_ALLOW_HTTP === "true" || developmentBuild,

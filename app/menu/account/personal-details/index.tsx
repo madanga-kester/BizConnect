@@ -1,13 +1,61 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, Platform, Text, View } from "react-native";
-import { Avatar, Button, Chip, EmptyState, Field, Page, TopBar, styles } from "@/components/biz-ui";
+import { Text, View } from "react-native";
+import { ActionTile, Avatar, Divider, EmptyState, Page, TopBar, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
-import { COUNTY_TOWNS, KENYAN_COUNTIES } from "@/utils/kenya";
-import type { County } from "@/types/domain";
-function feedback(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Profile", message); }
-export default function EditProfileScreen() {
-  const app = useAppStore(); const [name, setName] = useState(app.user.name); const [username, setUsername] = useState(app.user.username); const [bio, setBio] = useState(app.user.bio); const [county, setCounty] = useState<County>(app.user.county); const [town, setTown] = useState(app.user.town);
-  if (!app.isAuthenticated) return <Page><TopBar title="Edit profile" back /><EmptyState title="Sign in to edit your profile" detail="Your profile belongs to your local demo account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
-  return <Page><TopBar title="Edit profile" back /><View style={{ alignItems: "center", gap: 8 }}><Avatar name={name} image={app.user.avatar} size={76} /><Button title="Change profile photo" variant="outline" small onPress={async () => { try { const Picker = await import("expo-image-picker"); const p = await Picker.requestMediaLibraryPermissionsAsync(); if (!p.granted) return feedback("Allow media access to select a profile photo."); const result = await Picker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.7 }); if (!result.canceled) app.updateUser({ avatar: result.assets[0].uri }); } catch { feedback("Photo selection is available on device."); } }} /></View><Field label="Full name" value={name} onChangeText={setName} /><Field label="Username" value={username} onChangeText={setUsername} /><Field label="Biography" value={bio} onChangeText={setBio} multiline placeholder="What would you like people to know?" /><Text style={styles.label}>County</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{KENYAN_COUNTIES.map((item) => <Chip key={item} label={item} selected={county === item} onPress={() => { setCounty(item); setTown(COUNTY_TOWNS[item][0]); }} />)}</View><Text style={styles.label}>Town</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{COUNTY_TOWNS[county].map((item) => <Chip key={item} label={item} selected={town === item} onPress={() => setTown(item)} />)}</View><Text style={styles.caption}>Your profile can be public or private in Account privacy. Precise location stays hidden by default.</Text><Button title="Save profile locally" onPress={() => { if (!app.isAuthenticated) return router.push("/auth/login"); app.updateUser({ name: name.trim(), username: username.replace(/^@/, "").trim(), bio: bio.trim(), county, town }); feedback("Profile saved on this device."); router.back(); }} /></Page>;
+import { useThemeContext } from "@/lib/theme-provider";
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  useThemeContext();
+  return (
+    <View style={{ gap: 3 }}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.body}>{value || "Not set"}</Text>
+    </View>
+  );
+}
+
+export default function PersonalDetailsScreen() {
+  useThemeContext();
+  const app = useAppStore();
+
+  if (!app.isAuthenticated) {
+    return (
+      <Page>
+        <TopBar title="Personal details" back />
+        <EmptyState
+          title="Sign in to view your personal details"
+          detail="Your profile belongs to your local demo account."
+          icon="lock-closed-outline"
+          action="Sign in"
+          onAction={() => router.push("/auth/login")}
+        />
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      <TopBar title="Personal details" back />
+      <View style={{ alignItems: "center", gap: 8 }}>
+        <Avatar name={app.user.name} image={app.user.avatar} size={76} />
+        <Text style={styles.sectionHeading}>{app.user.name}</Text>
+        <Text style={styles.caption}>@{app.user.username}</Text>
+      </View>
+      <DetailRow label="Full name" value={app.user.name} />
+      <Divider />
+      <DetailRow label="Username" value={`@${app.user.username}`} />
+      <Divider />
+      <DetailRow label="Biography" value={app.user.bio} />
+      <Divider />
+      <DetailRow label="County" value={app.user.county} />
+      <Divider />
+      <DetailRow label="Town" value={app.user.town} />
+      <ActionTile
+        title="Privacy Centre"
+        detail="Learn how Mabiz protects and manages your information"
+        icon="shield-checkmark-outline"
+        onPress={() => router.push("/menu/support/privacy-centre")}
+      />
+    </Page>
+  );
 }
