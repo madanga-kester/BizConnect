@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ConfirmModal } from "@/components/biz-ui";
+import { ConfirmModal, TopBar } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
 import { colors, createThemedStyles } from "@/theme/tokens";
@@ -29,6 +29,7 @@ type MenuItem = {
   title: string;
   detail?: string;
   icon: IconName;
+  tone?: "orange";
   route?: string;
   onPress?: () => void;
   isSwitch?: boolean;
@@ -65,7 +66,6 @@ export default function MenuScreen() {
     router.replace("/auth");
   };
 
-  // ─── Build Menu Sections with ORIGINAL LINKS ───────────────────────────
   const authenticatedSections: MenuSection[] = [
     {
       title: "Account",
@@ -135,6 +135,7 @@ export default function MenuScreen() {
           title: "Subscriptions & Mabiz Pro",
           detail: "Manage creator and business verification plans",
           icon: "card-outline",
+          tone: "orange",
           route: "/menu/subscriptions",
         },
       ],
@@ -295,7 +296,6 @@ export default function MenuScreen() {
 
   const sections = app.isAuthenticated ? authenticatedSections : guestSections;
 
-  // ─── Renderers ─────────────────────────────────────────────────────────
   const renderMenuItem = (item: MenuItem, isLast: boolean) => (
     <TouchableOpacity
       key={item.title}
@@ -308,7 +308,13 @@ export default function MenuScreen() {
       activeOpacity={item.isSwitch ? 1 : 0.6}
     >
       <View style={localStyles.menuItemLeft}>
-        <Ionicons name={item.icon} size={20} color={colors.muted} style={localStyles.menuItemIcon} />
+        <View style={[localStyles.iconTile, item.tone === "orange" && localStyles.iconTileOrange]}>
+          <Ionicons
+            name={item.icon}
+            size={19}
+            color={item.tone === "orange" ? colors.warning : colors.emeraldDark}
+          />
+        </View>
         <View style={localStyles.menuItemTextContainer}>
           <Text style={localStyles.menuItemTitle}>{item.title}</Text>
           {item.detail && !item.isSwitch && (
@@ -344,22 +350,17 @@ export default function MenuScreen() {
     </View>
   );
 
-  // ─── Main Render ───────────────────────────────────────────────────────
   return (
     <SafeAreaView style={localStyles.safeArea} edges={["top"]}>
       <View style={localStyles.container}>
-        {/* Header */}
-        <View style={localStyles.header}>
-          <Text style={localStyles.headerTitle}>Settings</Text>
-        </View>
+        <View style={{ paddingHorizontal: 16 }}><TopBar title="Settings" back /></View>
 
         <ScrollView
           contentContainerStyle={localStyles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Profile Section */}
-          <View style={localStyles.profileSection}>
-            <View style={localStyles.avatarContainer}>
+          <View style={localStyles.profileCard}>
+            <View style={localStyles.avatarRing}>
               {app.isAuthenticated && app.user.avatar ? (
                 <Image
                   source={{ uri: app.user.avatar }}
@@ -367,7 +368,7 @@ export default function MenuScreen() {
                 />
               ) : (
                 <View style={localStyles.avatarFallback}>
-                  <Ionicons name="person" size={36} color="#FFFFFF" />
+                  <Ionicons name="person" size={32} color="#FFFFFF" />
                 </View>
               )}
             </View>
@@ -388,16 +389,15 @@ export default function MenuScreen() {
             )}
           </View>
 
-          {/* Menu Sections */}
           {sections.map((section, i) => renderSection(section, i))}
 
-          {/* Sign Out Button */}
           {app.isAuthenticated && (
             <TouchableOpacity
               style={localStyles.signOutButton}
               onPress={() => setLogoutConfirm(true)}
               activeOpacity={0.6}
             >
+              <Ionicons name="log-out-outline" size={18} color={colors.danger ?? "#EF4444"} />
               <Text style={localStyles.signOutText}>Sign Out</Text>
             </TouchableOpacity>
           )}
@@ -406,7 +406,6 @@ export default function MenuScreen() {
         </ScrollView>
       </View>
 
-      {/* Logout Confirmation Modal */}
       <ConfirmModal
         visible={logoutConfirm}
         title="Sign out?"
@@ -422,7 +421,6 @@ export default function MenuScreen() {
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
 const localStyles = createThemedStyles(() => StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -433,32 +431,31 @@ const localStyles = createThemedStyles(() => StyleSheet.create({
     backgroundColor: colors.canvas,
   },
 
-  // Header
-  header: {
-    alignItems: "center",
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: colors.ink,
-    letterSpacing: -0.2,
-  },
 
-  // Scroll
+
   scrollContent: {
-    paddingHorizontal: 0,
+    paddingTop: 16,
     paddingBottom: 40,
   },
 
-  // Profile
-  profileSection: {
+  profileCard: {
     alignItems: "center",
-    paddingVertical: 28,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    paddingVertical: 22,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  avatarContainer: {
+  avatarRing: {
+    padding: 3,
+    borderRadius: 48,
+    borderWidth: 2,
+    borderColor: colors.emeraldFill,
     marginBottom: 12,
   },
   avatar: {
@@ -475,46 +472,51 @@ const localStyles = createThemedStyles(() => StyleSheet.create({
     justifyContent: "center",
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 19,
+    fontWeight: "800",
     color: colors.ink,
+    letterSpacing: -0.2,
   },
   signInLink: {
-    marginTop: 8,
+    marginTop: 12,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: colors.emeraldFill,
   },
   signInLinkText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: colors.emerald,
+    fontWeight: "700",
+    color: colors.white,
   },
 
-  // Sections
   section: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   sectionHeader: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: colors.muted,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.ink,
+    letterSpacing: -0.2,
     paddingHorizontal: 20,
-    marginBottom: 8,
-    marginTop: 4,
+    marginBottom: 10,
   },
   menuGroup: {
+    marginHorizontal: 16,
+    borderRadius: 22,
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
 
-  // Menu Item
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
@@ -527,17 +529,24 @@ const localStyles = createThemedStyles(() => StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
-  menuItemIcon: {
-    marginRight: 14,
-    width: 20,
-    textAlign: "center",
+  iconTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    backgroundColor: colors.emeraldTint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  iconTileOrange: {
+    backgroundColor: colors.orangeTint,
   },
   menuItemTextContainer: {
     flex: 1,
   },
   menuItemTitle: {
     fontSize: 15,
-    fontWeight: "400",
+    fontWeight: "700",
     color: colors.ink,
   },
   menuItemDetail: {
@@ -546,15 +555,20 @@ const localStyles = createThemedStyles(() => StyleSheet.create({
     marginTop: 2,
   },
 
-  // Sign Out
   signOutButton: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 20,
-    marginTop: 16,
+    justifyContent: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    minHeight: 50,
+    borderRadius: 999,
+    backgroundColor: colors.dangerTint,
   },
   signOutText: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: colors.danger ?? "#EF4444",
   },
-})); 
+}));

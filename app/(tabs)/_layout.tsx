@@ -22,7 +22,17 @@ const TAB_ICONS: Record<string, IoniconName> = {
   profile: "person-circle-outline",
 };
 
-const getTabIconName = (routeName: string): IoniconName => TAB_ICONS[routeName] ?? "help-circle-outline";
+const TAB_ICONS_FOCUSED: Record<string, IoniconName> = {
+  index: "home",
+  discover: "compass",
+  create: "add-circle",
+  stories: "book",
+  notifications: "notifications",
+  profile: "person-circle",
+};
+
+const getTabIconName = (routeName: string, focused: boolean): IoniconName =>
+  (focused ? TAB_ICONS_FOCUSED[routeName] : TAB_ICONS[routeName]) ?? "help-circle-outline";
 
 export default function TabLayout() {
   const app = useAppStore();
@@ -33,23 +43,31 @@ export default function TabLayout() {
   const unreadNotifications = mode === "api" ? notificationSync.unreadCount : app.notifications.filter((item) => !item.read).length;
   const tabBarColors = getTabBarColors(colorScheme);
   const bottomPadding = Platform.OS === "web" ? 10 : Math.max(insets.bottom, 8);
-  return <Tabs screenOptions={({ route }) => ({
+  return <View style={{ flex: 1, backgroundColor: colors.canvas }}><Tabs screenOptions={({ route }) => ({
     headerShown: false,
     tabBarButton: HapticTab,
     tabBarActiveTintColor: colors.emerald,
     tabBarInactiveTintColor: colors.muted,
     tabBarLabelStyle: { fontSize: 10, fontWeight: "700", marginBottom: 1 },
-    tabBarIcon: ({ color, focused }) => <View>
-      <Ionicons name={getTabIconName(route.name)} size={focused ? 23 : 21} color={typeof color === "string" ? color : focused ? colors.emerald : colors.muted} />
-      {route.name === "notifications" && unreadNotifications > 0 ? <View accessibilityLabel={`${unreadNotifications} unread notifications`} style={{ position: "absolute", top: -5, right: -10, minWidth: 15, height: 15, borderRadius: 8, paddingHorizontal: 3, backgroundColor: colors.orange, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: tabBarColors.backgroundColor }}><Text style={{ fontSize: 9, lineHeight: 11, color: colors.white, fontWeight: "800" }}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</Text></View> : null}
-    </View>,
-    tabBarStyle: { paddingTop: 6, paddingBottom: bottomPadding, height: 58 + bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderTopColor: tabBarColors.borderTopColor, borderTopWidth: 1 },
+    tabBarIcon: ({ color, focused }) => {
+      const iconColor = typeof color === "string" ? color : focused ? colors.emerald : colors.muted;
+      if (route.name === "create") {
+        return <View style={{ width: 48, height: 34, borderRadius: 14, backgroundColor: colors.orange, alignItems: "center", justifyContent: "center", shadowColor: colors.orange, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
+          <Ionicons name="add" size={26} color={colors.white} />
+        </View>;
+      }
+      return <View style={{ width: 52, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: focused ? colors.emeraldTint : "transparent" }}>
+        <Ionicons name={getTabIconName(route.name, focused)} size={focused ? 23 : 21} color={iconColor} />
+        {route.name === "notifications" && unreadNotifications > 0 ? <View accessibilityLabel={`${unreadNotifications} unread notifications`} style={{ position: "absolute", top: -3, right: 2, minWidth: 15, height: 15, borderRadius: 8, paddingHorizontal: 3, backgroundColor: colors.orange, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: tabBarColors.backgroundColor }}><Text style={{ fontSize: 9, lineHeight: 11, color: colors.white, fontWeight: "800" }}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</Text></View> : null}
+      </View>;
+    },
+    tabBarStyle: { paddingTop: 6, paddingBottom: bottomPadding, height: 58 + bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderTopColor: tabBarColors.borderTopColor, borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
   })}>
     <Tabs.Screen name="index" options={{ title: t("home", app.settings.language) }} />
     <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language) }} />
-    <Tabs.Screen name="create" options={{ title: t("create", app.settings.language), tabBarActiveTintColor: colors.orange }} />
+    <Tabs.Screen name="create" options={{ title: t("create", app.settings.language), tabBarActiveTintColor: colors.orange, tabBarLabel: () => null, tabBarAccessibilityLabel: t("create", app.settings.language) }} />
     <Tabs.Screen name="stories" options={{ title: t("stories", app.settings.language) }} />
-    <Tabs.Screen name="notifications" options={{ title: "Alerts" }} />
+    <Tabs.Screen name="notifications" options={{ title: "Alerts", href: null }} />
     <Tabs.Screen name="profile" options={{ title: t("profile", app.settings.language) }} />
-  </Tabs>;
+  </Tabs></View>;
 }

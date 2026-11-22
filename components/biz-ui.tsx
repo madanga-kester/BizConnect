@@ -29,7 +29,7 @@ function ConnectivityBanner() {
   return offline ? <View accessibilityRole="alert" style={styles.offlineNote}><Ionicons name="cloud-offline-outline" size={15} color={colors.warning} /><Text style={styles.offlineText}>You&apos;re offline · saved demo content is still available on this device.</Text></View> : null;
 }
 
-export function Page({ children, scroll = true, style, refreshing, onRefresh, onScroll }: { children: ReactNode; scroll?: boolean; style?: ViewStyle; refreshing?: boolean; onRefresh?: () => void; onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void }) {
+export function Page({ children, scroll = true, style, refreshing, onRefresh, onScroll, topColor }: { children: ReactNode; scroll?: boolean; style?: ViewStyle; refreshing?: boolean; onRefresh?: () => void; onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void; topColor?: string }) {
   useThemeContext();
   const content = <><ConnectivityBanner />{children}</>;
   const insets = useSafeAreaInsets();
@@ -40,7 +40,7 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
     viewportWidth: width,
     embeddedPreview: Platform.OS === "web" && isRunningInPreviewIframe(),
   });
-  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.canvas, paddingTop: topInset }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: topColor ?? colors.canvas, paddingTop: topInset }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
     {scroll ? <ScrollView style={{ flex: 1, backgroundColor: colors.canvas }} contentContainerStyle={[styles.page, style]} keyboardShouldPersistTaps="handled" refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={colors.emerald} /> : undefined} onScroll={onScroll} scrollEventThrottle={onScroll ? 180 : undefined}>{content}</ScrollView> : <View style={[styles.page, { flex: 1, backgroundColor: colors.canvas }, style]}><ConnectivityBanner />{children}</View>}
   </KeyboardAvoidingView>;
 }
@@ -48,7 +48,7 @@ export function Page({ children, scroll = true, style, refreshing, onRefresh, on
 export function TopBar({ title, back, right, subtitle, brandNameOnly = false, onTitlePress }: { title?: string; back?: boolean; right?: ReactNode; subtitle?: string; brandNameOnly?: boolean; onTitlePress?: () => void }) {
   useThemeContext();
   return <View style={styles.topbar}>
-    {back || brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
+    {back ? <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/(tabs)"); }} style={styles.backButton}><Ionicons name="arrow-back" size={22} color={colors.ink} /></Pressable> : brandNameOnly ? null : <View style={styles.brandMark}><Image source={require("../assets/images/splash-icon.png")} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Mabiz logo" /></View>}
     <View style={{ flex: 1 }}>
       {brandNameOnly && !title ? <Text style={[styles.topTitle, { fontSize: 21, letterSpacing: -0.55 }]}><Text style={{ color: colors.ink }}>Biz</Text><Text style={{ color: colors.emerald }}>Connect</Text></Text> : onTitlePress ? <Pressable accessibilityRole="button" accessibilityLabel="Switch profile" onPress={onTitlePress} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}><Text style={styles.topTitle}>{title ?? "Mabiz"}</Text><Ionicons name="chevron-down" size={18} color={colors.ink} /></Pressable> : <Text style={styles.topTitle}>{title ?? "Mabiz"}</Text>}
       {subtitle ? <Text style={styles.caption}>{subtitle}</Text> : null}
@@ -243,6 +243,7 @@ export const styles = createThemedStyles(() => StyleSheet.create({
   page: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 34, gap: 16 },
   topbar: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 2 },
   brandMark: { width: 37, height: 37, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: colors.emeraldFill },
+    backButton: { width: 40, height: 40, borderRadius: 14, backgroundColor: colors.subtle, alignItems: "center", justifyContent: "center" },
   topTitle: { color: colors.ink, fontWeight: "800", fontSize: 19, letterSpacing: -0.2 },
   caption: { color: colors.muted, fontSize: 12, lineHeight: 17 },
   body: { color: colors.ink, fontSize: 14, lineHeight: 20 },
