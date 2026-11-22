@@ -6,6 +6,7 @@ using Mabiz.Infrastructure.Security;
 using Mabiz.Infrastructure.Notifications;
 using Mabiz.Infrastructure.Services;
 using Mabiz.Infrastructure.Storage;
+using Mabiz.Infrastructure.Menu;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,10 @@ public static class DependencyInjection
         services.AddScoped<IBusinessService, BusinessService>();
         services.AddScoped<SocialService>();
         services.AddScoped<SocialRelationshipService>();
+        services.AddScoped<SocialSharingService>();
+        services.AddScoped<SocialTaggingService>();
+        services.AddScoped<SocialMentionService>();
+        services.AddScoped<SocialStoryService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IMessagingService, MessagingService>();
@@ -77,6 +82,10 @@ public static class DependencyInjection
 
 
         AddMediaStorage(services, configuration, environment);
+        services.AddMabizMenu(new MenuExportOptions(
+            configuration["Menu:ExportRootPath"] ?? Path.Combine(environment.ContentRootPath, "private-exports"),
+            configuration.GetValue<int?>("Menu:ExportDownloadLifetimeHours") ?? 24),
+            configuration.GetValue<int?>("Menu:DeletionWorkerIntervalMinutes") ?? 60);
         return services;
     }
 

@@ -2,6 +2,8 @@ using Mabiz.Domain.Accounts;
 using Mabiz.Domain.Businesses;
 using Mabiz.Domain.Catalogue;
 using Mabiz.Domain.Notifications;
+using Mabiz.Domain.Menu;
+using Mabiz.Infrastructure.Menu;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +46,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BusinessFollow> BusinessFollows => Set<BusinessFollow>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
     public DbSet<HiddenPost> HiddenPosts => Set<HiddenPost>();
+    public DbSet<PostShare> PostShares => Set<PostShare>();
+    public DbSet<PostTag> PostTags => Set<PostTag>();
+    public DbSet<Story> Stories => Set<Story>();
+    public DbSet<StoryReply> StoryReplies => Set<StoryReply>();
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
     public DbSet<CatalogItemMedia> CatalogItemMediaLinks => Set<CatalogItemMedia>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
@@ -56,6 +62,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BusinessMilestone> BusinessMilestones => Set<BusinessMilestone>();
     public DbSet<BusinessOpportunity> BusinessOpportunities => Set<BusinessOpportunity>();
     public DbSet<BusinessAnalyticsEvent> BusinessAnalyticsEvents => Set<BusinessAnalyticsEvent>();
+    public DbSet<MenuSettings> MenuSettings => Set<MenuSettings>();
+    public DbSet<AccountDataExportRequest> AccountDataExportRequests => Set<AccountDataExportRequest>();
+    public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+    public DbSet<SavedContent> SavedContent => Set<SavedContent>();
+    public DbSet<MenuActivityEvent> MenuActivityEvents => Set<MenuActivityEvent>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -276,5 +290,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         Stage6Model.Configure(builder);
         Stage7Model.Configure(builder);
         Stage8Model.Configure(builder);
+        builder.ApplyConfiguration(new MenuSettingsConfiguration());
+        builder.ApplyConfiguration(new AccountDataExportRequestConfiguration());
+        builder.ApplyConfiguration(new AccountDeletionRequestConfiguration());
+        builder.ApplyConfiguration(new SupportTicketConfiguration());
+        builder.ApplyConfiguration(new SubscriptionPlanConfiguration());
+        builder.ApplyConfiguration(new UserSubscriptionConfiguration());
+        builder.ApplyConfiguration(new SavedContentConfiguration());
+        builder.ApplyConfiguration(new MenuActivityEventConfiguration());
+        builder.ApplyConfiguration(new PostShareConfiguration());
+        builder.ApplyConfiguration(new PostTagConfiguration());
+        builder.ApplyConfiguration(new StoryConfiguration());
+        builder.ApplyConfiguration(new StoryReplyConfiguration());
     }
 }

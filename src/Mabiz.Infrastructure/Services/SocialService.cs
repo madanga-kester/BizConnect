@@ -1,14 +1,16 @@
 using System.Text;
 using Mabiz.Application.Contracts;
 using Mabiz.Application.Services;
+using Mabiz.Application.Interfaces;
 using Mabiz.Domain.Accounts;
 using Mabiz.Domain.Businesses;
+using Mabiz.Domain.Menu;
 using Mabiz.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mabiz.Infrastructure.Services;
 
-public sealed class SocialService(AppDbContext db, TimeProvider clock, INotificationService notificationWriter)
+public sealed class SocialService(AppDbContext db, TimeProvider clock, INotificationService notificationWriter, IMenuPrivacyPolicy privacy, SocialMentionService mentions)
 {
     private DateTimeOffset Now => clock.GetUtcNow();
 
@@ -18,7 +20,10 @@ public sealed class SocialService(AppDbContext db, TimeProvider clock, INotifica
         if (req.Kind == PostKinds.Product && string.IsNullOrWhiteSpace(req.ProductJson)) throw ApiException.BadRequest("PRODUCT_DATA_REQUIRED", "Product posts require productJson.");
         if (req.BusinessId.HasValue) await RequirePublisher(actor, req.BusinessId.Value, ct);
         var now = Now; var post = new Post { Id = Guid.NewGuid(), AuthorUserId = actor, BusinessId = req.BusinessId, Kind = req.Kind, Audience = req.Audience, Discoverable = req.Discoverable, AllowComments = req.AllowComments, Location = req.Location?.Trim(), Text = req.Text.Trim(), ProductJson = req.ProductJson, CreatedAtUtc = now, UpdatedAtUtc = now };
-        db.Posts.Add(post); AddMedia(post.Id, req.Media); await db.SaveChangesAsync(ct); return await MapPost(post, actor, ct);
+        db.Posts.Add(post); AddMedia(post.Id, req.Media); await db.SaveChangesAsync(ct);
+        await NotifyMentions(actor, post.Text, post, $"mention:post:{post.Id:N}", ct);
+        await db.SaveChangesAsync(ct);
+        return await MapPost(post, actor, ct);
     }
     public async Task<PostDto> GetPost(Guid actor, Guid id, CancellationToken ct) { var p = await VisiblePost(actor, id, ct); return await MapPost(p, actor, ct); }
     public async Task<PostDto> UpdatePost(Guid actor, Guid id, UpdatePostRequest req, CancellationToken ct)
@@ -101,6 +106,7 @@ public sealed class SocialService(AppDbContext db, TimeProvider clock, INotifica
         await notificationWriter.CreateEventAsync(new NotificationEventRequest(actor, recipients, isReply ? "reply" : "comment",
             isReply ? "New reply" : "New comment", isReply ? "Someone replied to a conversation you joined." : "Someone commented on your post.",
             "post", postId, $"comment:{c.Id:N}", post.BusinessId, PostId: postId), ct);
+        await NotifyMentions(actor, c.Text, post, $"mention:comment:{c.Id:N}", ct);
         await db.SaveChangesAsync(ct); return await MapComment(c, actor, ct);
     }
     public async Task<CursorPage<CommentDto>> GetComments(Guid actor, Guid postId, Guid? parent, string? cursor, int limit, CancellationToken ct)
@@ -149,7 +155,10 @@ public sealed class SocialService(AppDbContext db, TimeProvider clock, INotifica
             (block.BlockerUserId == b.OwnerUserId && block.BlockedUserId == actor)))) &&
         (p.BusinessId == null
             ? (p.AuthorUserId == actor ||
-               (db.UserProfiles.Any(u => u.UserId == p.AuthorUserId && !u.PrivateProfile) &&
+               (db.UserProfiles.Any(u => u.UserId == p.AuthorUserId && !u.PrivateProfile &&
+                    (!db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility != "public") ||
+                     (db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility == "followers") &&
+                      db.UserFollows.Any(f => f.FollowerUserId == actor && f.FollowedUserId == u.UserId)))) &&
                 (p.Audience == PostAudiences.Public ||
                  (p.Audience == PostAudiences.Followers && db.UserFollows.Any(f => f.FollowerUserId == actor && f.FollowedUserId == p.AuthorUserId)))))
             : db.Businesses.Any(b => b.Id == p.BusinessId && b.Status == BusinessStatuses.Active &&
@@ -158,22 +167,66 @@ public sealed class SocialService(AppDbContext db, TimeProvider clock, INotifica
                  (p.Audience == PostAudiences.Followers && (db.BusinessFollows.Any(f => f.UserId == actor && f.BusinessId == b.Id) || db.BusinessMemberships.Any(m => m.BusinessId == b.Id && m.UserId == actor && m.RevokedAtUtc == null))) ||
                  (p.Audience == PostAudiences.Private && (p.AuthorUserId == actor || db.BusinessMemberships.Any(m => m.BusinessId == b.Id && m.UserId == actor && m.RevokedAtUtc == null)))))));
     private async Task<Post> VisiblePost(Guid actor, Guid id, CancellationToken ct) => await VisibleQuery(actor).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw ApiException.NotFound("POST_NOT_FOUND", "The post was not found.");
+    private Task NotifyMentions(Guid actor, string text, Post post, string eventKeyPrefix, CancellationToken ct) =>
+        mentions.NotifyAsync(actor, text, post.Id, post.BusinessId, eventKeyPrefix, async mentioned =>
+        {
+            try { _ = await VisiblePost(mentioned, post.Id, ct); return true; }
+            catch (ApiException ex) when (ex.StatusCode == 404) { return false; }
+        }, ct);
     private async Task EnsureInteractionAllowed(Guid actor, Guid target, CancellationToken ct) { if (actor == target) return; if (await IsBlocked(actor, target, ct)) throw ApiException.NotFound("RESOURCE_NOT_FOUND", "The resource was not found."); }
-    private async Task EnsurePostInteractionAllowed(Guid actor, Post post, CancellationToken ct) { await EnsureInteractionAllowed(actor, post.AuthorUserId, ct); if (post.BusinessId.HasValue) { var ownerId = await db.Businesses.Where(x => x.Id == post.BusinessId.Value).Select(x => x.OwnerUserId).SingleAsync(ct); await EnsureInteractionAllowed(actor, ownerId, ct); } }
-    private async Task EnsureRelationshipVisible(Guid actor, Guid target, CancellationToken ct) { if (actor != target && await IsBlocked(actor, target, ct)) throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found."); var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == target, ct) ?? throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found."); if (profile.PrivateProfile && actor != target) throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found."); }
+    private async Task EnsurePostInteractionAllowed(Guid actor, Post post, CancellationToken ct)
+    {
+        await EnsureInteractionAllowed(actor, post.AuthorUserId, ct);
+        var target = post.AuthorUserId;
+        if (post.BusinessId.HasValue) target = await db.Businesses.Where(x => x.Id == post.BusinessId.Value).Select(x => x.OwnerUserId).SingleAsync(ct);
+        var follower = await db.UserFollows.AnyAsync(x => x.FollowerUserId == actor && x.FollowedUserId == target, ct);
+        var permission = await db.Set<MenuSettings>().Where(x => x.UserId == target).Select(x => x.CommentPermission).SingleOrDefaultAsync(ct) ?? "everyone";
+        var decision = privacy.CanInteract(permission, follower, actor == target);
+        if (!decision.Allowed) throw ApiException.Forbidden(decision.Code, "This account does not allow this interaction.");
+        await EnsureInteractionAllowed(actor, target, ct);
+    }
+    private async Task EnsureRelationshipVisible(Guid actor, Guid target, CancellationToken ct)
+    {
+        if (actor != target && await IsBlocked(actor, target, ct)) throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found.");
+        var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == target, ct) ?? throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found.");
+        var configured = await db.Set<MenuSettings>().Where(x => x.UserId == target).Select(x => x.ProfileVisibility).SingleOrDefaultAsync(ct);
+        var visibility = MenuPrivacyCompatibility.EffectiveProfileVisibility(profile.PrivateProfile, configured);
+        var follower = await db.UserFollows.AnyAsync(x => x.FollowerUserId == actor && x.FollowedUserId == target, ct);
+        var decision = privacy.CanViewProfile(visibility, follower, actor == target);
+        if (!decision.Allowed) throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found.");
+    }
     private Task<bool> IsBlocked(Guid a, Guid b, CancellationToken ct) => db.UserBlocks.AsNoTracking().AnyAsync(x => (x.BlockerUserId == a && x.BlockedUserId == b) || (x.BlockerUserId == b && x.BlockedUserId == a), ct);
     private async Task EnsureBusinessVisible(Guid actor, Guid id, CancellationToken ct) { var b = await db.Businesses.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id && x.Status == BusinessStatuses.Active, ct) ?? throw ApiException.NotFound("BUSINESS_NOT_FOUND", "The business was not found."); if (b.Visibility == BusinessVisibility.Private && !await db.BusinessMemberships.AnyAsync(x => x.BusinessId == id && x.UserId == actor && x.RevokedAtUtc == null, ct)) throw ApiException.NotFound("BUSINESS_NOT_FOUND", "The business was not found."); }
     private async Task RequirePublisher(Guid actor, Guid business, CancellationToken ct) { if (!await db.Businesses.AnyAsync(x => x.Id == business && x.Status == BusinessStatuses.Active, ct)) throw ApiException.NotFound("BUSINESS_NOT_FOUND", "The business was not found."); var role = await db.BusinessMemberships.Where(x => x.BusinessId == business && x.UserId == actor && x.RevokedAtUtc == null).Select(x => x.Role).SingleOrDefaultAsync(ct); if (role is null) throw ApiException.NotFound("BUSINESS_NOT_FOUND", "The business was not found."); if (!BusinessAccessControl.Allows(role, BusinessPermission.PublishPosts)) throw ApiException.Forbidden("BUSINESS_PUBLISH_DENIED", "Your business role cannot publish posts."); }
     private void AddMedia(Guid postId, IReadOnlyList<MediaReferenceRequest> refs) { for (var i = 0; i < refs.Count; i++) db.PostMediaReferences.Add(new PostMediaReference { Id = Guid.NewGuid(), PostId = postId, MediaType = refs[i].MediaType, Url = refs[i].Url.Trim(), AltText = refs[i].AltText, SortOrder = i }); }
     private static void ValidateMedia(IReadOnlyList<MediaReferenceRequest> refs) { if (refs.Count > 10) throw ApiException.BadRequest("TOO_MANY_MEDIA_REFERENCES", "A post may reference at most 10 media items."); foreach (var m in refs) if (!Uri.TryCreate(m.Url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || !string.IsNullOrEmpty(uri.UserInfo)) throw ApiException.BadRequest("INVALID_MEDIA_URL", "Media references must be absolute HTTPS URLs; local device paths and other schemes are not accepted."); }
-    private IQueryable<SocialComment> VisibleComments(Guid actor) => db.Comments.AsNoTracking().Where(c => db.UserProfiles.Any(u => u.UserId == c.AuthorUserId && (!u.PrivateProfile || c.AuthorUserId == actor)) && !db.UserBlocks.Any(b => (b.BlockerUserId == actor && b.BlockedUserId == c.AuthorUserId) || (b.BlockerUserId == c.AuthorUserId && b.BlockedUserId == actor)));
+    private IQueryable<SocialComment> VisibleComments(Guid actor) => db.Comments.AsNoTracking().Where(c =>
+        db.UserProfiles.Any(u => u.UserId == c.AuthorUserId &&
+            (c.AuthorUserId == actor ||
+             (!u.PrivateProfile &&
+              (!db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility != "public") ||
+               (db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility == "followers") &&
+                db.UserFollows.Any(f => f.FollowerUserId == actor && f.FollowedUserId == u.UserId)))))) &&
+        !db.UserBlocks.Any(b =>
+            (b.BlockerUserId == actor && b.BlockedUserId == c.AuthorUserId) ||
+            (b.BlockerUserId == c.AuthorUserId && b.BlockedUserId == actor)));
     private async Task<PostDto> MapPost(Post p, Guid actor, CancellationToken ct)
     {
         var media = await db.PostMediaReferences.AsNoTracking().Where(x => x.PostId == p.Id).OrderBy(x => x.SortOrder).Select(x => new MediaReferenceDto(x.Id, x.MediaType, x.Url, x.AltText, x.SortOrder)).ToListAsync(ct);
         var profile = await db.UserProfiles.AsNoTracking().Where(x => x.UserId == p.AuthorUserId).Select(x => new { x.Name, x.Username, x.Avatar }).SingleAsync(ct);
         BusinessPublisherDto? business = null;
         if (p.BusinessId.HasValue) business = await db.Businesses.AsNoTracking().Where(x => x.Id == p.BusinessId.Value).Select(x => new BusinessPublisherDto(x.Id, x.Name, x.Slug, x.Logo, x.Cover)).SingleOrDefaultAsync(ct);
-        var likes = await (from l in db.PostLikes where l.PostId == p.Id && db.UserProfiles.Any(u => u.UserId == l.UserId && (!u.PrivateProfile || l.UserId == actor)) && !db.UserBlocks.Any(b => (b.BlockerUserId == actor && b.BlockedUserId == l.UserId) || (b.BlockerUserId == l.UserId && b.BlockedUserId == actor)) select l.UserId).CountAsync(ct);
+        var likes = await (from l in db.PostLikes
+            where l.PostId == p.Id && db.UserProfiles.Any(u => u.UserId == l.UserId &&
+                (l.UserId == actor ||
+                 (!u.PrivateProfile &&
+                  (!db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility != "public") ||
+                   (db.MenuSettings.Any(m => m.UserId == u.UserId && m.ProfileVisibility == "followers") &&
+                    db.UserFollows.Any(f => f.FollowerUserId == actor && f.FollowedUserId == u.UserId)))))) &&
+                !db.UserBlocks.Any(b =>
+                    (b.BlockerUserId == actor && b.BlockedUserId == l.UserId) ||
+                    (b.BlockerUserId == l.UserId && b.BlockedUserId == actor))
+            select l.UserId).CountAsync(ct);
         var comments = await VisibleComments(actor).CountAsync(x => x.PostId == p.Id, ct);
         var liked = await db.PostLikes.AnyAsync(x => x.PostId == p.Id && x.UserId == actor, ct);
         var pollId = await db.Polls.AsNoTracking().Where(x => x.PostId == p.Id).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);

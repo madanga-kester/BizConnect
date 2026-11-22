@@ -1,6 +1,8 @@
 using Mabiz.Application.Contracts;
 using Mabiz.Application.Services;
+using Mabiz.Application.Interfaces;
 using Mabiz.Domain.Accounts;
+using Mabiz.Domain.Menu;
 using Mabiz.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.DataProtection;
@@ -27,7 +29,11 @@ public sealed class UserService(UserManager<MabizUser> userManager, AppDbContext
         if (!user.IsActive) throw ApiException.NotFound("USER_NOT_FOUND", "The user was not found.");
         var profile = await db.UserProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken)
             ?? throw ApiException.NotFound("PROFILE_NOT_FOUND", "The user profile was not found.");
-        if (profile.PrivateProfile && viewerId != userId)
+        var menuVisibility = await db.Set<MenuSettings>().Where(x => x.UserId == userId).Select(x => x.ProfileVisibility).SingleOrDefaultAsync(cancellationToken);
+        var isFollower = viewerId.HasValue && await db.UserFollows.AnyAsync(x => x.FollowerUserId == viewerId.Value && x.FollowedUserId == userId, cancellationToken);
+        var visibility = MenuPrivacyCompatibility.EffectiveProfileVisibility(profile.PrivateProfile, menuVisibility);
+        var allowed = viewerId == userId || visibility.Equals("public", StringComparison.OrdinalIgnoreCase) || (visibility.Equals("followers", StringComparison.OrdinalIgnoreCase) && isFollower);
+        if (!allowed)
             throw ApiException.NotFound("PROFILE_NOT_FOUND", "The user profile was not found.");
         return await MapAsync(user, profile, includeContact: false, cancellationToken);
     }

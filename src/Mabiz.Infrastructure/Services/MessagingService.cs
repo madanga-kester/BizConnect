@@ -1,16 +1,18 @@
 using Mabiz.Application.Contracts;
 using Mabiz.Application.Services;
+using Mabiz.Application.Interfaces;
 using Mabiz.Domain.Accounts;
 using Mabiz.Domain.Businesses;
 using Mabiz.Domain.Catalogue;
 using Mabiz.Domain.Messaging;
+using Mabiz.Domain.Menu;
 using Mabiz.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mabiz.Infrastructure.Services;
 
 /// <summary>REST-backed source of truth for direct conversations and buyer-to-business enquiries.</summary>
-public sealed class MessagingService(AppDbContext db, TimeProvider clock, IConversationNotifier notifier, INotificationService notificationWriter) : IMessagingService
+public sealed class MessagingService(AppDbContext db, TimeProvider clock, IConversationNotifier notifier, INotificationService notificationWriter, IMenuPrivacyPolicy privacy) : IMessagingService
 {
     private const int MaxPageSize = 50;
 
@@ -74,8 +76,10 @@ public sealed class MessagingService(AppDbContext db, TimeProvider clock, IConve
             if (isBlocked) throw ApiException.NotFound("USER_NOT_FOUND", "The requested user was not found.");
             var profilePrivate = await db.UserProfiles.AsNoTracking().AnyAsync(x => x.UserId == targetId && x.PrivateProfile, ct);
             var followsTarget = await db.UserFollows.AnyAsync(x => x.FollowerUserId == actorId && x.FollowedUserId == targetId, ct);
-            if (profilePrivate && !followsTarget)
-                throw ApiException.NotFound("USER_NOT_FOUND", "The requested user was not found.");
+            var configuredMessagePermission = await db.Set<MenuSettings>().Where(x => x.UserId == targetId).Select(x => x.MessagePermission).SingleOrDefaultAsync(ct);
+            var messagePermission = profilePrivate && !followsTarget ? "followers" : (configuredMessagePermission ?? "everyone");
+            var messageDecision = privacy.CanMessage(messagePermission, followsTarget, false);
+            if (!messageDecision.Allowed) throw ApiException.NotFound("USER_NOT_FOUND", "The requested user was not found.");
 
             var low = actorId.CompareTo(targetId) < 0 ? actorId : targetId;
             var high = actorId.CompareTo(targetId) < 0 ? targetId : actorId;
@@ -154,6 +158,16 @@ public sealed class MessagingService(AppDbContext db, TimeProvider clock, IConve
         await EnsureConversationAccessAsync(actorId, conversation, ct);
         if (conversation.IsBlocked) throw ApiException.Conflict("CONVERSATION_BLOCKED", "This conversation is blocked and cannot receive messages.");
         await EnsureNoUserBlockAsync(actorId, conversation, ct);
+        if (conversation.Kind == ConversationKinds.Direct)
+        {
+            var targetId = conversation.DirectUserLowId == actorId ? conversation.DirectUserHighId!.Value : conversation.DirectUserLowId!.Value;
+            var followsTarget = await db.UserFollows.AnyAsync(x => x.FollowerUserId == actorId && x.FollowedUserId == targetId, ct);
+            var profilePrivate = await db.UserProfiles.AsNoTracking().AnyAsync(x => x.UserId == targetId && x.PrivateProfile, ct);
+            var configuredPermission = await db.Set<MenuSettings>().Where(x => x.UserId == targetId).Select(x => x.MessagePermission).SingleOrDefaultAsync(ct);
+            var permission = profilePrivate && !followsTarget ? "followers" : (configuredPermission ?? "everyone");
+            var messageDecision = privacy.CanMessage(permission, followsTarget, false);
+            if (!messageDecision.Allowed) throw ApiException.Forbidden(messageDecision.Code, "This account does not accept messages from you.");
+        }
 
         var previous = await db.ConversationMessages.AsNoTracking().FirstOrDefaultAsync(x => x.ConversationId == conversationId && x.SenderUserId == actorId && x.ClientMessageId == request.ClientMessageId, ct);
         if (previous is not null)
