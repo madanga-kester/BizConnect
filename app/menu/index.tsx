@@ -107,15 +107,9 @@ export default function MenuScreen() {
         },
         {
           title: "Business ideas & opportunities",
-          detail: "Saved opportunities and founder resources",
+          detail: "Saved businesses and business ideas",
           icon: "bulb-outline",
-          route: "/menu/activity/opportunities",
-        },
-        {
-          title: "Notifications",
-          detail: "View alerts and activity updates",
-          icon: "notifications-outline",
-          route: "/menu/activity/notifications",
+          route: "/menu/activity/saved-business-ideas",
         },
         serviceMode === "api"
           ? {

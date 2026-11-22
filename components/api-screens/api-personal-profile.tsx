@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Modal,
   PanResponder,
   Pressable,
@@ -190,19 +191,37 @@ export function ApiPersonalProfile() {
     if (inBusiness && tab === "saved") setTab("all");
   }, [inBusiness, tab]);
 
-    const swipe = useMemo(
+    const slide = useRef(new Animated.Value(0)).current;
+  const swipe = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_event, gesture) =>
-          Math.abs(gesture.dx) > 20 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
-        onPanResponderRelease: (_event, gesture) => {
-          if (Math.abs(gesture.dx) < 60) return;
+          Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5,
+        onPanResponderMove: (_event, gesture) => {
           const index = visibleTabs.findIndex((item) => item.key === tab);
-          const next = visibleTabs[index + (gesture.dx < 0 ? 1 : -1)];
-          if (next) setTab(next.key);
+          const target = visibleTabs[index + (gesture.dx < 0 ? 1 : -1)];
+          slide.setValue(target ? gesture.dx : gesture.dx * 0.25);
+        },
+        onPanResponderRelease: (_event, gesture) => {
+          const index = visibleTabs.findIndex((item) => item.key === tab);
+          const direction = gesture.dx < 0 ? 1 : -1;
+          const target = visibleTabs[index + direction];
+          const committed = Boolean(target) && (Math.abs(gesture.dx) > width * 0.25 || Math.abs(gesture.vx) > 0.5);
+          if (!committed || !target) {
+            Animated.spring(slide, { toValue: 0, useNativeDriver: true, bounciness: 0 }).start();
+            return;
+          }
+          Animated.timing(slide, { toValue: -direction * width, duration: 120, useNativeDriver: true }).start(() => {
+            setTab(target.key);
+            slide.setValue(direction * width);
+            Animated.timing(slide, { toValue: 0, duration: 180, useNativeDriver: true }).start();
+          });
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(slide, { toValue: 0, useNativeDriver: true, bounciness: 0 }).start();
         },
       }),
-    [tab, visibleTabs]
+    [tab, visibleTabs, width, slide]
   );
 
   const tileSize = Math.floor((width - 32 - 4) / 3);
@@ -654,6 +673,7 @@ export function ApiPersonalProfile() {
           </View>
          
           {/* Tab Content */}
+          <Animated.View style={{ transform: [{ translateX: slide }] }}>
           {tab === "saved" ? (
             <View style={{ gap: 8 }}>
               <ActionTile
@@ -680,6 +700,7 @@ export function ApiPersonalProfile() {
           ) : (
             <EmptyState title={emptyText[tab]} detail="Posts you publish will appear here." icon="albums-outline" />
           )}
+          </Animated.View>
           </View>
         </>
       ) : null}
