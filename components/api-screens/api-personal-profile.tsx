@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   Share,
+  StyleSheet,
   Text,
   View,
   useWindowDimensions,
@@ -17,7 +18,6 @@ import {
   Avatar,
   Button,
   EmptyState,
-  LoadingState,
   Page,
   Stat,
   TopBar,
@@ -34,7 +34,7 @@ import {
   type LoosePost,
   type ProfileTab,
 } from "@/lib/profile-post-utils";
-import { colors } from "@/theme/tokens";
+import { colors, createThemedStyles } from "@/theme/tokens";
 import type { Post, UserProfile } from "@/types/domain";
 import { ProfileSkeleton, SkeletonGrid } from "@/components/skeleton";
 import { ApiPostCard } from "@/components/api-post-card";
@@ -43,28 +43,7 @@ export function ApiPersonalProfile() {
   const services = useMabizServices();
   const app = useAppStore();
   const { width, height } = useWindowDimensions();
-  const { colorScheme } = useThemeContext();
-  const isDark = colorScheme === "dark";
-
-  // Theme-responsive palette derived from system color scheme & design tokens
-  const theme = useMemo(
-    () => ({
-      bg: colors.canvas,
-      surface: colors.surface,
-      surfaceElevated: colors.subtle,
-      border: colors.border,
-      textPrimary: colors.ink,
-      textSecondary: colors.muted,
-      accent: colors.emerald,
-      accentText: colors.emeraldDark,
-      accentSoft: colors.emeraldTint,
-      businessBadgeBg: isDark ? "rgba(56, 189, 248, 0.15)" : "rgba(14, 165, 233, 0.10)",
-      businessBadgeText: isDark ? "#38BDF8" : "#0284C7",
-      backdrop: "rgba(0, 0, 0, 0.6)",
-      handleBar: colors.border,
-    }),
-    [isDark]
-  );
+  useThemeContext();
 
   const [person, setPerson] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -191,7 +170,7 @@ export function ApiPersonalProfile() {
     if (inBusiness && tab === "saved") setTab("all");
   }, [inBusiness, tab]);
 
-    const slide = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(0)).current;
   const swipe = useMemo(
     () =>
       PanResponder.create({
@@ -258,36 +237,28 @@ export function ApiPersonalProfile() {
   };
 
   return (
-    <Page onRefresh={() => void load()} refreshing={loading} style={{ backgroundColor: theme.bg }}>
-      <TopBar
-        title={person ? `@${displayHandle}` : "Profile"}
-        onTitlePress={person ? () => setPickerOpen(true) : undefined}
-        right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Menu"
-            onPress={() => router.push("/menu")}
-            hitSlop={8}
-            style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" }}
-          >
-            <Ionicons name="menu-outline" size={26} color={theme.textPrimary} />
-          </Pressable>
-        }
-      />
+    <Page topColor={colors.surface} onRefresh={() => void load()} refreshing={loading}>
+      <View style={localStyles.topBarFlat}>
+        <TopBar
+          title={person ? `@${displayHandle}` : "Profile"}
+          onTitlePress={person ? () => setPickerOpen(true) : undefined}
+          right={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Menu"
+              onPress={() => router.push("/menu")}
+              hitSlop={8}
+              style={localStyles.menuButton}
+            >
+              <Ionicons name="menu-outline" size={24} color={colors.ink} />
+            </Pressable>
+          }
+        />
+      </View>
 
       {error ? (
-        <View
-          accessibilityRole="alert"
-          style={{
-            backgroundColor: theme.surface,
-            borderColor: theme.border,
-            borderWidth: 1,
-            borderRadius: 12,
-            padding: 12,
-            gap: 8,
-          }}
-        >
-          <Text style={[styles.body, { color: theme.textPrimary }]}>Profile error: {error}</Text>
+        <View accessibilityRole="alert" style={localStyles.errorBar}>
+          <Text style={styles.body}>Profile error: {error}</Text>
           <Button title="Retry" small variant="outline" onPress={() => void load()} />
         </View>
       ) : null}
@@ -301,139 +272,100 @@ export function ApiPersonalProfile() {
 
       {!loading && person ? (
         <>
-          {/* Profile Header & Stats */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
-            <Avatar
-              name={displayName}
-              image={inBusiness && activeBusiness ? activeBusiness.logo : person.avatar}
-              size={82}
-              ring
-            />
-            <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
-              <Stat value={shownPosts.length} label="Posts" />
-              {inBusiness && activeBusiness ? (
-                <Stat value={activeBusiness.followers} label="Followers" />
-              ) : (
-                <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
-                  <Stat value={person.followers} label="Followers" />
-                </Pressable>
-              )}
-              {inBusiness ? null : (
-                <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
-                  <Stat value={person.following} label="Following" />
-                </Pressable>
-              )}
+          {/* Flat Profile Header & Stats */}
+          <View style={localStyles.profileBand}>
+            <View style={localStyles.headerRow}>
+              <Avatar
+                name={displayName}
+                image={inBusiness && activeBusiness ? activeBusiness.logo : person.avatar}
+                size={80}
+                ring
+              />
+              <View style={localStyles.statsRow}>
+                <Stat value={shownPosts.length} label="Posts" />
+                {inBusiness && activeBusiness ? (
+                  <Stat value={activeBusiness.followers} label="Followers" />
+                ) : (
+                  <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                    <Stat value={person.followers} label="Followers" />
+                  </Pressable>
+                )}
+                {inBusiness ? null : (
+                  <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                    <Stat value={person.following} label="Following" />
+                  </Pressable>
+                )}
+              </View>
             </View>
-          </View>
 
-          {/* Identity Info + Quick Switcher Pill */}
-          <View style={{ gap: 4 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
-                <Text style={[styles.sectionHeading, { color: theme.textPrimary }]} numberOfLines={1}>
-                  {displayName}
-                </Text>
-                {inBusiness ? (
-                  <View
-                    style={{
-                      backgroundColor: theme.businessBadgeBg,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: 999,
-                    }}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: theme.businessBadgeText }}>
-                      Business
-                    </Text>
-                  </View>
-                ) : null}
+            {/* Identity Info + Quick Switcher */}
+            <View style={localStyles.identityBlock}>
+              <View style={localStyles.nameLine}>
+                <View style={localStyles.nameGroup}>
+                  <Text style={styles.sectionHeading} numberOfLines={1}>
+                    {displayName}
+                  </Text>
+                  {inBusiness ? (
+                    <View style={localStyles.businessTag}>
+                      <Text style={localStyles.businessTagText}>Business</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch profile"
+                  onPress={() => setPickerOpen(true)}
+                  style={({ pressed }) => [localStyles.switchButton, pressed && { opacity: 0.6 }]}
+                >
+                  <Ionicons name="swap-horizontal-outline" size={16} color={colors.ink} />
+                  <Text style={localStyles.switchButtonText}>Switch</Text>
+                </Pressable>
               </View>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Switch profile"
-                onPress={() => setPickerOpen(true)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 4,
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 999,
-                  backgroundColor: theme.surfaceElevated,
-                  borderWidth: 1,
-                  borderColor: theme.border,
-                }}
-              >
-                <Ionicons name="swap-horizontal-outline" size={14} color={theme.accentText} />
-                <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textPrimary }}>Switch</Text>
-              </Pressable>
+              <Text style={styles.caption}>
+                {inBusiness && activeBusiness
+                  ? `${activeBusiness.category} · ${activeBusiness.town}`
+                  : `${person.town}, ${person.county}`}
+              </Text>
+              {displayAbout ? <Text style={styles.body}>{displayAbout}</Text> : null}
             </View>
 
-            <Text style={[styles.caption, { color: theme.textSecondary }]}>
-              {inBusiness && activeBusiness
-                ? `${activeBusiness.category} · ${activeBusiness.town}`
-                : `${person.town}, ${person.county}`}
-            </Text>
-            {displayAbout ? <Text style={[styles.body, { color: theme.textPrimary }]}>{displayAbout}</Text> : null}
-          </View>
-
-          {/* Primary Actions */}
-          <View style={{ flexDirection: "row", gap: 9 }}>
-            <View style={{ flex: 1 }}>
-              <Button
-                title={inBusiness ? "Manage business" : "Edit profile"}
-                icon={inBusiness ? "settings-outline" : "create-outline"}
-                variant="outline"
-                small
-                onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/edit-profile")}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Button title="Share profile" icon="share-outline" variant="outline" small onPress={shareProfile} />
+            {/* Primary Actions */}
+            <View style={localStyles.actionRow}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title={inBusiness ? "Manage business" : "Edit profile"}
+                  icon={inBusiness ? "settings-outline" : "create-outline"}
+                  variant="outline"
+                  small
+                  onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/edit-profile")}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button title="Share profile" icon="share-outline" variant="outline" small onPress={shareProfile} />
+              </View>
             </View>
           </View>
 
-          {/* Redesigned Bottom Sheet Profile Switcher */}
+          {/* Bottom Sheet Profile Switcher */}
           <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
             <Pressable
               onPress={() => setPickerOpen(false)}
-              style={{ flex: 1, backgroundColor: theme.backdrop, justifyContent: "flex-end" }}
+              style={localStyles.modalBackdrop}
             >
               <Pressable
                 onPress={() => {}}
-                style={{
-                  backgroundColor: theme.surface,
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
-                  borderTopWidth: 1,
-                  borderColor: theme.border,
-                  paddingTop: 10,
-                  paddingHorizontal: 16,
-                  paddingBottom: 24,
-                  maxHeight: height * 0.78,
-                  gap: 14,
-                }}
+                style={[localStyles.sheetContainer, { maxHeight: height * 0.78 }]}
               >
-                {/* Sheet Drag Handle */}
-                <View style={{ alignItems: "center" }}>
-                  <View
-                    style={{
-                      width: 40,
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: theme.handleBar,
-                    }}
-                  />
+                <View style={localStyles.handleWrap}>
+                  <View style={localStyles.handleBar} />
                 </View>
 
-                {/* Sheet Header */}
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={localStyles.sheetHeader}>
                   <View>
-                    <Text style={[styles.cardTitle, { color: theme.textPrimary, fontSize: 17 }]}>
-                      Switch account
-                    </Text>
-                    <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                    <Text style={[styles.cardTitle, { fontSize: 17 }]}>Switch account</Text>
+                    <Text style={styles.caption}>
                       Choose between your personal account and business profiles
                     </Text>
                   </View>
@@ -442,100 +374,56 @@ export function ApiPersonalProfile() {
                     accessibilityLabel="Close profile switcher"
                     onPress={() => setPickerOpen(false)}
                     hitSlop={8}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: theme.surfaceElevated,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    style={localStyles.closeButton}
                   >
-                    <Ionicons name="close" size={18} color={theme.textSecondary} />
+                    <Ionicons name="close" size={18} color={colors.ink} />
                   </Pressable>
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
-                  {/* Personal Profile Section */}
                   <View style={{ gap: 6 }}>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: "700",
-                        letterSpacing: 0.6,
-                        textTransform: "uppercase",
-                        color: theme.textSecondary,
-                      }}
-                    >
-                      Personal Account
-                    </Text>
+                    <Text style={localStyles.sheetSectionLabel}>Personal Account</Text>
                     <Pressable
                       accessibilityRole="button"
                       onPress={selectPersonal}
                       style={[
-                        styles.actionTile,
-                        {
-                          backgroundColor: !inBusiness ? theme.accentSoft : theme.surfaceElevated,
-                          borderColor: !inBusiness ? theme.accent : theme.border,
-                          borderWidth: !inBusiness ? 1.5 : 1,
-                          borderRadius: 14,
-                        },
+                        localStyles.pickerRow,
+                        !inBusiness && localStyles.pickerRowSelected,
                       ]}
                     >
                       <Avatar name={person.name} image={person.avatar} size={42} />
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{person.name}</Text>
-                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                        <Text style={styles.cardTitle}>{person.name}</Text>
+                        <Text style={styles.caption}>
                           @{person.username} · Personal profile
                         </Text>
                       </View>
-                      {!inBusiness ? (
-                        <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
-                      ) : (
-                        <Ionicons name="ellipse-outline" size={22} color={theme.textSecondary} />
-                      )}
+                      <Ionicons
+                        name={!inBusiness ? "checkmark-circle" : "ellipse-outline"}
+                        size={22}
+                        color={!inBusiness ? colors.emerald : colors.muted}
+                      />
                     </Pressable>
                   </View>
 
-                  {/* Business Profiles Section */}
                   <View style={{ gap: 8 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={localStyles.sheetSubHeader}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Ionicons name="storefront-outline" size={14} color={theme.businessBadgeText} />
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            fontWeight: "700",
-                            letterSpacing: 0.6,
-                            textTransform: "uppercase",
-                            color: theme.textSecondary,
-                          }}
-                        >
-                          Business Profiles
-                        </Text>
+                        <Ionicons name="storefront-outline" size={15} color={colors.ink} />
+                        <Text style={localStyles.sheetSectionLabel}>Business Profiles</Text>
                       </View>
                       {managed.length > 0 ? (
-                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                        <Text style={styles.caption}>
                           {managed.length} {managed.length === 1 ? "business" : "businesses"}
                         </Text>
                       ) : null}
                     </View>
 
                     {businessLoading ? (
-                      <Text style={[styles.caption, { color: theme.textSecondary }]}>
-                        Loading business profiles...
-                      </Text>
+                      <Text style={styles.caption}>Loading business profiles...</Text>
                     ) : managed.length === 0 ? (
-                      <View
-                        style={{
-                          padding: 12,
-                          borderRadius: 12,
-                          borderWidth: 1,
-                          borderColor: theme.border,
-                          backgroundColor: theme.surfaceElevated,
-                        }}
-                      >
-                        <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                      <View style={localStyles.emptyPickerNote}>
+                        <Text style={styles.caption}>
                           No business profiles linked yet. Create one to manage a storefront and post as a business.
                         </Text>
                       </View>
@@ -548,47 +436,27 @@ export function ApiPersonalProfile() {
                             accessibilityRole="button"
                             onPress={() => selectBusiness(business.id)}
                             style={[
-                              styles.actionTile,
-                              {
-                                backgroundColor: selected ? theme.accentSoft : theme.surfaceElevated,
-                                borderColor: selected ? theme.accent : theme.border,
-                                borderWidth: selected ? 1.5 : 1,
-                                borderRadius: 14,
-                              },
+                              localStyles.pickerRow,
+                              selected && localStyles.pickerRowSelected,
                             ]}
                           >
                             <Avatar name={business.name} image={business.logo} size={42} />
                             <View style={{ flex: 1, gap: 3 }}>
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                                <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{business.name}</Text>
-                                <View
-                                  style={{
-                                    backgroundColor: theme.businessBadgeBg,
-                                    paddingHorizontal: 7,
-                                    paddingVertical: 1.5,
-                                    borderRadius: 6,
-                                  }}
-                                >
-                                  <Text
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: "700",
-                                      color: theme.businessBadgeText,
-                                    }}
-                                  >
-                                    Business profile
-                                  </Text>
+                                <Text style={styles.cardTitle}>{business.name}</Text>
+                                <View style={localStyles.businessTag}>
+                                  <Text style={localStyles.businessTagText}>Business profile</Text>
                                 </View>
                               </View>
-                              <Text style={[styles.caption, { color: theme.textSecondary }]}>
+                              <Text style={styles.caption}>
                                 @{business.slug} · {business.currentUserRole ?? "Team member"}
                               </Text>
                             </View>
-                            {selected ? (
-                              <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
-                            ) : (
-                              <Ionicons name="ellipse-outline" size={22} color={theme.textSecondary} />
-                            )}
+                            <Ionicons
+                              name={selected ? "checkmark-circle" : "ellipse-outline"}
+                              size={22}
+                              color={selected ? colors.emerald : colors.muted}
+                            />
                           </Pressable>
                         );
                       })
@@ -610,13 +478,11 @@ export function ApiPersonalProfile() {
             </Pressable>
           </Modal>
 
-          {/* Active Business Quick Actions (shown only when switched into a business profile) */}
+          {/* Active Business Quick Actions */}
           {businessMode ? (
-            <View style={{ gap: 8 }}>
-              {businessError ? <Text style={[styles.caption, { color: theme.textSecondary }]}>{businessError}</Text> : null}
-              {businessPostsError ? (
-                <Text style={[styles.caption, { color: theme.textSecondary }]}>{businessPostsError}</Text>
-              ) : null}
+            <View style={localStyles.businessBand}>
+              {businessError ? <Text style={styles.caption}>{businessError}</Text> : null}
+              {businessPostsError ? <Text style={styles.caption}>{businessPostsError}</Text> : null}
               {activeBusiness ? (
                 <>
                   <ActionTile
@@ -638,74 +504,255 @@ export function ApiPersonalProfile() {
             </View>
           ) : null}
 
-          <View {...swipe.panHandlers} style={{ gap: 16, minHeight: height * 0.5 }}>
-          {/* Content Tabs */}
-          <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: theme.border }}>
-            {visibleTabs.map((item) => {
-              const selected = tab === item.key;
-              return (
-                <Pressable
-                  key={item.key}
-                  accessibilityRole="tab"
-                  accessibilityLabel={item.label}
-                  accessibilityState={{ selected }}
-                  onPress={() => setTab(item.key)}
-                  style={{
-                    flex: 1,
-                    alignItems: "center",
-                    paddingVertical: 10,
-                    borderBottomWidth: 2,
-                    borderBottomColor: selected ? theme.accent : "transparent",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: selected ? "700" : "500",
-                      color: selected ? theme.textPrimary : theme.textSecondary,
-                    }}
+          <View {...swipe.panHandlers} style={{ gap: 12, minHeight: height * 0.5 }}>
+            {/* Content Tabs */}
+            <View style={localStyles.tabBar}>
+              {visibleTabs.map((item) => {
+                const selected = tab === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={item.label}
+                    accessibilityState={{ selected }}
+                    onPress={() => setTab(item.key)}
+                    style={[localStyles.tabItem, selected && localStyles.tabItemSelected]}
                   >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-         
-          {/* Tab Content */}
-          <Animated.View style={{ transform: [{ translateX: slide }] }}>
-          {tab === "saved" ? (
-            <View style={{ gap: 8 }}>
-              <ActionTile
-                title="Saved posts and stories"
-                detail={`${app.savedPosts.length + app.savedStories.length} items saved`}
-                icon="bookmark-outline"
-                onPress={() => router.push("/menu/activity/saved")}
-              />
-              <ActionTile
-                title="Saved businesses"
-                detail="Places and founders to revisit"
-                icon="heart-outline"
-                onPress={() => router.push("/menu/activity/saved-businesses")}
-              />
+                    <Text style={[localStyles.tabLabel, selected && localStyles.tabLabelSelected]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-          ) : inBusiness && businessPostsLoading ? (
-            <SkeletonGrid size={tileSize} />
-          ) : tabPosts.length ? (
-            <View style={{ gap: 12 }}>
-              {tabPosts.map((post) => (
-                <ApiPostCard key={post.id} post={post} />
-              ))}
-            </View>
-          ) : (
-            <EmptyState title={emptyText[tab]} detail="Posts you publish will appear here." icon="albums-outline" />
-          )}
-          </Animated.View>
+
+            {/* Tab Content */}
+            <Animated.View style={{ transform: [{ translateX: slide }] }}>
+              {tab === "saved" ? (
+                <View style={{ gap: 8 }}>
+                  <ActionTile
+                    title="Saved posts and stories"
+                    detail={`${app.savedPosts.length + app.savedStories.length} items saved`}
+                    icon="bookmark-outline"
+                    onPress={() => router.push("/menu/activity/saved")}
+                  />
+                  <ActionTile
+                    title="Saved businesses"
+                    detail="Places and founders to revisit"
+                    icon="heart-outline"
+                    onPress={() => router.push("/menu/activity/saved-businesses")}
+                  />
+                </View>
+              ) : inBusiness && businessPostsLoading ? (
+                <SkeletonGrid size={tileSize} />
+              ) : tabPosts.length ? (
+                <View style={{ gap: 12 }}>
+                  {tabPosts.map((post) => (
+                    <ApiPostCard key={post.id} post={post} />
+                  ))}
+                </View>
+              ) : (
+                <EmptyState
+                  title={emptyText[tab]}
+                  detail="Posts you publish will appear here."
+                  icon="albums-outline"
+                />
+              )}
+            </Animated.View>
           </View>
         </>
       ) : null}
-
-     
     </Page>
   );
 }
+
+const localStyles = createThemedStyles(() =>
+  StyleSheet.create({
+    topBarFlat: {
+      marginHorizontal: -16,
+      marginTop: -10,
+      paddingHorizontal: 16,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    menuButton: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    errorBar: {
+      paddingVertical: 10,
+      gap: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    profileBand: {
+      marginHorizontal: -16,
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 16,
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 6,
+      borderBottomColor: colors.canvas,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 20,
+    },
+    statsRow: {
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "space-around",
+    },
+    identityBlock: {
+      gap: 4,
+    },
+    nameLine: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    nameGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      flexShrink: 1,
+    },
+    businessTag: {
+      backgroundColor: colors.subtle,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+    },
+    businessTagText: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: colors.muted,
+    },
+    switchButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: colors.subtle,
+    },
+    switchButtonText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.ink,
+    },
+    actionRow: {
+      flexDirection: "row",
+      gap: 9,
+      marginTop: 2,
+    },
+    businessBand: {
+      marginHorizontal: -16,
+      paddingHorizontal: 16,
+      paddingBottom: 14,
+      gap: 8,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 6,
+      borderBottomColor: colors.canvas,
+    },
+    tabBar: {
+      flexDirection: "row",
+      marginHorizontal: -16,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    tabItem: {
+      flex: 1,
+      alignItems: "center",
+      paddingVertical: 11,
+      borderBottomWidth: 2,
+      borderBottomColor: "transparent",
+    },
+    tabItemSelected: {
+      borderBottomColor: colors.ink,
+    },
+    tabLabel: {
+      fontSize: 14,
+      fontWeight: "500",
+      color: colors.muted,
+    },
+    tabLabelSelected: {
+      fontWeight: "700",
+      color: colors.ink,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "flex-end",
+    },
+    sheetContainer: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingTop: 10,
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+      gap: 14,
+    },
+    handleWrap: {
+      alignItems: "center",
+    },
+    handleBar: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+    },
+    sheetHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    closeButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.subtle,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    sheetSectionLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+      color: colors.muted,
+    },
+    sheetSubHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    emptyPickerNote: {
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: colors.subtle,
+    },
+    pickerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      padding: 12,
+      borderRadius: 14,
+      backgroundColor: colors.subtle,
+    },
+    pickerRowSelected: {
+      backgroundColor: colors.emeraldTint,
+    },
+  })
+);

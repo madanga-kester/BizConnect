@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { EmptyState, Page, styles } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { pickFromGallery, type PickedMedia } from "@/hooks/use-media-picker";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { errorText } from "@/lib/api-helpers";
-import { colors } from "@/theme/tokens";
+import { colors, createThemedStyles } from "@/theme/tokens";
 import type { ApiPollInput } from "@/lib/api/feature-contracts";
 import { ComposerForm } from "./composer-form";
 import { ComposerPreview } from "./composer-preview";
@@ -210,18 +210,22 @@ export function ApiPostComposer() {
   const pickedStrip = picked.length > 0 ? (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       {picked.map((item, index) => (
-        <View key={`${item.uri}-${index}`}>
+        <View key={`${item.uri}-${index}`} style={localStyles.mediaThumbWrap}>
           {item.mediaType === "image" ? (
-            <Image source={{ uri: item.uri }} style={{ width: 96, height: 96, borderRadius: 12 }} />
+            <Image source={{ uri: item.uri }} style={localStyles.mediaThumb} />
           ) : (
-            <View style={{ width: 96, height: 96, borderRadius: 12, backgroundColor: colors.navy, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="videocam" size={28} color={colors.white} />
+            <View style={localStyles.videoThumb}>
+              <Ionicons name="videocam-outline" size={26} color={colors.white} />
             </View>
           )}
-          <Pressable accessibilityRole="button" accessibilityLabel="Remove media" disabled={busy}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Remove media"
+            disabled={busy}
             onPress={() => setPicked((current) => current.filter((_, position) => position !== index))}
-            style={{ position: "absolute", right: 4, top: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.navy, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="close" size={13} color={colors.white} />
+            style={({ pressed }) => [localStyles.removeMediaButton, pressed && { opacity: 0.7 }]}
+          >
+            <Ionicons name="close" size={14} color={colors.white} />
           </Pressable>
         </View>
       ))}
@@ -235,31 +239,67 @@ export function ApiPostComposer() {
 
   const typeChoices: TypeChoice[] = [
     { title: "Post", detail: "Share an update, photo, video or thought.", icon: "create-outline", select: () => { setKind("text"); setShowPoll(false); } },
-    { title: "Poll", detail: "Ask a question and collect votes.", icon: "stats-chart-outline", select: () => { setKind("text"); setShowPoll(true); } },
+    { title: "Poll", detail: "Ask a question and collect votes.", icon: "bar-chart-outline", select: () => { setKind("text"); setShowPoll(true); } },
     { title: "Product", detail: "Showcase a product with its name, price and link.", icon: "pricetag-outline", select: () => { setKind("product"); setShowPoll(false); useFirstBusiness(); } },
-    { title: "Business update", detail: "Share news or an announcement from your business.", icon: "business-outline", select: () => { setKind("announcement"); setShowPoll(false); useFirstBusiness(); } },
+    { title: "Business update", detail: "Share news or an announcement from your business.", icon: "megaphone-outline", select: () => { setKind("announcement"); setShowPoll(false); useFirstBusiness(); } },
   ];
   const selectedType = showPoll ? "Poll" : kind === "product" ? "Product" : kind === "announcement" ? "Business update" : "Post";
 
   return (
-    <Page>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 8 }}>
-        <Pressable onPress={() => { if (step === 3) setStep(2); else if (step === 2) setStep(1); else router.back(); }} style={{ padding: 4 }}>
-          <Ionicons name="arrow-back" size={22} color={colors.navy} />
+    <Page topColor={colors.surface}>
+      <View style={localStyles.headerBar}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={() => {
+            if (step === 3) setStep(2);
+            else if (step === 2) setStep(1);
+            else router.back();
+          }}
+          hitSlop={8}
+          style={({ pressed }) => [localStyles.headerButton, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.ink} />
         </Pressable>
-        <Text style={{ color: colors.navy, fontSize: 17, fontWeight: "800" }}>{step === 1 ? "Create something" : step === 2 ? `Create ${selectedType.toLowerCase()}` : "Preview post"}</Text>
-        <Pressable onPress={() => router.push("/menu/activity/drafts")}><Text style={{ color: colors.emeraldDark, fontSize: 14, fontWeight: "700" }}>Drafts</Text></Pressable>
+        <Text style={localStyles.headerTitle} numberOfLines={1}>
+          {step === 1 ? "Create something" : step === 2 ? `Create ${selectedType.toLowerCase()}` : "Preview post"}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/menu/activity/drafts")}
+          hitSlop={8}
+          style={({ pressed }) => [localStyles.draftsLink, pressed && { opacity: 0.6 }]}
+        >
+          <Text style={localStyles.draftsText}>Drafts</Text>
+        </Pressable>
       </View>
 
-      {!app.isAuthenticated ? <EmptyState title="Sign in to publish" detail="Publishing requires an authenticated API session." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /> : null}
-      {error ? <Text accessibilityRole="alert" style={{ ...styles.body, color: colors.danger }}>{error}</Text> : null}
+      {!app.isAuthenticated ? (
+        <EmptyState
+          title="Sign in to publish"
+          detail="Publishing requires an authenticated API session."
+          icon="lock-closed-outline"
+          action="Sign in"
+          onAction={() => router.push("/auth/login")}
+        />
+      ) : null}
+
+      {error ? (
+        <View accessibilityRole="alert" style={localStyles.errorBand}>
+          <Text style={[styles.body, { color: colors.danger }]}>{error}</Text>
+        </View>
+      ) : null}
 
       {step === 1 ? (
         <ComposerTypePicker
           choices={typeChoices}
           selectedType={selectedType}
           noBusinesses={ownedBusinesses.length === 0}
-          onPick={(choice) => { choice.select(); setError(""); setStep(2); }}
+          onPick={(choice) => {
+            choice.select();
+            setError("");
+            setStep(2);
+          }}
         />
       ) : null}
 
@@ -341,3 +381,78 @@ export function ApiPostComposer() {
     </Page>
   );
 }
+
+const localStyles = createThemedStyles(() =>
+  StyleSheet.create({
+    headerBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginHorizontal: -16,
+      marginTop: -10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    headerButton: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: "center",
+      color: colors.ink,
+      fontSize: 17,
+      fontWeight: "700",
+      letterSpacing: -0.2,
+    },
+    draftsLink: {
+      paddingHorizontal: 4,
+      paddingVertical: 6,
+    },
+    draftsText: {
+      color: colors.emeraldDark,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    errorBand: {
+      marginHorizontal: -16,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 6,
+      borderBottomColor: colors.canvas,
+    },
+    mediaThumbWrap: {
+      position: "relative",
+    },
+    mediaThumb: {
+      width: 96,
+      height: 96,
+      borderRadius: 10,
+    },
+    videoThumb: {
+      width: 96,
+      height: 96,
+      borderRadius: 10,
+      backgroundColor: colors.ink,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    removeMediaButton: {
+      position: "absolute",
+      right: 5,
+      top: 5,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  })
+);

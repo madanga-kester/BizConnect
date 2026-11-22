@@ -73,7 +73,7 @@ export default function MenuScreen() {
         {
           title: "Personal details",
           detail: "Name, username, bio, town & county",
-          icon: "person-circle-outline",
+          icon: "person-outline",
           route: "/menu/account/personal-details",
         },
       ],
@@ -96,26 +96,26 @@ export default function MenuScreen() {
         {
           title: "Archive & drafts",
           detail: `${app.drafts.length} drafts stored on this device`,
-          icon: "archive-outline",
+          icon: "time-outline",
           route: "/menu/activity/drafts",
         },
         {
           title: "Your activity",
           detail: "Recently viewed posts, profiles & interactions",
-          icon: "time-outline",
+          icon: "analytics-outline",
           route: "/menu/activity/your-activity",
         },
         {
           title: "Business ideas & opportunities",
           detail: "Saved businesses and business ideas",
-          icon: "bulb-outline",
+          icon: "sparkles-outline",
           route: "/menu/activity/saved-business-ideas",
         },
         serviceMode === "api"
           ? {
               title: "Notification delivery preferences",
               detail: "Manage in-app, activity and Expo push settings for your account",
-              icon: "options-outline",
+              icon: "notifications-outline",
               route: "/menu/activity/notification-settings",
             }
           : {
@@ -134,7 +134,7 @@ export default function MenuScreen() {
         {
           title: "Subscriptions & Mabiz Pro",
           detail: "Manage creator and business verification plans",
-          icon: "card-outline",
+          icon: "checkmark-seal-outline",
           tone: "orange",
           route: "/menu/subscriptions",
         },
@@ -169,7 +169,7 @@ export default function MenuScreen() {
         {
           title: "Messages and story replies",
           detail: "Control who can message you or reply to stories",
-          icon: "chatbubble-ellipses-outline",
+          icon: "paper-plane-outline",
           route: "/menu/privacy/messages-replies",
         },
         {
@@ -181,13 +181,13 @@ export default function MenuScreen() {
         {
           title: "Comments",
           detail: "Manage comment filters and permissions",
-          icon: "chatbox-outline",
+          icon: "chatbubble-outline",
           route: "/menu/privacy/comments",
         },
         {
           title: "Sharing",
           detail: "Allow others to reshare your posts and stories",
-          icon: "share-social-outline",
+          icon: "repeat-outline",
           route: "/menu/privacy/sharing",
         },
         {
@@ -214,13 +214,13 @@ export default function MenuScreen() {
         {
           title: "Appearance",
           detail: "Light or dark mode",
-          icon: "contrast-outline",
+          icon: "moon-outline",
           route: "/menu/app-media/appearance",
         },
         {
           title: "Language",
           detail: "English / Kiswahili",
-          icon: "language-outline",
+          icon: "globe-outline",
           route: "/menu/app-media/language",
         },
         {
@@ -232,19 +232,19 @@ export default function MenuScreen() {
         {
           title: "Video autoplay",
           detail: "Choose whether videos start on their own",
-          icon: "play-circle-outline",
+          icon: "play-outline",
           route: "/menu/app-media/video-autoplay",
         },
         {
           title: "Device permissions",
           detail: "Camera, photos, location and notifications access",
-          icon: "phone-portrait-outline",
+          icon: "key-outline",
           route: "/menu/app-media/device-permissions",
         },
         {
           title: "Accessibility",
           detail: "Text sizing, contrast and motion preferences",
-          icon: "accessibility-outline",
+          icon: "eye-outline",
           route: "/menu/app-media/accessibility",
         },
       ],
@@ -255,7 +255,7 @@ export default function MenuScreen() {
         {
           title: "Help",
           detail: "Help centre & community guidelines",
-          icon: "help-circle-outline",
+          icon: "help-buoy-outline",
           route: "/menu/support/help",
         },
         {
@@ -267,7 +267,7 @@ export default function MenuScreen() {
         {
           title: "Profile status",
           detail: "Check account standing and community guideline status",
-          icon: "checkmark-circle-outline",
+          icon: "person-circle-outline",
           route: "/menu/support/profile-status",
         },
         {
@@ -287,7 +287,7 @@ export default function MenuScreen() {
         {
           title: "Appearance",
           detail: "Light or dark mode",
-          icon: "contrast-outline",
+          icon: "moon-outline",
           route: "/menu/app-media/appearance",
         },
       ],
@@ -296,23 +296,23 @@ export default function MenuScreen() {
 
   const sections = app.isAuthenticated ? authenticatedSections : guestSections;
 
-  const renderMenuItem = (item: MenuItem, isLast: boolean) => (
+  const renderMenuItem = (item: MenuItem) => (
     <TouchableOpacity
       key={item.title}
-      style={[localStyles.menuItem, isLast && localStyles.menuItemLast]}
+      style={localStyles.menuItem}
       onPress={
         item.isSwitch
           ? undefined
           : item.onPress ?? (() => router.push(item.route as never))
       }
-      activeOpacity={item.isSwitch ? 1 : 0.6}
+      activeOpacity={item.isSwitch ? 1 : 0.5}
     >
       <View style={localStyles.menuItemLeft}>
-        <View style={[localStyles.iconTile, item.tone === "orange" && localStyles.iconTileOrange]}>
+        <View style={localStyles.iconContainer}>
           <Ionicons
             name={item.icon}
-            size={19}
-            color={item.tone === "orange" ? colors.warning : colors.emeraldDark}
+            size={23}
+            color={item.tone === "orange" ? colors.warning : colors.ink}
           />
         </View>
         <View style={localStyles.menuItemTextContainer}>
@@ -330,22 +330,26 @@ export default function MenuScreen() {
           value={item.switchValue}
           onValueChange={item.onSwitchChange}
           trackColor={{ false: colors.border, true: colors.emerald }}
-          thumbColor="#FFFFFF"
+          thumbColor={colors.white}
           ios_backgroundColor={colors.border}
         />
       ) : (
-        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+        <Ionicons name="chevron-forward" size={18} color={colors.muted} />
       )}
     </TouchableOpacity>
   );
 
   const renderSection = (section: MenuSection, sectionIndex: number) => (
-    <View key={sectionIndex} style={localStyles.section}>
+    <View
+      key={sectionIndex}
+      style={[
+        localStyles.section,
+        sectionIndex > 0 && localStyles.sectionDivider,
+      ]}
+    >
       <Text style={localStyles.sectionHeader}>{section.title}</Text>
       <View style={localStyles.menuGroup}>
-        {section.items.map((item, i) =>
-          renderMenuItem(item, i === section.items.length - 1)
-        )}
+        {section.items.map((item) => renderMenuItem(item))}
       </View>
     </View>
   );
@@ -353,13 +357,15 @@ export default function MenuScreen() {
   return (
     <SafeAreaView style={localStyles.safeArea} edges={["top"]}>
       <View style={localStyles.container}>
-        <View style={{ paddingHorizontal: 16 }}><TopBar title="Settings" back /></View>
+        <View style={localStyles.topBarWrapper}>
+          <TopBar title="Settings and activity" back />
+        </View>
 
         <ScrollView
           contentContainerStyle={localStyles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={localStyles.profileCard}>
+          <View style={localStyles.profileHeader}>
             <View style={localStyles.avatarRing}>
               {app.isAuthenticated && app.user.avatar ? (
                 <Image
@@ -368,7 +374,7 @@ export default function MenuScreen() {
                 />
               ) : (
                 <View style={localStyles.avatarFallback}>
-                  <Ionicons name="person" size={32} color="#FFFFFF" />
+                  <Ionicons name="person" size={32} color={colors.white} />
                 </View>
               )}
             </View>
@@ -377,6 +383,9 @@ export default function MenuScreen() {
                 ? app.user.name || app.user.username
                 : "Guest"}
             </Text>
+            {app.isAuthenticated && app.user.username && (
+              <Text style={localStyles.profileHandle}>@{app.user.username}</Text>
+            )}
             {!app.isAuthenticated && (
               <TouchableOpacity
                 style={localStyles.signInLink}
@@ -391,18 +400,22 @@ export default function MenuScreen() {
 
           {sections.map((section, i) => renderSection(section, i))}
 
-          {app.isAuthenticated && (
-            <TouchableOpacity
-              style={localStyles.signOutButton}
-              onPress={() => setLogoutConfirm(true)}
-              activeOpacity={0.6}
-            >
-              <Ionicons name="log-out-outline" size={18} color={colors.danger ?? "#EF4444"} />
-              <Text style={localStyles.signOutText}>Sign Out</Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={{ height: 40 }} />
+          <View style={localStyles.footerSection}>
+            {app.isAuthenticated && (
+              <TouchableOpacity
+                style={localStyles.signOutButton}
+                onPress={() => setLogoutConfirm(true)}
+                activeOpacity={0.5}
+              >
+                <Ionicons
+                  name="log-out-outline"
+                  size={22}
+                  color={colors.danger}
+                />
+                <Text style={localStyles.signOutText}>Log out</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </ScrollView>
       </View>
 
@@ -421,154 +434,150 @@ export default function MenuScreen() {
   );
 }
 
-const localStyles = createThemedStyles(() => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-  },
+const localStyles = createThemedStyles(() =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.surface,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.surface,
+    },
+    topBarWrapper: {
+      paddingHorizontal: 16,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    scrollContent: {
+      paddingBottom: 48,
+      backgroundColor: colors.surface,
+    },
 
+    profileHeader: {
+      alignItems: "center",
+      paddingVertical: 24,
+      paddingHorizontal: 20,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 6,
+      borderBottomColor: colors.canvas,
+    },
+    avatarRing: {
+      padding: 2,
+      borderRadius: 48,
+      borderWidth: 1.5,
+      borderColor: colors.emeraldFill,
+      marginBottom: 10,
+    },
+    avatar: {
+      width: 78,
+      height: 78,
+      borderRadius: 39,
+    },
+    avatarFallback: {
+      width: 78,
+      height: 78,
+      borderRadius: 39,
+      backgroundColor: colors.emerald,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileName: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.ink,
+      letterSpacing: -0.2,
+    },
+    profileHandle: {
+      fontSize: 13,
+      color: colors.muted,
+      marginTop: 2,
+    },
+    signInLink: {
+      marginTop: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 10,
+      borderRadius: 999,
+      backgroundColor: colors.emeraldFill,
+    },
+    signInLinkText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.white,
+    },
 
+    section: {
+      paddingTop: 18,
+      paddingBottom: 8,
+      backgroundColor: colors.surface,
+    },
+    sectionDivider: {
+      borderTopWidth: 6,
+      borderTopColor: colors.canvas,
+    },
+    sectionHeader: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.muted,
+      paddingHorizontal: 20,
+      marginBottom: 6,
+    },
+    menuGroup: {
+      backgroundColor: colors.surface,
+    },
 
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingVertical: 13,
+      backgroundColor: colors.surface,
+    },
+    menuItemLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      paddingRight: 12,
+    },
+    iconContainer: {
+      width: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 16,
+    },
+    menuItemTextContainer: {
+      flex: 1,
+    },
+    menuItemTitle: {
+      fontSize: 15,
+      fontWeight: "500",
+      color: colors.ink,
+    },
+    menuItemDetail: {
+      fontSize: 12,
+      color: colors.muted,
+      marginTop: 2,
+    },
 
-  profileCard: {
-    alignItems: "center",
-    marginHorizontal: 16,
-    marginBottom: 20,
-    paddingVertical: 22,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    shadowColor: "#000000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  avatarRing: {
-    padding: 3,
-    borderRadius: 48,
-    borderWidth: 2,
-    borderColor: colors.emeraldFill,
-    marginBottom: 12,
-  },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-  },
-  avatarFallback: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: colors.emerald,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  profileName: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: colors.ink,
-    letterSpacing: -0.2,
-  },
-  signInLink: {
-    marginTop: 12,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: colors.emeraldFill,
-  },
-  signInLinkText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.white,
-  },
-
-  section: {
-    marginBottom: 18,
-  },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.ink,
-    letterSpacing: -0.2,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  menuGroup: {
-    marginHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    shadowColor: "#000000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  menuItemLast: {
-    borderBottomWidth: 0,
-  },
-  menuItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  iconTile: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    backgroundColor: colors.emeraldTint,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  iconTileOrange: {
-    backgroundColor: colors.orangeTint,
-  },
-  menuItemTextContainer: {
-    flex: 1,
-  },
-  menuItemTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: colors.ink,
-  },
-  menuItemDetail: {
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 2,
-  },
-
-  signOutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
-    minHeight: 50,
-    borderRadius: 999,
-    backgroundColor: colors.dangerTint,
-  },
-  signOutText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: colors.danger ?? "#EF4444",
-  },
-}));
+    footerSection: {
+      marginTop: 8,
+      paddingTop: 12,
+      borderTopWidth: 6,
+      borderTopColor: colors.canvas,
+    },
+    signOutButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      gap: 16,
+    },
+    signOutText: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: colors.danger,
+    },
+  })
+);

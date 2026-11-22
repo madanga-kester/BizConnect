@@ -577,6 +577,27 @@ export interface PreferencesService {
   update(patch: Partial<AppSettings>): Promise<Result<AppSettings>>;
 }
 
+export type MenuAudience = "everyone" | "followers" | "none";
+export interface MenuSettings {
+  textSize: string;
+  highContrast: boolean;
+  profileVisibility: "public" | "followers" | "private";
+  messagePermission: MenuAudience;
+  storyReplyPermission: MenuAudience;
+  commentPermission: MenuAudience;
+  tagPermission: MenuAudience;
+  mentionPermission: MenuAudience;
+  sharingPermission: MenuAudience;
+  allowPostResharing: boolean;
+  allowStorySharing: boolean;
+  allowExternalSharing: boolean;
+}
+export type MenuSettingsUpdate = Partial<MenuSettings>;
+export interface MenuSettingsService {
+  getSettings(): Promise<Result<MenuSettings>>;
+  updateSettings(patch: MenuSettingsUpdate): Promise<Result<MenuSettings>>;
+}
+
 export interface MabizServices {
   auth: AuthService;
   users: UserService;
@@ -599,5 +620,6 @@ export interface MabizServices {
   media: MediaUploadService;
   dataRights: DataRightsService;
   preferences: PreferencesService;
+  menu: MenuSettingsService;
 }
 export interface StartConversationInput { participantId?: string; businessId?: string; catalogItemId?: string; firstMessage?: string; }

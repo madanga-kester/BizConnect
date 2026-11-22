@@ -40,6 +40,7 @@ import type {
   ApiPollInput,
   FollowState,
   BusinessGrowthSummary, BusinessGrowthAnalytics, BusinessReview,
+  MenuAudience, MenuSettings, MenuSettingsUpdate,
 } from "@/lib/api/feature-contracts";
 import type {
   CatalogDiscoveryFilters,
@@ -157,6 +158,23 @@ function mapApiConversationMessage(value: ApiConversationMessageDto): ChatMessag
   return { id: value.id, senderId: value.senderUserId, text: value.text, createdAt: value.createdAt, status: value.status };
 }
 function apiPageNumber(page: PageRequest): number { const parsed = Number(page.cursor); return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1; }
+
+interface ApiMenuSettingsDto {
+  textSize: string; highContrast: boolean; profileVisibility: string; messagePermission: string; storyReplyPermission: string;
+  commentPermission: string; tagPermission: string; mentionPermission: string; sharingPermission: string;
+  allowPostResharing: boolean; allowStorySharing: boolean; allowExternalSharing: boolean;
+}
+function menuAudience(value: string): MenuAudience { return value === "followers" || value === "none" ? value : "everyone"; }
+function mapMenuSettings(value: ApiMenuSettingsDto): MenuSettings {
+  return {
+    textSize: value.textSize, highContrast: value.highContrast,
+    profileVisibility: value.profileVisibility === "followers" || value.profileVisibility === "private" ? value.profileVisibility : "public",
+    messagePermission: menuAudience(value.messagePermission), storyReplyPermission: menuAudience(value.storyReplyPermission),
+    commentPermission: menuAudience(value.commentPermission), tagPermission: menuAudience(value.tagPermission),
+    mentionPermission: menuAudience(value.mentionPermission), sharingPermission: menuAudience(value.sharingPermission),
+    allowPostResharing: value.allowPostResharing, allowStorySharing: value.allowStorySharing, allowExternalSharing: value.allowExternalSharing,
+  };
+}
 function mapPagedResult<A, B>(result: Result<ApiPage<A>>, page: PageRequest, map: (value: A) => B): Result<{ items: B[]; total: number; nextCursor?: string }> {
   return mapResult(result, (payload) => ({ items: payload.items.map(map), total: payload.total,
     ...(payload.page * payload.pageSize < payload.total ? { nextCursor: String(payload.page + 1) } : {}) }));
@@ -806,7 +824,12 @@ export function createApiServices(options: ApiServicesOptions = {}): MabizServic
     update: (values: Partial<AppSettings>) => patch<AppSettings>("/users/me/preferences", values),
   };
 
-  return { auth, users, businesses, memberships, reviews, growth, feed, posts, catalog, stories, socialStories, listings, milestones, messaging, search, notifications, verification, moderation, media, dataRights, preferences };
+  const menu: MabizServices["menu"] = {
+    getSettings: () => mapPromiseResult(get<ApiMenuSettingsDto>("/menu/settings"), mapMenuSettings),
+    updateSettings: (patch: MenuSettingsUpdate) => mapPromiseResult(put<ApiMenuSettingsDto>("/menu/settings", patch), mapMenuSettings),
+  };
+
+  return { auth, users, businesses, memberships, reviews, growth, feed, posts, catalog, stories, socialStories, listings, milestones, messaging, search, notifications, verification, moderation, media, dataRights, preferences, menu };
 }
 
 // --- Stage 5 catalogue: DTOs, mappers and payload builders -------------------------------------------------

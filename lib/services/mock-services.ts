@@ -30,6 +30,7 @@ import type {
   StartConversationInput,
   OwnershipTransfer,
   BusinessGrowthSummary, BusinessGrowthAnalytics, BusinessReview, GrowthDateRange, GrowthActivity,
+  MenuSettings,
 } from "@/lib/api/feature-contracts";
 import type {
   AppSettings,
@@ -114,6 +115,11 @@ export function createMockServices(options: MockServicesOptions = {}): MabizServ
   let searchHistory: { id: string; query: string; createdAt: string }[] = [];
   let recentlyViewed: { id: string; entityId: string; type: "business" | "product" | "service" | "story"; viewedAt: string }[] = [];
   let deletionRequest: DataDeletionRequest | null = null;
+  let menuSettings: MenuSettings = {
+    textSize: "default", highContrast: false, profileVisibility: "public", messagePermission: "everyone", storyReplyPermission: "everyone",
+    commentPermission: "everyone", tagPermission: "everyone", mentionPermission: "everyone", sharingPermission: "everyone",
+    allowPostResharing: true, allowStorySharing: true, allowExternalSharing: true,
+  };
   let appPreferences: AppSettings = { language: "en", appearance: "light", reducedData: false, autoplayVideos: false, messagePermissions: "following", hidePreciseLocation: true, privateProfile: false, notifications: true };
   const savedPosts = new Set<string>();
   const savedStories = new Set<string>();
@@ -646,6 +652,11 @@ export function createMockServices(options: MockServicesOptions = {}): MabizServ
     async update(patch) { appPreferences = { ...appPreferences, ...clone(patch) }; return ok(appPreferences); },
   };
 
-  const services: MabizServices = { auth, users: usersService, businesses: businessesService, memberships, reviews, growth, feed, posts: postsService, catalog, stories: storiesService, socialStories, listings, milestones, messaging, search: searchService, notifications: notificationsService, verification, moderation, media, dataRights, preferences };
+  const menu: MabizServices["menu"] = {
+    async getSettings() { return ok(clone(menuSettings)); },
+    async updateSettings(patch) { menuSettings = { ...menuSettings, ...clone(patch) }; return ok(clone(menuSettings)); },
+  };
+
+  const services: MabizServices = { auth, users: usersService, businesses: businessesService, memberships, reviews, growth, feed, posts: postsService, catalog, stories: storiesService, socialStories, listings, milestones, messaging, search: searchService, notifications: notificationsService, verification, moderation, media, dataRights, preferences, menu };
   return services;
 }

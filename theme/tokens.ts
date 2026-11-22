@@ -9,13 +9,13 @@ const lightColors = {
   emeraldTint: "#E7F4EF",
   orange: "#E9823A",
   orangeTint: "#FFF1E6",
-  canvas: "#F7F7F2",
+  canvas: "#F5F5F5",
   white: "#FFFFFF",
   surface: "#FFFFFF",
   ink: "#172B3A",
   muted: "#6B7C89",
-  border: "#E5E9E6",
-  subtle: "#EFF2EF",
+  border: "#EFEFEF",
+  subtle: "#F5F5F5",
   danger: "#B42318",
   dangerTint: "#FDECEB",
   success: "#16734A",
@@ -31,12 +31,12 @@ const darkColors: typeof lightColors = {
   emeraldTint: "#181818",
   orange: "#F09A57",
   orangeTint: "#241D17",
-  canvas: "#000000",
+  canvas: "#141414",
   white: "#FFFFFF",
-  surface: "#0A0A0A",
+  surface: "#000000",
   ink: "#F5F5F5",
   muted: "#A3A3A3",
-  border: "#262626",
+  border: "#222222",
   subtle: "#141414",
   danger: "#FF8A80",
   dangerTint: "#2A1717",
@@ -47,7 +47,7 @@ const darkColors: typeof lightColors = {
 export function getTabBarColors(scheme: ColorScheme): { backgroundColor: string; borderTopColor: string } {
   const palette = scheme === "dark" ? darkColors : lightColors;
   return {
-    backgroundColor: scheme === "dark" ? palette.canvas : palette.surface,
+    backgroundColor: scheme === "dark" ? palette.surface : palette.surface,
     borderTopColor: palette.border,
   };
 }
