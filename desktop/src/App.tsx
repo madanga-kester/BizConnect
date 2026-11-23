@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, apiMode } from "./api";
 import { businesses as seedBusinesses, products as seedProducts, type Business, type Opportunity, type PageKey, type Product } from "./data";
-import { Icon, type IconName } from "./components/icons";
-import { Avatar, Banner, Logo, Modal } from "./components/ui";
+import { Banner, Modal } from "./components/ui";
 import { BusinessProfileView, OpportunityDetailView, ProductDetailView } from "./components/details";
 import { AccountMenu, CreateMenu, NotificationsPopover } from "./components/menus";
 import type { Status } from "./hooks/useAction";
@@ -16,18 +15,8 @@ import { Messages } from "./pages/Messages";
 import { Notifications } from "./pages/Notifications";
 import { Opportunities } from "./pages/Opportunities";
 import { Settings } from "./pages/Settings";
+import { I as BcI } from "./bc/Icon";
 
-const nav: { key: PageKey; label: string; icon: IconName }[] = [
-  { key: "home", label: "Home", icon: "home" },
-  { key: "discover", label: "Discover", icon: "search" },
-  { key: "businesses", label: "Businesses", icon: "briefcase" },
-  { key: "catalog", label: "Products & Services", icon: "box" },
-  { key: "opportunities", label: "Opportunities", icon: "spark" },
-  { key: "messages", label: "Messages", icon: "message" },
-  { key: "notifications", label: "Notifications", icon: "bell" },
-  { key: "analytics", label: "Analytics", icon: "chart" },
-  { key: "settings", label: "Settings", icon: "gear" }
-];
 
 export default function App() {
   const pathToPage = (path: string): PageKey => (({ "/": "home", "/discover": "discover", "/businesses": "businesses", "/products-services": "catalog", "/opportunities": "opportunities", "/messages": "messages", "/notifications": "notifications", "/analytics": "analytics", "/settings": "settings" } as Record<string, PageKey>)[path] ?? "home");
@@ -230,73 +219,70 @@ export default function App() {
 
   if (!authenticated) return <Auth initialMode={authPath ?? "login"} onLogin={() => { setAuthenticated(true); navigate("home"); }}/>;
 
+  const bcNav: { key: PageKey; label: string; icon: string; badge?: number }[] = [
+    { key: "home", label: "Home", icon: "home" }, { key: "discover", label: "Discover", icon: "search" },
+    { key: "businesses", label: "Businesses", icon: "building" }, { key: "catalog", label: "Products & Services", icon: "box" },
+    { key: "opportunities", label: "Opportunities", icon: "briefcase" }, { key: "messages", label: "Messages", icon: "message", badge: 3 },
+    { key: "notifications", label: "Notifications", icon: "bell", badge: 5 }, { key: "analytics", label: "Analytics", icon: "chart" },
+    { key: "settings", label: "Settings", icon: "gear" },
+  ];
+  const logout = () => { setMenu(null); if (apiMode === "api") void api.logout(); setAuthenticated(false); window.history.pushState({}, "", "/auth/login"); };
+  const bcPage = ["home", "discover", "businesses", "catalog", "opportunities", "messages"].includes(page);
   return (
-    <div className="app-shell">
-      <aside className={`sidebar ${mobileNav ? "open" : ""}`}>
-        <div className="sidebar-top">
-          <Logo/>
-          <button className="mobile-close" onClick={() => setMobileNav(false)}><Icon name="close"/></button>
-        </div>
-        <nav>
-          {nav.map(i => (
-            <button key={i.key} className={page === i.key ? "active" : ""} onClick={() => navigate(i.key)}>
-              <Icon name={i.icon}/>
-              <span>{i.label}</span>
-              {i.key === "messages" && <i className="nav-badge">3</i>}
-              {i.key === "notifications" && <i className="nav-badge">5</i>}
+    <div className="bc-shell">
+      <aside className={`bc-side ${mobileNav ? "open" : ""}`}>
+        <button className="bc-brand" onClick={() => navigate("home")}>
+          <img src="/bc/logo.jpg" alt="" />
+          <span><b>Biz<em>Connect</em></b><small>Connect • Grow • Thrive</small></span>
+        </button>
+        <nav className="bc-nav">
+          {bcNav.map(i => (
+            <button key={i.key} className={page === i.key ? "on" : ""} onClick={() => { navigate(i.key); setMobileNav(false); }}>
+              <BcI n={i.icon} size={22} /><span>{i.label}</span>{i.badge && <em>{i.badge}</em>}
             </button>
           ))}
         </nav>
-        <div className="sidebar-promo">
-          <span className="promo-star"><Icon name="spark"/></span>
+        <div className="bc-pro">
+          <img src="/bc/crown.jpg" alt="" />
           <b>Pro Business Tools</b>
-          <span>Grow your business with powerful tools.</span>
-          <button className="button button-primary" onClick={() => setShellStatus({ kind: "success", message: "Upgrade checkout is not configured for this demo." })}>Upgrade Plan</button>
+          <span>Unlock advanced tools to grow your business faster.</span>
+          <button className="bc-btn solid" onClick={() => setShellStatus({ kind: "success", message: "Upgrade checkout is not configured for this demo." })}>Upgrade Plan</button>
         </div>
-        <div className="sidebar-user">
-          <Avatar initials="KM" color="#d17a49" size="sm"/>
-          <div><b>{profileName}</b><span>Business Owner</span></div>
-          <button onClick={() => navigate("settings")}><Icon name="chevron"/></button>
-        </div>
-        <button className="business-switch" onClick={() => navigate("businesses")}><span className="switch-dot"/> Urban Coffee Co. <Icon name="chevron"/></button>
+        <button className="bc-user" onClick={() => navigate("settings")}>
+          <img src="/bc/kester.jpg" alt="" />
+          <span><b>{profileName}</b><small>Business Owner</small></span>
+          <BcI n="chevRight" size={18} />
+        </button>
+        <button className="bc-side-link" onClick={() => navigate("businesses")}><BcI n="users" size={20} /> Switch Business <BcI n="chevRight" size={16} /></button>
+        <button className="bc-side-link" onClick={logout}><BcI n="logout" size={20} /> Log Out</button>
       </aside>
-      <div className="main-area">
-        <header className="topbar">
-          <button className="mobile-menu" onClick={() => setMobileNav(true)}><Icon name="list"/></button>
-          <div className="global-search">
-            <Icon name="search"/>
-            <input placeholder="Search businesses, products, or opportunities..." onKeyDown={e => {
-              if (e.key === "Enter") {
-                const q = e.currentTarget.value.trim();
-                window.history.pushState({}, "", q ? `/discover?q=${encodeURIComponent(q)}` : "/discover");
-                setPage("discover");
-                setMenu(null);
-              }
-            }}/>
-          </div>
-          <div className="top-actions">
+      <div className="bc-body">
+        <header className="bc-top">
+          <button className="bc-burger" onClick={() => setMobileNav(!mobileNav)} aria-label="Menu"><BcI n="list" size={22} /></button>
+          <label className="bc-top-search">
+            <BcI n="search" size={21} />
+            <input placeholder="Search businesses, products, services, opportunities..." onKeyDown={e => {
+              if (e.key === "Enter") { const q = e.currentTarget.value.trim(); window.history.pushState({}, "", q ? `/discover?q=${encodeURIComponent(q)}` : "/discover"); setPage("discover"); setMenu(null); }
+            }} />
+          </label>
+          <div className="bc-top-actions">
             <div className="popover-anchor">
-              <button className="create-button" onClick={() => setMenu(menu === "create" ? null : "create")}><Icon name="plus"/> Create</button>
-              {menu === "create" && <CreateMenu onClose={() => setMenu(null)} onBusiness={() => { setMenu(null); openCreateBusiness(); }} onOpportunity={() => { setMenu(null); createOpportunity(); }} onProduct={() => { setMenu(null); openProduct(seedProducts[0]); }} onPost={() => { setMenu(null); createPost(); }}/>}
+              <button className="bc-create" onClick={() => setMenu(menu === "create" ? null : "create")}><BcI n="plus" size={20} /> Create</button>
+              {menu === "create" && <CreateMenu onClose={() => setMenu(null)} onBusiness={() => { setMenu(null); openCreateBusiness(); }} onOpportunity={() => { setMenu(null); createOpportunity(); }} onProduct={() => { setMenu(null); openProduct(seedProducts[0]); }} onPost={() => { setMenu(null); createPost(); }} />}
             </div>
             <div className="popover-anchor">
-              <button className="top-icon" onClick={() => setMenu(menu === "notifications" ? null : "notifications")} aria-label="Notifications"><Icon name="bell"/><i/></button>
-              {menu === "notifications" && <NotificationsPopover onOpen={() => { setMenu(null); navigate("notifications"); }}/>}
+              <button className="bc-top-ico" onClick={() => setMenu(menu === "notifications" ? null : "notifications")} aria-label="Notifications"><BcI n="bell" size={25} /><em>5</em></button>
+              {menu === "notifications" && <NotificationsPopover onOpen={() => { setMenu(null); navigate("notifications"); }} />}
             </div>
-            <button className="top-icon" onClick={() => navigate("messages")} aria-label="Messages"><Icon name="message"/></button>
+            <button className="bc-top-ico" onClick={() => navigate("messages")} aria-label="Messages"><BcI n="message" size={25} /><em>3</em></button>
             <div className="popover-anchor">
-              <button onClick={() => setMenu(menu === "account" ? null : "account")} aria-label="Account"><Avatar initials="KM" color="#d17a49" size="sm"/></button>
-              {menu === "account" && <AccountMenu onSettings={() => { setMenu(null); navigate("settings"); }} onSwitch={() => { setMenu(null); navigate("businesses"); }} onLogout={() => { setMenu(null); setAuthenticated(false); window.history.pushState({}, "", "/auth/login"); }}/>}
+              <button className="bc-acct" onClick={() => setMenu(menu === "account" ? null : "account")} aria-label="Account"><img src="/bc/kester.jpg" alt="" /><BcI n="chevDown" size={18} /></button>
+              {menu === "account" && <AccountMenu onSettings={() => { setMenu(null); navigate("settings"); }} onSwitch={() => { setMenu(null); navigate("businesses"); }} onLogout={logout} />}
             </div>
-            <button className="theme-button" onClick={() => setThemeState(theme === "light" ? "dark" : "light")} aria-label="Toggle theme"><Icon name={theme === "light" ? "moon" : "sun"}/></button>
           </div>
         </header>
-        <main className="page-content">
-          <div className="page-context">
-            <span>Home / {nav.find(i => i.key === page)?.label ?? "Home"}</span>
-            <span className={`mode-note ${apiMode}`}>{apiMode === "api" ? "Connected to Mabiz API" : "Demo mode · local examples"}</span>
-          </div>
-          <Banner status={shellStatus} onDismiss={() => setShellStatus(null)}/>
+        <main className={bcPage ? "bc-content" : "page-content"}>
+          <Banner status={shellStatus} onDismiss={() => setShellStatus(null)} />
           {content}
         </main>
       </div>
