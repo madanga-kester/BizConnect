@@ -203,7 +203,7 @@ export function ApiHomeFeed() {
                     <Pressable
             accessibilityRole="button"
             accessibilityLabel="Create a post"
-            onPress={() => router.push("/(tabs)/create")}
+            onPress={() => router.push("/create")}
             style={({ pressed }) => [
               localStyles.createButton,
               pressed && { opacity: 0.6 },
@@ -230,7 +230,7 @@ export function ApiHomeFeed() {
         <SectionTitle
           title="Business updates"
           action="View all"
-          onAction={() => router.push("/(tabs)/stories")}
+          onAction={() => router.push("/stories")}
         />
         <ScrollView
           horizontal

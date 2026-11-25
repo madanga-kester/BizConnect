@@ -165,7 +165,7 @@ export default function CreateSocialStoryScreen() {
     if (editingDraftId) app.removeDraft(editingDraftId);
     savedSnapshotRef.current = snapshotKey; setBusy(false);
     notify(sourceStory ? "Story updated locally" : "Story saved locally", `This Story is stored on this device only and expires within 24 hours.${targetHighlight ? ` Added to “${targetHighlight.title}”.` : ""} It was not shared or uploaded.`);
-    router.replace("/(tabs)/stories");
+    router.replace("/stories");
   };
 
   const discardAndLeave = () => {

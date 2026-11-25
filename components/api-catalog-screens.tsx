@@ -686,7 +686,7 @@ export function ApiCatalogItemDetail({ slugOrId, kind }: { slugOrId: string; kin
   };
 
   if (loading) return <Page><TopBar title="Item details" back /><LoadingState label="Loading published item" /></Page>;
-  if (notFound || !item) return <Page><TopBar title="Item details" back /><EmptyState title={`${resolvedKind === "product" ? "Product" : "Service"} not found`} detail="It may be unpublished, archived, or belong to a private business." icon="search-outline" action="Browse businesses" onAction={() => router.replace("/(tabs)/discover")} /></Page>;
+  if (notFound || !item) return <Page><TopBar title="Item details" back /><EmptyState title={`${resolvedKind === "product" ? "Product" : "Service"} not found`} detail="It may be unpublished, archived, or belong to a private business." icon="search-outline" action="Browse businesses" onAction={() => router.replace("/discover")} /></Page>;
 
   const gallery = item.gallery ?? [];
   const product = kind === "product" || (resolvedKind === "product" && "price" in item) ? item as Product : undefined;

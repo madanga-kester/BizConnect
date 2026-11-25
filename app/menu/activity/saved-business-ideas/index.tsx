@@ -44,7 +44,7 @@ export default function SavedBusinessIdeasScreen() {
           detail="Bookmark a business profile to keep it here."
           icon="storefront-outline"
           action="Discover businesses"
-          onAction={() => router.push("/(tabs)/discover")}
+          onAction={() => router.push("/discover")}
         />
       )}
 

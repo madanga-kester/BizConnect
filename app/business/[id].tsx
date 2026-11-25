@@ -287,7 +287,7 @@ function MockBusinessProfileScreen() {
           />
           <Button
             title="Back to Discover"
-            onPress={() => router.replace("/(tabs)/discover")}
+            onPress={() => router.replace("/discover")}
           />
         </View>
       </Page>

@@ -17,7 +17,7 @@ import { t } from "@/i18n/translations";
 import { colors, createThemedStyles } from "@/theme/tokens";
 import { useThemeContext } from "@/lib/theme-provider";
 
-type FlyoutPath = "/(tabs)/discover" | "/(tabs)/stories";
+type FlyoutPath = "/discover" | "/stories";
 
 type HomeFlyoutProps = {
   visible: boolean;
@@ -127,7 +127,7 @@ export function HomeFlyout({ visible, onClose }: HomeFlyoutProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("discover", app.settings.language)}
-            onPress={() => goTo("/(tabs)/discover")}
+            onPress={() => goTo("/discover")}
             style={({ pressed }) => [
               localStyles.row,
               pressed && { opacity: 0.6 },
@@ -149,7 +149,7 @@ export function HomeFlyout({ visible, onClose }: HomeFlyoutProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("stories", app.settings.language)}
-            onPress={() => goTo("/(tabs)/stories")}
+            onPress={() => goTo("/stories")}
             style={({ pressed }) => [
               localStyles.row,
               pressed && { opacity: 0.6 },

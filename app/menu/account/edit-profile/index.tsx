@@ -1,8 +1,8 @@
-
 import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -34,6 +34,48 @@ function feedback(message: string) {
   else Alert.alert("Profile", message);
 }
 
+const USERNAME_COOLDOWN_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function usernameCooldown(changedAt?: string) {
+  if (!changedAt) return { locked: false, daysLeft: 0, unlockDate: "" };
+  const unlockAt = new Date(changedAt).getTime() + USERNAME_COOLDOWN_DAYS * DAY_MS;
+  const msLeft = unlockAt - Date.now();
+  if (Number.isNaN(unlockAt) || msLeft <= 0) {
+    return { locked: false, daysLeft: 0, unlockDate: "" };
+  }
+  return {
+    locked: true,
+    daysLeft: Math.ceil(msLeft / DAY_MS),
+    unlockDate: new Date(unlockAt).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+  };
+}
+
+async function pickImage(aspect: [number, number]): Promise<string | null> {
+  try {
+    const Picker = await import("expo-image-picker");
+    const p = await Picker.requestMediaLibraryPermissionsAsync();
+    if (!p.granted) {
+      feedback("Allow media access to select a photo.");
+      return null;
+    }
+    const result = await Picker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect,
+      quality: 0.7,
+    });
+    return result.canceled ? null : result.assets[0].uri;
+  } catch {
+    feedback("Photo selection is available on device.");
+    return null;
+  }
+}
+
 export default function EditProfileScreen() {
   useThemeContext(); // Kept exactly as it was to avoid context errors
 
@@ -44,6 +86,9 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState(app.user.bio);
   const [county, setCounty] = useState<County>(app.user.county);
   const [town, setTown] = useState(app.user.town);
+  const [cover, setCover] = useState<string | undefined>(app.user.cover);
+
+  const cooldown = usernameCooldown(app.user.usernameChangedAt);
 
   // County selector state
   const [countyModal, setCountyModal] = useState(false);
@@ -76,87 +121,133 @@ export default function EditProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={localStyles.scrollContent}
       >
-        {/* Avatar / Header Section */}
-        <View style={localStyles.heroSection}>
-          <View style={localStyles.avatarWrap}>
-            <Avatar name={name} image={app.user.avatar} size={96} />
-
-            <View style={localStyles.avatarBadge}>
-              <Text style={localStyles.avatarBadgeText}>✎</Text>
-            </View>
-          </View>
-
-          <Text style={localStyles.heroName}>
-            {name || "Your name"}
-          </Text>
-
-          <Text style={localStyles.heroHandle}>
-            @{username.replace(/^@/, "") || "username"}
-          </Text>
-
-          <Button
-            title="Change profile photo"
-            variant="outline"
-            small
+        {/* Cover + Overlapping Avatar Header */}
+        <View style={localStyles.profileHeader}>
+          {/* Cover Photo */}
+          <Pressable
             onPress={async () => {
-              try {
-                const Picker = await import("expo-image-picker");
-
-                const p =
-                  await Picker.requestMediaLibraryPermissionsAsync();
-
-                if (!p.granted) {
-                  return feedback(
-                    "Allow media access to select a profile photo."
-                  );
-                }
-
-                const result =
-                  await Picker.launchImageLibraryAsync({
-                    mediaTypes: ["images"],
-                    allowsEditing: true,
-                    aspect: [1, 1],
-                    quality: 0.7,
-                  });
-
-                if (!result.canceled) {
-                  app.updateUser({
-                    avatar: result.assets[0].uri,
-                  });
-                }
-              } catch {
-                feedback("Photo selection is available on device.");
-              }
+              const uri = await pickImage([16, 9]);
+              if (uri) setCover(uri);
             }}
-          />
+            style={({ pressed }) => [
+              localStyles.coverWrap,
+              pressed && { opacity: 0.9 },
+            ]}
+            accessibilityLabel="Change cover photo"
+          >
+            {cover ? (
+              <Image
+                source={{ uri: cover }}
+                style={localStyles.coverImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={localStyles.coverPlaceholder} />
+            )}
+
+            {/* Cover Pen / Remove Badges */}
+            <View style={localStyles.coverBadgeRow}>
+              {cover ? (
+                <Pressable
+                  onPress={() => setCover(undefined)}
+                  hitSlop={8}
+                  style={({ pressed }) => [
+                    localStyles.coverIconBadge,
+                    localStyles.coverRemoveBadge,
+                    pressed && { opacity: 0.75 },
+                  ]}
+                  accessibilityLabel="Remove cover photo"
+                >
+                  <Text style={localStyles.coverBadgeText}>×</Text>
+                </Pressable>
+              ) : null}
+
+              <Pressable
+                onPress={async () => {
+                  const uri = await pickImage([16, 9]);
+                  if (uri) setCover(uri);
+                }}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  localStyles.coverIconBadge,
+                  pressed && { opacity: 0.75 },
+                ]}
+                accessibilityLabel="Edit cover photo"
+              >
+                <Text style={localStyles.coverBadgeText}>✎</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+
+          {/* Overlapping Avatar + Name/Handle */}
+          <View style={localStyles.heroSection}>
+            <Pressable
+              onPress={async () => {
+                const uri = await pickImage([1, 1]);
+                if (uri) app.updateUser({ avatar: uri });
+              }}
+              style={({ pressed }) => [
+                localStyles.avatarWrap,
+                pressed && { opacity: 0.85 },
+              ]}
+              accessibilityLabel="Change profile photo"
+            >
+              <Avatar name={name} image={app.user.avatar} size={96} />
+
+              <View style={localStyles.avatarBadge}>
+                <Text style={localStyles.avatarBadgeText}>✎</Text>
+              </View>
+            </Pressable>
+
+            <Text style={localStyles.heroName}>{name || "Your name"}</Text>
+
+            <Text style={localStyles.heroHandle}>
+              @{username.replace(/^@/, "") || "username"}
+            </Text>
+          </View>
         </View>
 
         {/* Personal Info Section */}
         <View style={localStyles.section}>
-          <Text style={localStyles.sectionTitle}>
-            Personal info
-          </Text>
+          <Text style={localStyles.sectionTitle}>Personal info</Text>
 
           <View style={localStyles.fieldStack}>
-            <Field
-              label="Full name"
-              value={name}
-              onChangeText={setName}
-            />
+            <Field label="Full name" value={name} onChangeText={setName} />
 
-            <Field
-              label="Username"
-              value={username}
-              onChangeText={setUsername}
-            />
+            {cooldown.locked ? (
+              <View style={{ gap: 6 }}>
+                <Text style={styles.label}>Username</Text>
+                <View style={localStyles.lockedField}>
+                  <Text style={localStyles.lockedValue}>
+                    @{app.user.username}
+                  </Text>
+                  <Text style={localStyles.lockedBadge}>Locked</Text>
+                </View>
+                <Text style={styles.caption}>
+                  You can change your username again in {cooldown.daysLeft}{" "}
+                  {cooldown.daysLeft === 1 ? "day" : "days"} (on{" "}
+                  {cooldown.unlockDate}).
+                </Text>
+              </View>
+            ) : (
+              <View style={{ gap: 6 }}>
+                <Field
+                  label="Username"
+                  value={username}
+                  onChangeText={setUsername}
+                />
+                <Text style={styles.caption}>
+                  You can only change your username once every{" "}
+                  {USERNAME_COOLDOWN_DAYS} days.
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* Biography Section */}
         <View style={localStyles.section}>
-          <Text style={localStyles.sectionTitle}>
-            About you
-          </Text>
+          <Text style={localStyles.sectionTitle}>About you</Text>
 
           <Field
             label="Biography"
@@ -169,9 +260,7 @@ export default function EditProfileScreen() {
 
         {/* Location Section */}
         <View style={localStyles.section}>
-          <Text style={localStyles.sectionTitle}>
-            Location
-          </Text>
+          <Text style={localStyles.sectionTitle}>Location</Text>
 
           {/* COUNTY SELECTOR */}
           <View style={{ gap: 9 }}>
@@ -194,19 +283,13 @@ export default function EditProfileScreen() {
               </View>
 
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={localStyles.countyEyebrow}>
-                  SELECTED COUNTY
-                </Text>
+                <Text style={localStyles.countyEyebrow}>SELECTED COUNTY</Text>
 
-                <Text style={localStyles.countyValue}>
-                  {county}
-                </Text>
+                <Text style={localStyles.countyValue}>{county}</Text>
               </View>
 
               <View style={localStyles.changeButton}>
-                <Text style={localStyles.changeButtonText}>
-                  Change
-                </Text>
+                <Text style={localStyles.changeButtonText}>Change</Text>
                 <Text style={localStyles.changeArrow}>›</Text>
               </View>
             </Pressable>
@@ -247,16 +330,30 @@ export default function EditProfileScreen() {
         <Button
           title="Save profile locally"
           onPress={() => {
-            if (!app.isAuthenticated) {
-              return router.push("/auth/login");
+            if (!app.isAuthenticated) return router.push("/auth/login");
+
+            const cleanUsername = username.replace(/^@/, "").trim();
+            const usernameChanged = cleanUsername !== app.user.username;
+
+            if (usernameChanged && cooldown.locked) {
+              return feedback(
+                `You can change your username again on ${cooldown.unlockDate}.`
+              );
+            }
+            if (usernameChanged && cleanUsername.length < 3) {
+              return feedback("Username must be at least 3 characters.");
             }
 
             app.updateUser({
               name: name.trim(),
-              username: username.replace(/^@/, "").trim(),
+              username: cleanUsername,
               bio: bio.trim(),
               county,
               town,
+              cover,
+              ...(usernameChanged
+                ? { usernameChangedAt: new Date().toISOString() }
+                : {}),
             });
 
             feedback("Profile saved on this device.");
@@ -277,7 +374,6 @@ export default function EditProfileScreen() {
         onRequestClose={() => setCountyModal(false)}
       >
         <View style={localStyles.modalOverlay}>
-
           {/* Outside dismiss area */}
           <Pressable
             style={{ flex: 1 }}
@@ -286,16 +382,13 @@ export default function EditProfileScreen() {
 
           {/* Bottom Sheet */}
           <View style={localStyles.bottomSheet}>
-
             {/* Handle */}
             <View style={localStyles.sheetHandle} />
 
             {/* Header */}
             <View style={localStyles.sheetHeader}>
               <View style={{ flex: 1, gap: 5 }}>
-                <Text style={localStyles.sheetTitle}>
-                  Select county
-                </Text>
+                <Text style={localStyles.sheetTitle}>Select county</Text>
 
                 <Text style={localStyles.sheetSubtitle}>
                   Choose your county of residence
@@ -334,18 +427,14 @@ export default function EditProfileScreen() {
                   onPress={() => setCountySearch("")}
                   hitSlop={10}
                 >
-                  <Text style={localStyles.clearText}>
-                    Clear
-                  </Text>
+                  <Text style={localStyles.clearText}>Clear</Text>
                 </Pressable>
               )}
             </View>
 
             {/* Results Heading */}
             <View style={localStyles.resultsHeader}>
-              <Text style={localStyles.resultsLabel}>
-                ALL COUNTIES
-              </Text>
+              <Text style={localStyles.resultsLabel}>ALL COUNTIES</Text>
 
               <Text style={localStyles.resultsCount}>
                 {filteredCounties.length} of 47
@@ -410,9 +499,7 @@ export default function EditProfileScreen() {
                         selected && localStyles.radioOuterSelected,
                       ]}
                     >
-                      {selected && (
-                        <View style={localStyles.radioInner} />
-                      )}
+                      {selected && <View style={localStyles.radioInner} />}
                     </View>
                   </Pressable>
                 );
@@ -421,9 +508,7 @@ export default function EditProfileScreen() {
               {filteredCounties.length === 0 && (
                 <View style={localStyles.emptySearch}>
                   <View style={localStyles.emptySearchIcon}>
-                    <Text style={localStyles.emptySearchIconText}>
-                      ⌕
-                    </Text>
+                    <Text style={localStyles.emptySearchIconText}>⌕</Text>
                   </View>
 
                   <Text style={localStyles.emptySearchTitle}>
@@ -450,32 +535,88 @@ const localStyles = StyleSheet.create({
     gap: 20,
   },
 
+  profileHeader: {
+    marginBottom: 4,
+  },
+
+  coverWrap: {
+    height: 156,
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: "rgba(99,102,241,0.11)",
+  },
+
+  coverImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  coverPlaceholder: {
+    flex: 1,
+    backgroundColor: "rgba(99,102,241,0.11)",
+  },
+
+  coverBadgeRow: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  coverIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6366f1",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+
+  coverRemoveBadge: {
+    backgroundColor: "rgba(17,24,39,0.75)",
+  },
+
+  coverBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 17,
+  },
+
   heroSection: {
     alignItems: "center",
-    paddingVertical: 24,
-    gap: 10,
+    marginTop: -48,
+    gap: 6,
   },
 
   avatarWrap: {
     position: "relative",
+    borderRadius: 52,
+    padding: 3,
+    backgroundColor: "#FFFFFF",
     marginBottom: 4,
   },
 
   avatarBadge: {
     position: "absolute",
     bottom: 2,
-    right: -4,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    right: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#6366f1",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
   },
 
   avatarBadgeText: {
-    color: "#fff",
-    fontSize: 14,
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "700",
   },
 
@@ -487,7 +628,6 @@ const localStyles = StyleSheet.create({
   heroHandle: {
     fontSize: 15,
     opacity: 0.6,
-    marginBottom: 8,
   },
 
   section: {
@@ -505,6 +645,29 @@ const localStyles = StyleSheet.create({
 
   fieldStack: {
     gap: 14,
+  },
+
+  lockedField: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(128,128,128,0.22)",
+    opacity: 0.7,
+  },
+
+  lockedValue: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  lockedBadge: {
+    fontSize: 11,
+    fontWeight: "700",
+    opacity: 0.6,
   },
 
   chipGrid: {

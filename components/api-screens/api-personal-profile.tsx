@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   Modal,
   PanResponder,
   Pressable,
@@ -20,7 +21,6 @@ import {
   EmptyState,
   Page,
   Stat,
-  TopBar,
   styles,
 } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
@@ -67,6 +67,7 @@ export function ApiPersonalProfile() {
   useEffect(() => {
     if (switchParam) setPickerOpen(true);
   }, [switchParam]);
+
   const load = useCallback(async () => {
     loadSeq.current += 1;
     const seq = loadSeq.current;
@@ -209,6 +210,8 @@ export function ApiPersonalProfile() {
   );
 
   const tileSize = Math.floor((width - 32 - 4) / 3);
+  // Cover is ~28% of screen height, kept between 170 and 260 so it looks right on short and tall phones.
+  const coverHeight = Math.min(260, Math.max(170, Math.round(height * 0.28)));
   const emptyText: Record<ProfileTab, string> = {
     all: "No posts yet.",
     videos: "No videos yet.",
@@ -219,6 +222,13 @@ export function ApiPersonalProfile() {
   const displayName = inBusiness && activeBusiness ? activeBusiness.name : person?.name ?? "";
   const displayHandle = inBusiness && activeBusiness ? activeBusiness.slug : person?.username ?? "";
   const displayAbout = inBusiness && activeBusiness ? activeBusiness.description : person?.bio;
+
+  const coverPhoto =
+    (inBusiness && activeBusiness
+      ? (activeBusiness as { cover?: string; banner?: string }).cover ??
+        (activeBusiness as { cover?: string; banner?: string }).banner
+      : (person as { cover?: string; banner?: string } | null)?.cover ??
+        (person as { cover?: string; banner?: string } | null)?.banner) ?? person?.avatar;
 
   const selectPersonal = () => {
     setBusinessMode(false);
@@ -241,26 +251,32 @@ export function ApiPersonalProfile() {
     });
   };
 
+  const renderHamburgerButton = () => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Menu"
+      onPress={() => router.push("/menu")}
+      hitSlop={8}
+      style={localStyles.menuButtonOverlay}
+    >
+      <Ionicons name="menu-outline" size={22} color="#FFFFFF" />
+    </Pressable>
+  );
+
+  const renderShareButton = () => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Share profile"
+      onPress={shareProfile}
+      hitSlop={8}
+      style={[localStyles.menuButtonOverlay, { right: 56 }]}
+    >
+      <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
+    </Pressable>
+  );
+
   return (
     <Page topColor={colors.surface} onRefresh={() => void load()} refreshing={loading}>
-      <View style={localStyles.topBarFlat}>
-        <TopBar
-          title={person ? `@${displayHandle}` : "Profile"}
-          onTitlePress={person ? () => setPickerOpen(true) : undefined}
-          right={
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Menu"
-              onPress={() => router.push("/menu")}
-              hitSlop={8}
-              style={localStyles.menuButton}
-            >
-              <Ionicons name="menu-outline" size={24} color={colors.ink} />
-            </Pressable>
-          }
-        />
-      </View>
-
       {error ? (
         <View accessibilityRole="alert" style={localStyles.errorBar}>
           <Text style={styles.body}>Profile error: {error}</Text>
@@ -270,6 +286,10 @@ export function ApiPersonalProfile() {
 
       {loading ? (
         <>
+          <View style={[localStyles.coverBanner, { height: coverHeight, marginTop: -10 }]}>
+            <View style={localStyles.coverPlaceholder} />
+            {renderHamburgerButton()}
+          </View>
           <ProfileSkeleton />
           <SkeletonGrid size={tileSize} />
         </>
@@ -277,78 +297,96 @@ export function ApiPersonalProfile() {
 
       {!loading && person ? (
         <>
-          {/* Flat Profile Header & Stats */}
+          {/* Cover Photo with Share & Hamburger Buttons + Overlapping Profile */}
           <View style={localStyles.profileBand}>
-            <View style={localStyles.headerRow}>
-              <Avatar
-                name={displayName}
-                image={inBusiness && activeBusiness ? activeBusiness.logo : person.avatar}
-                size={80}
-                ring
-              />
-              <View style={localStyles.statsRow}>
-                <Stat value={shownPosts.length} label="Posts" />
-                {inBusiness && activeBusiness ? (
-                  <Stat value={activeBusiness.followers} label="Followers" />
-                ) : (
-                  <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
-                    <Stat value={person.followers} label="Followers" />
-                  </Pressable>
-                )}
-                {inBusiness ? null : (
-                  <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
-                    <Stat value={person.following} label="Following" />
-                  </Pressable>
-                )}
-              </View>
+            <View style={[localStyles.coverBanner, { height: coverHeight }]}>
+              {coverPhoto ? (
+                <Image
+                  source={{ uri: coverPhoto }}
+                  style={localStyles.coverImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={localStyles.coverPlaceholder} />
+              )}
+              <View style={localStyles.coverScrim} />
+              {renderShareButton()}
+              {renderHamburgerButton()}
             </View>
 
-            {/* Identity Info + Quick Switcher */}
-            <View style={localStyles.identityBlock}>
-              <View style={localStyles.nameLine}>
-                <View style={localStyles.nameGroup}>
-                  <Text style={styles.sectionHeading} numberOfLines={1}>
-                    {displayName}
-                  </Text>
-                  {inBusiness ? (
-                    <View style={localStyles.businessTag}>
-                      <Text style={localStyles.businessTagText}>Business</Text>
-                    </View>
-                  ) : null}
+            <View style={localStyles.profileBody}>
+              {/* Circular Profile Picture Overlapping Cover + Stats */}
+              <View style={localStyles.headerRow}>
+                <View style={localStyles.avatarColumn}>
+                  <View style={localStyles.avatarOverlapWrap}>
+                    <Avatar
+                      name={displayName}
+                      image={inBusiness ? undefined : person.avatar}
+                      size={84}
+                      ring
+                    />
+                  </View>
                 </View>
 
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Switch profile"
-                  onPress={() => setPickerOpen(true)}
-                  style={({ pressed }) => [localStyles.switchButton, pressed && { opacity: 0.6 }]}
-                >
-                  <Ionicons name="swap-horizontal-outline" size={16} color={colors.ink} />
-                  <Text style={localStyles.switchButtonText}>Switch</Text>
-                </Pressable>
+                <View style={localStyles.statsRow}>
+                  <Stat value={shownPosts.length} label="Posts" />
+                  {inBusiness && activeBusiness ? (
+                    <Stat value={activeBusiness.followers} label="Followers" />
+                  ) : (
+                    <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                      <Stat value={person.followers} label="Followers" />
+                    </Pressable>
+                  )}
+                  {inBusiness ? null : (
+                    <Pressable accessibilityRole="button" onPress={() => router.push("/menu/followers")}>
+                      <Stat value={person.following} label="Following" />
+                    </Pressable>
+                  )}
+                </View>
               </View>
 
-              <Text style={styles.caption}>
-                {inBusiness && activeBusiness
-                  ? `${activeBusiness.category} · ${activeBusiness.town}`
-                  : `${person.town}, ${person.county}`}
-              </Text>
-              {displayAbout ? <Text style={styles.body}>{displayAbout}</Text> : null}
-            </View>
+              {/* Name, handle (opens switcher) and Edit profile */}
+              <View style={localStyles.nameBlock}>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <View style={localStyles.nameRow}>
+                    <Text style={[styles.sectionHeading, { flexShrink: 1 }]} numberOfLines={1}>
+                      {displayName}
+                    </Text>
+                    {inBusiness ? (
+                      <View style={localStyles.businessTag}>
+                        <Text style={localStyles.businessTagText}>Business</Text>
+                      </View>
+                    ) : null}
+                  </View>
 
-            {/* Primary Actions */}
-            <View style={localStyles.actionRow}>
-              <View style={{ flex: 1 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Switch profile, @${displayHandle}`}
+                    onPress={() => setPickerOpen(true)}
+                    hitSlop={8}
+                    style={localStyles.handleRow}
+                  >
+                    <Text style={[styles.body, { fontWeight: "600" }]}>@{displayHandle}</Text>
+                    <Ionicons name="chevron-down" size={15} color={colors.ink} />
+                  </Pressable>
+                </View>
+
                 <Button
                   title={inBusiness ? "Manage business" : "Edit profile"}
-                  icon={inBusiness ? "settings-outline" : "create-outline"}
                   variant="outline"
                   small
                   onPress={() => router.push(inBusiness ? "/business-management" : "/menu/account/edit-profile")}
                 />
               </View>
-              <View style={{ flex: 1 }}>
-                <Button title="Share profile" icon="share-outline" variant="outline" small onPress={shareProfile} />
+
+              {/* Location & Bio */}
+              <View style={localStyles.identityBlock}>
+                <Text style={styles.caption}>
+                  {inBusiness && activeBusiness
+                    ? `${activeBusiness.category} · ${activeBusiness.town}`
+                    : `${person.town}, ${person.county}`}
+                </Text>
+                {displayAbout ? <Text style={styles.body}>{displayAbout}</Text> : null}
               </View>
             </View>
           </View>
@@ -413,10 +451,7 @@ export function ApiPersonalProfile() {
 
                   <View style={{ gap: 8 }}>
                     <View style={localStyles.sheetSubHeader}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Ionicons name="storefront-outline" size={15} color={colors.ink} />
-                        <Text style={localStyles.sheetSectionLabel}>Business Profiles</Text>
-                      </View>
+                      <Text style={localStyles.sheetSectionLabel}>Business Profiles</Text>
                       {managed.length > 0 ? (
                         <Text style={styles.caption}>
                           {managed.length} {managed.length === 1 ? "business" : "businesses"}
@@ -445,7 +480,7 @@ export function ApiPersonalProfile() {
                               selected && localStyles.pickerRowSelected,
                             ]}
                           >
-                            <Avatar name={business.name} image={business.logo} size={42} />
+                            <Avatar name={business.name} size={42} />
                             <View style={{ flex: 1, gap: 3 }}>
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                                 <Text style={styles.cardTitle}>{business.name}</Text>
@@ -471,7 +506,6 @@ export function ApiPersonalProfile() {
 
                 <Button
                   title="Create a business profile"
-                  icon="add-circle-outline"
                   variant="outline"
                   small
                   onPress={() => {
@@ -573,19 +607,11 @@ export function ApiPersonalProfile() {
 
 const localStyles = createThemedStyles(() =>
   StyleSheet.create({
-    topBarFlat: {
-      marginHorizontal: -16,
-      marginTop: -10,
-      paddingHorizontal: 16,
-      backgroundColor: colors.surface,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    menuButton: {
-      width: 40,
-      height: 40,
+    handleRow: {
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
+      gap: 4,
+      alignSelf: "flex-start",
     },
     errorBar: {
       paddingVertical: 10,
@@ -595,38 +621,79 @@ const localStyles = createThemedStyles(() =>
     },
     profileBand: {
       marginHorizontal: -16,
-      paddingHorizontal: 16,
-      paddingTop: 14,
+      marginTop: -10,
       paddingBottom: 16,
-      gap: 12,
       backgroundColor: colors.surface,
       borderBottomWidth: 6,
       borderBottomColor: colors.canvas,
     },
+    coverBanner: {
+      width: "100%",
+      height: 132,
+      backgroundColor: colors.subtle,
+      overflow: "hidden",
+      position: "relative",
+    },
+    coverImage: {
+      width: "100%",
+      height: "100%",
+    },
+    coverPlaceholder: {
+      flex: 1,
+      backgroundColor: colors.emeraldTint,
+    },
+    coverScrim: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0, 0, 0, 0.16)",
+    },
+    menuButtonOverlay: {
+      position: "absolute",
+      top: 10,
+      right: 12,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: "rgba(0, 0, 0, 0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileBody: {
+      paddingHorizontal: 16,
+      gap: 10,
+    },
     headerRow: {
       flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 16,
+      marginTop: -42,
+    },
+    avatarColumn: {
+      alignItems: "flex-start",
+    },
+    avatarOverlapWrap: {
+      borderRadius: 999,
+      padding: 3,
+      backgroundColor: colors.surface,
+    },
+    nameBlock: {
+      flexDirection: "row",
       alignItems: "center",
-      gap: 20,
+      gap: 12,
+    },
+    nameRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      flexWrap: "wrap",
     },
     statsRow: {
       flex: 1,
       flexDirection: "row",
       justifyContent: "space-around",
+      paddingTop: 48,
     },
     identityBlock: {
       gap: 4,
-    },
-    nameLine: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 8,
-    },
-    nameGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      flexShrink: 1,
     },
     businessTag: {
       backgroundColor: colors.subtle,
@@ -638,25 +705,6 @@ const localStyles = createThemedStyles(() =>
       fontSize: 11,
       fontWeight: "600",
       color: colors.muted,
-    },
-    switchButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 999,
-      backgroundColor: colors.subtle,
-    },
-    switchButtonText: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: colors.ink,
-    },
-    actionRow: {
-      flexDirection: "row",
-      gap: 9,
-      marginTop: 2,
     },
     businessBand: {
       marginHorizontal: -16,

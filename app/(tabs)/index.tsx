@@ -54,7 +54,7 @@ function MockHomeScreen() {
     </View>} />
     <HomeQuickMenu visible={quickMenuVisible} onClose={() => setQuickMenuVisible(false)} hasUnreadNotifications={hasUnreadNotifications} />
     <LocalNote text={app.localNotice} />
-    <SectionTitle title={t("businessStories", app.settings.language)} action={t("seeAll", app.settings.language)} onAction={() => router.push("/(tabs)/stories")} />
+    <SectionTitle title={t("businessStories", app.settings.language)} action={t("seeAll", app.settings.language)} onAction={() => router.push("/stories")} />
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 13, paddingBottom: 2 }}>
       {visibleStories.map((story, index) => {
         const person = PEOPLE.find((p) => p.id === story.founderId)!;
@@ -63,15 +63,15 @@ function MockHomeScreen() {
           <Text style={{ color: colors.ink, fontSize: 11, fontWeight: "600" }} numberOfLines={1}>{person.name.split(" ")[0]}</Text>
         </Pressable>;
       })}
-      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/create")} style={{ width: 70, alignItems: "center", gap: 6 }}><View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.orangeTint, alignItems: "center", justifyContent: "center" }}><Ionicons name="add" size={26} color={colors.orange} /></View><Text style={{ color: colors.ink, fontSize: 11 }}>Your story</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/create")} style={{ width: 70, alignItems: "center", gap: 6 }}><View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.orangeTint, alignItems: "center", justifyContent: "center" }}><Ionicons name="add" size={26} color={colors.orange} /></View><Text style={{ color: colors.ink, fontSize: 11 }}>Your story</Text></Pressable>
     </ScrollView>
     <View style={styles.rowBetween}><SectionTitle title={t("yourFeed", app.settings.language)} /><Pressable accessibilityRole="button" onPress={refresh}><Text style={{ color: colors.emerald, fontSize: 12, fontWeight: "700" }}>{refreshing ? "Refreshing…" : "↻ Refresh"}</Text></Pressable></View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       {filters.map((item) => <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: filter === item }} onPress={() => setFilter(item)} style={{ paddingHorizontal: 15, paddingVertical: 9, borderRadius: 30, backgroundColor: filter === item ? colors.navy : colors.white, borderWidth: 1, borderColor: filter === item ? colors.navy : colors.border }}><Text style={{ fontSize: 12, fontWeight: "700", color: filter === item ? colors.white : colors.muted }}>{filterLabels[item]}</Text></Pressable>)}
     </ScrollView>
-    {filter === "Nearby" ? <View style={styles.localNote}><Ionicons name="location-outline" size={15} color={colors.navySoft} /><Text style={styles.localNoteText}>Showing seed content near {app.user.town}. Precise location stays hidden.</Text><Button title="Choose area" variant="quiet" small onPress={() => router.push("/(tabs)/discover")} /></View> : null}
+    {filter === "Nearby" ? <View style={styles.localNote}><Ionicons name="location-outline" size={15} color={colors.navySoft} /><Text style={styles.localNoteText}>Showing seed content near {app.user.town}. Precise location stays hidden.</Text><Button title="Choose area" variant="quiet" small onPress={() => router.push("/discover")} /></View> : null}
     {posts.slice(0, visibleCount).map((post: Post) => <PostCard key={post.id} post={post} />)}
-    {!posts.length ? <EmptyState title={filter === "Following" ? "No posts from your circle yet" : filter === "Nearby" ? "No posts in this area yet" : "Your feed is just getting started"} detail={filter === "Following" ? "Follow a few businesses and founders to see their updates here." : filter === "Nearby" ? "Try another area or explore more local businesses." : "Follow local businesses and founders to shape your feed."} icon="people-outline" action="Explore businesses" onAction={() => router.push("/(tabs)/discover")} /> : null}
+    {!posts.length ? <EmptyState title={filter === "Following" ? "No posts from your circle yet" : filter === "Nearby" ? "No posts in this area yet" : "Your feed is just getting started"} detail={filter === "Following" ? "Follow a few businesses and founders to see their updates here." : filter === "Nearby" ? "Try another area or explore more local businesses." : "Follow local businesses and founders to shape your feed."} icon="people-outline" action="Explore businesses" onAction={() => router.push("/discover")} /> : null}
     {visibleCount < posts.length ? <Text style={styles.caption}>Scroll for more from your local feed.</Text> : posts.length ? <View style={{ alignItems: "center", paddingVertical: 6 }}><Text style={styles.caption}>You’re all caught up · sample posts are local demo content</Text></View> : null}
   </Page>;
 }

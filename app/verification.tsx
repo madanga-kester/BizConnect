@@ -27,7 +27,7 @@ export default function VerificationScreen() {
   const [documents, setDocuments] = useState<string[]>([]);
   const canManage = Boolean(business && app.isAuthenticated && hasBusinessRole(business, app.user.id));
 
-  if (!business) return <Page><TopBar title="Business verification" back /><EmptyState title="Business not found" detail="Choose a business profile to view its verification status." icon="shield-outline" action="Discover businesses" onAction={() => router.push("/(tabs)/discover")} /></Page>;
+  if (!business) return <Page><TopBar title="Business verification" back /><EmptyState title="Business not found" detail="Choose a business profile to view its verification status." icon="shield-outline" action="Discover businesses" onAction={() => router.push("/discover")} /></Page>;
 
   const verifyEditAccess = () => {
     const currentBusiness = app.businesses.find((item) => item.id === business.id);

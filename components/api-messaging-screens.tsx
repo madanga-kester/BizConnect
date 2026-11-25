@@ -68,7 +68,7 @@ export function ApiMessagesPane() {
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Archive conversation" disabled={busyId === conversation.id} onPress={() => void archive(conversation.id)}><Ionicons name="archive-outline" size={18} color={colors.muted} /></Pressable>
     </View>) : null}
-    {!loading && !error && !visible.length ? <EmptyState title={query ? "No conversations found" : "No conversations yet"} detail={query ? "Try another search." : "Start an enquiry from a business or catalogue item. Your messages sync with the service when API mode is enabled."} icon="chatbubbles-outline" action={query ? "Clear search" : "Discover businesses"} onAction={() => query ? setQuery("") : router.push("/(tabs)/discover")} /> : null}  </>;
+    {!loading && !error && !visible.length ? <EmptyState title={query ? "No conversations found" : "No conversations yet"} detail={query ? "Try another search." : "Start an enquiry from a business or catalogue item. Your messages sync with the service when API mode is enabled."} icon="chatbubbles-outline" action={query ? "Clear search" : "Discover businesses"} onAction={() => query ? setQuery("") : router.push("/discover")} /> : null}  </>;
 }
 
 export function ApiChatScreen() {

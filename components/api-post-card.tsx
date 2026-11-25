@@ -1,106 +1,725 @@
+
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { Avatar, Button, MediaImage, VideoPreview, styles } from "@/components/biz-ui";
+import {
+  Alert,
+  Pressable,
+  Share,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import {
+  Avatar,
+  MediaImage,
+  VideoPreview,
+  styles,
+} from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
 import type { Post } from "@/types/domain";
 import { useThemeContext } from "@/lib/theme-provider";
 
-const errorText = (error: { message: string; code?: string }) => `${error.message}${error.code ? ` (${error.code})` : ""}`;
+const errorText = (error: { message: string; code?: string }) =>
+  `${error.message}${error.code ? ` (${error.code})` : ""}`;
 
 export function ApiPostCard({ post }: { post: Post }) {
   useThemeContext();
+
   const services = useMabizServices();
   const app = useAppStore();
+  const { width: screenWidth } = useWindowDimensions();
+
   const [liked, setLiked] = useState(Boolean(post.viewerHasLiked));
   const [likeCount, setLikeCount] = useState(post.likes);
+  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
   const [poll, setPoll] = useState(post.poll);
-  const personName = post.authorId === app.user.id ? app.user.name : post.authorName ?? "Mabiz member";
-  const name = post.identityKind === "business" ? post.identityName ?? "Business" : personName;
-  const canBlock = post.identityKind === "personal" && post.authorId !== app.user.id;
-  const openDetail = () => router.push({ pathname: "/post/[id]", params: { id: post.id } });
-  const cardStyle = [styles.card, { borderColor: "transparent", shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }];
-  const pillStyle = { flexDirection: "row" as const, alignItems: "center" as const, gap: 6, minHeight: 36, paddingHorizontal: 13, borderRadius: 999, backgroundColor: colors.subtle };
+  const [activeImage, setActiveImage] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+
+  const personName =
+    post.authorId === app.user.id
+      ? app.user.name
+      : post.authorName ?? "Mabiz member";
+
+  const name =
+    post.identityKind === "business"
+      ? post.identityName ?? "Business"
+      : personName;
+
+  const media = post.mediaItems?.length
+    ? post.mediaItems
+    : post.media
+      ? [post.media]
+      : [];
+
+  const openDetail = () =>
+    router.push({
+      pathname: "/post/[id]",
+      params: { id: post.id },
+    });
+
+  const openProfile = () => {
+    if (post.identityKind === "business" && post.businessId) {
+      router.push({
+        pathname: "/business/[id]",
+        params: { id: post.businessId },
+      });
+      return;
+    }
+
+    openDetail();
+  };
+
+  const requireAuth = () => {
+    if (!app.isAuthenticated) {
+      router.push("/auth/login");
+      return false;
+    }
+
+    return true;
+  };
 
   const toggleLike = async () => {
-    if (!app.isAuthenticated) { router.push("/auth/login"); return; }
-    setBusy(true); setError("");
-    const result = liked ? await services.posts.unlike(post.id) : await services.posts.like(post.id);
-    if (!result.ok) { setError(errorText(result.error)); setBusy(false); return; }
-    const nextLiked = !liked;
-    setLiked(nextLiked);
-    const status = await services.posts.getLikeStatus(post.id);
-    if (status.ok) { setLiked(status.data.viewerHasLiked); setLikeCount(status.data.likeCount); }
-    else { setLikeCount((count) => Math.max(0, count + (nextLiked ? 1 : -1))); setError(`Like updated, but refresh failed: ${errorText(status.error)}`); }
-    setBusy(false);
-  };
+    if (!requireAuth()) return;
 
-  const toggleHidden = async () => {
-    setBusy(true); setError("");
-    const result = hidden ? await services.moderation.unhidePost(post.id) : await services.moderation.hidePost(post.id);
-    if (!result.ok) setError(errorText(result.error)); else setHidden(!hidden);
-    setBusy(false);
-  };
+    setBusy(true);
+    setError("");
 
-  const toggleBlocked = async () => {
-    setBusy(true); setError("");
-    const result = blocked ? await services.moderation.unblock(post.authorId) : await services.moderation.block(post.authorId);
-    if (!result.ok) setError(errorText(result.error)); else setBlocked(!blocked);
-    setBusy(false);
+    try {
+      const result = liked
+        ? await services.posts.unlike(post.id)
+        : await services.posts.like(post.id);
+
+      if (!result.ok) {
+        setError(errorText(result.error));
+        return;
+      }
+
+      const nextLiked = !liked;
+      setLiked(nextLiked);
+
+      const status = await services.posts.getLikeStatus(post.id);
+
+      if (status.ok) {
+        setLiked(status.data.viewerHasLiked);
+        setLikeCount(status.data.likeCount);
+      } else {
+        setLikeCount((count) =>
+          Math.max(0, count + (nextLiked ? 1 : -1))
+        );
+        setError(
+          `Like updated, but refresh failed: ${errorText(status.error)}`
+        );
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to update like.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const vote = async (optionId: string) => {
-    if (!app.isAuthenticated) { router.push("/auth/login"); return; }
-    setBusy(true); setError("");
-    const result = await services.posts.vote(post.id, { optionIds: [optionId] });
-    if (!result.ok) setError(errorText(result.error)); else setPoll(result.data);
-    setBusy(false);
+    if (!requireAuth()) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const result = await services.posts.vote(post.id, {
+        optionIds: [optionId],
+      });
+
+      if (!result.ok) {
+        setError(errorText(result.error));
+      } else {
+        setPoll(result.data);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to submit vote.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (hidden) return <View style={styles.card} accessibilityLiveRegion="polite"><Text style={styles.caption}>This post is hidden in your feed.</Text><Button title={busy ? "Working..." : "Undo hide"} small variant="outline" disabled={busy} onPress={() => void toggleHidden()} />{error ? <Text accessibilityRole="alert" style={[styles.caption, { color: colors.danger }]}>{error}</Text> : null}</View>;
+  const sharePost = async () => {
+    try {
+      await Share.share({
+        message: `Check out this post by ${name} on Mabiz.`,
+      });
+    } catch {
+      setError("Unable to share this post.");
+    }
+  };
 
-  return <View style={cardStyle}>
-    <View style={[styles.row, { padding: 14, paddingBottom: 10 }]}>
-      <Avatar name={name} image={post.identityKind === "business" ? post.identityAvatar : post.authorAvatar} size={46} />
-      <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={[styles.cardTitle, { fontSize: 16, fontWeight: "800" }]}>{name}</Text>
-        <Text numberOfLines={1} style={styles.caption}>{post.identityKind === "business" ? "Business post" : `@${post.authorUsername || "member"}`} - {new Date(post.createdAt).toLocaleDateString()}</Text>
+  const toggleSaved = () => {
+    if (!requireAuth()) return;
+
+    setSaved((value) => !value);
+
+    Alert.alert(
+      saved ? "Removed from saved" : "Saved",
+      saved
+        ? "This post was removed from your saved posts."
+        : "This post is saved locally. Connect your bookmark service to persist it."
+    );
+  };
+
+  const showPostMenu = () => {
+    Alert.alert("Post options", undefined, [
+      {
+        text: "View post",
+        onPress: openDetail,
+      },
+      {
+        text: "Visit profile",
+        onPress: openProfile,
+      },
+      {
+        text: "Share post",
+        onPress: () => void sharePost(),
+      },
+      {
+        text: "Report post",
+        onPress: () =>
+          Alert.alert(
+            "Report post",
+            "Connect this option to your moderation reporting service."
+          ),
+      },
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+    ]);
+  };
+
+  const iconButton = (
+    icon: React.ComponentProps<typeof Ionicons>["name"],
+    label: string,
+    onPress: () => void,
+    active = false,
+    count?: number
+  ) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: busy }}
+      disabled={busy}
+      onPress={onPress}
+      hitSlop={8}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingVertical: 8,
+      }}
+    >
+      <Ionicons
+        name={icon}
+        size={22}
+        color={active ? colors.orange : colors.ink}
+      />
+
+      {count !== undefined && (
+        <Text
+          style={{
+            color: active ? colors.orange : colors.ink,
+            fontSize: 13,
+            fontWeight: "700",
+          }}
+        >
+          {count.toLocaleString()}
+        </Text>
+      )}
+    </Pressable>
+  );
+
+  const textMuted = {
+    color: colors.muted,
+    fontSize: 12,
+  } as const;
+
+  const pollHasVoted = Boolean(poll?.viewerVoteOptionId);
+
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          padding: 0,
+          overflow: "hidden",
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.white,
+          shadowColor: "#000",
+          shadowOpacity: 0.035,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 1,
+        },
+      ]}
+    >
+      {/* POST HEADER */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 15,
+          paddingTop: 14,
+          paddingBottom: 12,
+          gap: 10,
+        }}
+      >
+        <Pressable onPress={openProfile}>
+          <Avatar
+            name={name}
+            image={
+              post.identityKind === "business"
+                ? post.identityAvatar
+                : post.authorAvatar
+            }
+            size={43}
+          />
+        </Pressable>
+
+        <Pressable
+          onPress={openProfile}
+          style={{ flex: 1, gap: 3 }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <Text
+              numberOfLines={1}
+              style={{
+                color: colors.ink,
+                fontSize: 14,
+                fontWeight: "800",
+              }}
+            >
+              {name}
+            </Text>
+
+            {post.identityKind === "business" && (
+              <Ionicons
+                name="checkmark-circle"
+                size={15}
+                color={colors.emerald}
+              />
+            )}
+          </View>
+
+          <Text style={textMuted} numberOfLines={1}>
+            {post.identityKind === "business"
+              ? "Business"
+              : `@${post.authorUsername || "member"}`}
+            {" · "}
+            {new Date(post.createdAt).toLocaleDateString()}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="More post options"
+          onPress={showPostMenu}
+          hitSlop={10}
+          style={{
+            width: 36,
+            height: 36,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={22}
+            color={colors.ink}
+          />
+        </Pressable>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Open post details" onPress={openDetail} hitSlop={8}><Ionicons name="ellipsis-horizontal" color={colors.muted} size={22} /></Pressable>
+
+      {/* POST CAPTION */}
+      {post.caption ? (
+        <View
+          style={{
+            paddingHorizontal: 15,
+            paddingBottom: media.length ? 12 : 14,
+          }}
+        >
+          <Text
+            numberOfLines={expanded ? undefined : 5}
+            style={{
+              color: colors.ink,
+              fontSize: 14,
+              lineHeight: 22,
+            }}
+          >
+            {post.caption}
+          </Text>
+
+          {post.caption.length > 180 && (
+            <Pressable
+              onPress={() => setExpanded(!expanded)}
+              style={{
+                alignSelf: "flex-start",
+                marginTop: 4,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.muted,
+                  fontSize: 13,
+                  fontWeight: "700",
+                }}
+              >
+                {expanded ? "See less" : "See more"}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      ) : null}
+
+      {/* MEDIA - NATURAL IMAGE RATIO */}
+      {media.length > 0 && (
+        <View style={{ width: "100%" }}>
+          <View
+            style={{
+              width: "100%",
+              backgroundColor: colors.subtle,
+            }}
+          >
+            {post.video ? (
+              <VideoPreview
+                uri={media[activeImage]}
+                height={280}
+              />
+            ) : (
+              <MediaImage
+                uri={media[activeImage]}
+                height={Math.min(screenWidth * 1.25, 620)}
+                label={`${name} photo ${activeImage + 1}`}
+              />
+            )}
+          </View>
+
+          {media.length > 1 && (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 5,
+                paddingVertical: 10,
+              }}
+            >
+              {media.map((_, index) => (
+                <Pressable
+                  key={`${index}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show image ${index + 1}`}
+                  onPress={() => setActiveImage(index)}
+                  style={{
+                    width: activeImage === index ? 17 : 6,
+                    height: 6,
+                    borderRadius: 5,
+                    backgroundColor:
+                      activeImage === index
+                        ? colors.emerald
+                        : colors.border,
+                  }}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* POLL */}
+      {poll && (
+        <View
+          style={{
+            marginHorizontal: 15,
+            marginTop: 12,
+            marginBottom: 5,
+            padding: 13,
+            borderRadius: 13,
+            backgroundColor: colors.subtle,
+            gap: 10,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 7,
+            }}
+          >
+            <Ionicons
+              name="stats-chart-outline"
+              size={18}
+              color={colors.emerald}
+            />
+
+            <Text
+              style={{
+                flex: 1,
+                color: colors.ink,
+                fontSize: 15,
+                fontWeight: "800",
+              }}
+            >
+              {poll.question}
+            </Text>
+          </View>
+
+          {poll.options.map((option) => {
+            const votes = option.voteCount ?? 0;
+            const total = poll.totalVotes ?? 0;
+
+            const percentage =
+              total > 0
+                ? Math.round((votes / total) * 100)
+                : 0;
+
+            const selected =
+              poll.viewerVoteOptionId === option.id;
+
+            return (
+              <Pressable
+                key={option.id}
+                disabled={
+                  busy ||
+                  poll.isClosed ||
+                  pollHasVoted
+                }
+                onPress={() => void vote(option.id)}
+                style={{
+                  padding: 11,
+                  borderRadius: 11,
+                  borderWidth: 1,
+                  borderColor: selected
+                    ? colors.emerald
+                    : colors.border,
+                  backgroundColor: colors.white,
+                  gap: 8,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.ink,
+                      fontSize: 13,
+                      fontWeight: selected ? "800" : "600",
+                      flex: 1,
+                    }}
+                  >
+                    {option.text}
+                    {selected ? " · Your vote" : ""}
+                  </Text>
+
+                  {(pollHasVoted || poll.isClosed) && (
+                    <Text
+                      style={{
+                        color: colors.emerald,
+                        fontSize: 12,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {percentage}%
+                    </Text>
+                  )}
+                </View>
+
+                {(pollHasVoted || poll.isClosed) && (
+                  <View
+                    style={{
+                      height: 5,
+                      borderRadius: 5,
+                      backgroundColor: colors.border,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: 5,
+                        width: `${percentage}%`,
+                        borderRadius: 5,
+                        backgroundColor: colors.emerald,
+                      }}
+                    />
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+
+          <Text style={textMuted}>
+            {poll.totalVotes ?? 0} votes
+            {poll.isClosed ? " · Poll closed" : ""}
+            {poll.endsAt
+              ? ` · Closes ${new Date(
+                  poll.endsAt
+                ).toLocaleDateString()}`
+              : ""}
+          </Text>
+        </View>
+      )}
+
+      {/* ENGAGEMENT COUNTS */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 15,
+          paddingTop: 12,
+        }}
+      >
+        <Text style={textMuted}>
+          {likeCount.toLocaleString()} likes
+        </Text>
+
+        <Pressable onPress={openDetail}>
+          <Text style={textMuted}>
+            {post.commentCount ?? 0} comments
+          </Text>
+        </Pressable>
+      </View>
+
+      <View
+        style={{
+          height: 1,
+          backgroundColor: colors.border,
+          marginHorizontal: 15,
+          marginTop: 10,
+        }}
+      />
+
+      {/* ACTION BAR */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 18,
+          paddingVertical: 6,
+        }}
+      >
+        {iconButton(
+          liked ? "heart" : "heart-outline",
+          liked ? "Unlike" : "Like",
+          () => void toggleLike(),
+          liked
+        )}
+
+        {iconButton(
+          "chatbubble-outline",
+          "Comment",
+          openDetail
+        )}
+
+        {iconButton(
+          "repeat-outline",
+          "Repost",
+          () =>
+            Alert.alert(
+              "Repost",
+              "Connect this action to your repost service."
+            )
+        )}
+
+        {iconButton(
+          "share-social-outline",
+          "Share",
+          () => void sharePost()
+        )}
+
+        {iconButton(
+          saved ? "bookmark" : "bookmark-outline",
+          saved ? "Unsave" : "Save",
+          toggleSaved,
+          saved
+        )}
+      </View>
+
+      {/* BUSINESS PROFILE */}
+      {post.businessId && (
+        <Pressable
+          onPress={openProfile}
+          style={{
+            marginHorizontal: 15,
+            marginBottom: 13,
+            padding: 11,
+            borderRadius: 10,
+            backgroundColor: colors.subtle,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <Ionicons
+              name="storefront-outline"
+              size={18}
+              color={colors.emerald}
+            />
+
+            <Text
+              style={{
+                color: colors.ink,
+                fontSize: 13,
+                fontWeight: "700",
+              }}
+            >
+              Visit business profile
+            </Text>
+          </View>
+
+          <Ionicons
+            name="chevron-forward"
+            size={17}
+            color={colors.muted}
+          />
+        </Pressable>
+      )}
+
+      {/* ERROR */}
+      {error ? (
+        <Text
+          accessibilityRole="alert"
+          style={{
+            color: colors.danger,
+            fontSize: 12,
+            paddingHorizontal: 15,
+            paddingBottom: 12,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
-    <Text style={[styles.body, { paddingHorizontal: 14, paddingBottom: 10 }]}>{post.caption}</Text>
-    {(post.mediaItems?.length || post.media) ? <View style={{ gap: 8, paddingHorizontal: 14, paddingBottom: 4 }}>{(post.mediaItems?.length ? post.mediaItems : [post.media!]).map((uri, index) => <View key={`${uri}-${index}`} style={{ borderRadius: 18, overflow: "hidden" }}>{post.video ? <VideoPreview uri={uri} height={230} /> : <MediaImage uri={uri} height={230} label={`${name} - photo ${index + 1}`} />}</View>)}</View> : null}
-    {poll ? <View style={{ margin: 14, marginTop: 8, padding: 12, backgroundColor: colors.subtle, borderRadius: 14, gap: 8 }}>
-      <Text style={styles.cardTitle}>{poll.question}</Text>
-      {poll.options.map((option) => {
-        const optionVotes = option.voteCount ?? 0;
-        const totalVotes = poll.totalVotes ?? 0;
-        const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
-        return <Pressable key={option.id} accessibilityRole="button" accessibilityLabel={`Vote for ${option.text}`} accessibilityState={{ disabled: busy || poll.isClosed || Boolean(poll.viewerVoteOptionId) }} disabled={busy || poll.isClosed || Boolean(poll.viewerVoteOptionId)} onPress={() => void vote(option.id)} style={[styles.rowBetween, { borderWidth: 1, borderColor: poll.viewerVoteOptionId === option.id ? colors.emerald : colors.border, backgroundColor: colors.white, borderRadius: 12, padding: 10 }]}>
-          <Text style={styles.body}>{option.text}{poll.viewerVoteOptionId === option.id ? " - Your vote" : ""}</Text>
-          <Text style={styles.caption}>{optionVotes} - {percentage}%</Text>
-        </Pressable>;
-      })}
-      <Text style={styles.caption}>{poll.totalVotes ?? 0} votes{poll.isClosed ? " - Poll closed" : poll.endsAt ? ` - Closes ${new Date(poll.endsAt).toLocaleDateString()}` : ""}</Text>
-    </View> : null}
-    <View style={[styles.row, { flexWrap: "wrap", padding: 14, paddingTop: 10 }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={liked ? "Unlike post" : "Like post"} accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void toggleLike()} style={[pillStyle, liked ? { backgroundColor: colors.orangeTint } : null]}>
-        <Ionicons name={liked ? "heart" : "heart-outline"} size={19} color={liked ? colors.orange : colors.ink} /><Text style={styles.actionText}>{likeCount}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Open ${post.commentCount ?? 0} comments`} onPress={openDetail} style={pillStyle}>
-        <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.ink} /><Text style={styles.actionText}>{post.commentCount ?? 0} comments</Text>
-      </Pressable>
-      {post.businessId ? <Button title="Business profile" small variant="soft" onPress={() => router.push({ pathname: "/business/[id]", params: { id: post.businessId! } })} /> : null}
-      {canBlock ? <Button title={blocked ? "Unblock author" : "Block author"} small variant="quiet" disabled={busy} onPress={() => void toggleBlocked()} /> : null}
-      <Button title="Hide post" small variant="quiet" disabled={busy} onPress={() => void toggleHidden()} />
-    </View>
-    {error ? <Text accessibilityRole="alert" style={{ color: colors.danger, paddingHorizontal: 14, paddingBottom: 12 }}>{error}</Text> : null}
-  </View>;
+  );
 }

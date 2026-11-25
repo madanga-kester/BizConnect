@@ -53,7 +53,7 @@ export default function VideoEditorScreen() {
 
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
-  if (!isSafeVideoUri(uri)) return <Page><TopBar title="Video editor" back /><EmptyState title="Choose a local video first" detail="Open the editor from a video selected in the Create composer. This route accepts only local or secure HTTPS media references." action="Back to Create" onAction={() => router.replace("/(tabs)/create")} /></Page>;
+  if (!isSafeVideoUri(uri)) return <Page><TopBar title="Video editor" back /><EmptyState title="Choose a local video first" detail="Open the editor from a video selected in the Create composer. This route accepts only local or secure HTTPS media references." action="Back to Create" onAction={() => router.replace("/create")} /></Page>;
 
   const start = parseFinite(startText);
   const end = parseFinite(endText);

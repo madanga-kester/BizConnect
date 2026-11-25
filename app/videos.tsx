@@ -110,7 +110,7 @@ export default function VideosScreen() {
       renderItem={({ item }) => <VideoPost post={item} active={item.id === activeVideoId} />}
       contentContainerStyle={{ padding: 14, gap: 12, flexGrow: 1 }}
       ListHeaderComponent={<Text style={styles.caption}>Short clips from founders and businesses. Only visible clips play; autoplay also respects reduced-data mode.</Text>}
-      ListEmptyComponent={<EmptyState title="Business videos are ready when you are" detail="Create a video post, choose a clip from your device and preview playback here. No sample movie is bundled or downloaded in the background." icon="videocam-outline" action="Create a video post" onAction={() => router.push("/(tabs)/create")} />}
+      ListEmptyComponent={<EmptyState title="Business videos are ready when you are" detail="Create a video post, choose a clip from your device and preview playback here. No sample movie is bundled or downloaded in the background." icon="videocam-outline" action="Create a video post" onAction={() => router.push("/create")} />}
       ListFooterComponent={<View style={{ gap: 10, paddingBottom: 12 }}><Button title="Video autoplay settings" variant="outline" icon="settings-outline" onPress={() => router.push("/menu/app-media/video-autoplay")} /><Text style={styles.caption}>Video clips play locally. Uploading and sharing beyond this device require a future API.</Text></View>}
       initialNumToRender={1}
       maxToRenderPerBatch={2}

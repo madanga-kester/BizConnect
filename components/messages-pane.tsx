@@ -65,7 +65,7 @@ function LocalMessagesPane() {
         {conversation.unread ? <View style={{ width: 8, height: 8, borderRadius: 5, backgroundColor: colors.orange }} /> : null}
       </Pressable>;
     })}
-    {!conversations.length ? <EmptyState title={query.trim() ? "No conversations found" : "No conversations yet"} detail={query.trim() ? "Try another person or message, or clear your search." : "Start a business enquiry from a product or profile. Messages stay local in this demo."} icon="chatbubbles-outline" action={query.trim() ? "Clear search" : "Discover businesses"} onAction={() => query.trim() ? setQuery("") : router.push("/(tabs)/discover")} /> : null}
+    {!conversations.length ? <EmptyState title={query.trim() ? "No conversations found" : "No conversations yet"} detail={query.trim() ? "Try another person or message, or clear your search." : "Start a business enquiry from a product or profile. Messages stay local in this demo."} icon="chatbubbles-outline" action={query.trim() ? "Clear search" : "Discover businesses"} onAction={() => query.trim() ? setQuery("") : router.push("/discover")} /> : null}
     <Text style={styles.caption}>Future live messaging can connect to ASP.NET Core SignalR; no live messages are sent from this app.</Text>
   </>;
 }

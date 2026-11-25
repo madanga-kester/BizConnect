@@ -20,7 +20,7 @@ export default function StoryHighlightScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   if (!app.hasHydrated) return <Page><TopBar title="Highlight" back /><LoadingState label="Loading your local Highlight" /></Page>;
   const highlight = app.storyHighlights.find((item) => item.id === id && item.ownerId === app.user.id);
-  if (!highlight) return <Page><TopBar title="Highlight" back /><EmptyState title="Highlight unavailable" detail="This local collection may have been removed or belongs to another profile." action="Business Stories" onAction={() => router.replace("/(tabs)/stories")} /></Page>;
+  if (!highlight) return <Page><TopBar title="Highlight" back /><EmptyState title="Highlight unavailable" detail="This local collection may have been removed or belongs to another profile." action="Business Stories" onAction={() => router.replace("/stories")} /></Page>;
   return <HighlightEditor key={highlight.id} app={app} highlight={highlight} now={now} />;
 }
 
@@ -105,6 +105,6 @@ function HighlightEditor({ app, highlight, now }: { app: ReturnType<typeof useAp
     }) : <EmptyState title="Your Story library is empty" detail="Create a Social Story and it will appear here for Highlight curation." action="Create Story" onAction={() => router.push({ pathname: "/create-social-story", params: { highlightId: highlight.id } })} />}
     <Button title="Remove this Highlight collection" icon="trash-outline" variant="danger" small onPress={() => setConfirmRemoveHighlight(true)} />
     <ConfirmModal visible={Boolean(removeStoryId)} title="Remove Story from this Highlight?" detail="The Story will remain in your local Story library and other Highlights. This action does not delete the Story." confirmLabel="Remove from Highlight" destructive onCancel={() => setRemoveStoryId(undefined)} onConfirm={() => { if (removeStoryId) app.removeStoryFromHighlight(highlight.id, removeStoryId); setRemoveStoryId(undefined); }} />
-    <ConfirmModal visible={confirmRemoveHighlight} title="Remove this Highlight?" detail="This removes the local collection. Its Stories remain in your Story library and any other Highlights." confirmLabel="Remove Highlight" destructive onCancel={() => setConfirmRemoveHighlight(false)} onConfirm={() => { app.removeStoryHighlight(highlight.id); setConfirmRemoveHighlight(false); router.replace("/(tabs)/stories"); }} />
+    <ConfirmModal visible={confirmRemoveHighlight} title="Remove this Highlight?" detail="This removes the local collection. Its Stories remain in your Story library and any other Highlights." confirmLabel="Remove Highlight" destructive onCancel={() => setConfirmRemoveHighlight(false)} onConfirm={() => { app.removeStoryHighlight(highlight.id); setConfirmRemoveHighlight(false); router.replace("/stories"); }} />
   </Page>;
 }

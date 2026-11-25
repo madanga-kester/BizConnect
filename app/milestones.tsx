@@ -37,7 +37,7 @@ export default function MilestonesScreen() {
   const snapshotKey = JSON.stringify({ businessId: business?.id, title, description, kind, date, mediaItems });
   const unsaved = useUnsavedChanges(snapshotKey);
 
-  if (!business) return <Page><TopBar title="Business milestones" back /><EmptyState title="Business not found" detail="Choose a business profile to view its milestones." icon="trophy-outline" action="Discover businesses" onAction={() => router.push("/(tabs)/discover")} /></Page>;
+  if (!business) return <Page><TopBar title="Business milestones" back /><EmptyState title="Business not found" detail="Choose a business profile to view its milestones." icon="trophy-outline" action="Discover businesses" onAction={() => router.push("/discover")} /></Page>;
   const verifyAccess = () => { const current = app.businesses.find((item) => item.id === business.id); return Boolean(app.isAuthenticated && current && hasBusinessRole(current, app.user.id)); };
   const save = (confirmed = false) => {
     if (!verifyAccess()) return feedback("Only this business's Owner or Administrator can manage milestones.");

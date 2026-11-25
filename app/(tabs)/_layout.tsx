@@ -70,8 +70,6 @@ export default function TabLayout() {
     <Tabs.Screen name="index" options={{ title: t("home", app.settings.language) }} />
     <Tabs.Screen name="notifications" options={{ title: "Inbox" }} />
     <Tabs.Screen name="profile" options={{ title: t("profile", app.settings.language) }} />
-    <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
-    <Tabs.Screen name="stories" options={{ title: t("stories", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
-    <Tabs.Screen name="create" options={{ title: t("create", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
+
   </Tabs></View>;
 }

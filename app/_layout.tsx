@@ -29,7 +29,7 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-const PRIVATE_ROUTES = ["/messages", "/drafts", "/privacy", "/search-history", "/saved", "/saved-businesses", "/saved-opportunities", "/business-management", "/business-growth", "/catalog-management", "/team", "/verification", "/analytics", "/notifications", "/notification-settings", "/report", "/edit-profile", "/followers", "/data-export", "/delete-account", "/create-business", "/moderation-status", "/recently-viewed","/menu/privacy", "/menu/activity/drafts", "/menu/activity/saved", "/menu/activity/saved-businesses", "/menu/activity/notifications", "/menu/activity/notification-settings", "/menu/activity/your-activity", "/menu/account/personal-details", "/menu/account/export-data", "/menu/account/delete-account", "/menu/followers", "/create", "/(tabs)/create"];
+const PRIVATE_ROUTES = ["/messages", "/drafts", "/privacy", "/search-history", "/saved", "/saved-businesses", "/saved-opportunities", "/business-management", "/business-growth", "/catalog-management", "/team", "/verification", "/analytics", "/notifications", "/notification-settings", "/report", "/edit-profile", "/followers", "/data-export", "/delete-account", "/create-business", "/moderation-status", "/recently-viewed","/menu/privacy", "/menu/activity/drafts", "/menu/activity/saved", "/menu/activity/saved-businesses", "/menu/activity/notifications", "/menu/activity/notification-settings", "/menu/activity/your-activity", "/menu/account/personal-details", "/menu/account/export-data", "/menu/account/delete-account", "/menu/followers", "/create"];
 
 function GuardedStack() {
   const app = useAppStore();

@@ -75,10 +75,10 @@ export default function MyContentScreen() {
   if (!app.isAuthenticated) return <Page><TopBar title="My Content" back /><EmptyState title="Sign in to manage your content" detail="Your local demo content appears here after signing in on this device." action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
 
   const edit = (item: ManagedItem) => {
-    if (item.entity === "post") router.push({ pathname: "/(tabs)/create", params: { postId: item.id } });
+    if (item.entity === "post") router.push({ pathname: "/create", params: { postId: item.id } });
     else if (item.entity === "story") router.push({ pathname: "/create-social-story", params: { storyId: item.id } });
-    else if (item.entity === "draft") { const draft = item.raw as { draftType?: string }; router.push(draft.draftType === "social-story" ? { pathname: "/create-social-story", params: { draftId: item.id } } : { pathname: "/(tabs)/create", params: { draftId: item.id } }); }
-    else if (item.entity === "scheduled") router.push({ pathname: "/(tabs)/create", params: { scheduledId: item.id } });
+    else if (item.entity === "draft") { const draft = item.raw as { draftType?: string }; router.push(draft.draftType === "social-story" ? { pathname: "/create-social-story", params: { draftId: item.id } } : { pathname: "/create", params: { draftId: item.id } }); }
+    else if (item.entity === "scheduled") router.push({ pathname: "/create", params: { scheduledId: item.id } });
     else if (item.entity === "offer") router.push({ pathname: "/create-listing", params: { kind: "offer", offerId: item.id } });
     else if (item.entity === "event") router.push({ pathname: "/create-listing", params: { kind: "event", eventId: item.id } });
     else if (item.entity === "opportunity") router.push({ pathname: "/create-listing", params: { kind: "opportunity", opportunityId: item.id } });
@@ -118,7 +118,7 @@ export default function MyContentScreen() {
   return <Page>
     <TopBar title="My Content" back />
     <LocalNote text="Unified local content manager · edits and deletion affect this device only · no content is synced or shared" />
-    <View style={styles.rowBetween}><Text style={styles.sectionHeading}>Your content · {items.length}</Text><Button title="Create" icon="add-outline" small variant="soft" onPress={() => router.push("/(tabs)/create")} /></View>
+    <View style={styles.rowBetween}><Text style={styles.sectionHeading}>Your content · {items.length}</Text><Button title="Create" icon="add-outline" small variant="soft" onPress={() => router.push("/create")} /></View>
     <Field label="Search all content" value={query} onChangeText={setQuery} placeholder="Caption, title, business, status" />
     <Text style={styles.label}>Content type</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{FILTERS.map((filter) => <Chip key={filter} label={filter} selected={typeFilter === filter} onPress={() => setTypeFilter(filter)} />)}</View>
     <Text style={styles.label}>Status and order</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>{["All", "Active", "Expired", "Draft", "Scheduled", "Archived", "Published"].map((status) => <Chip key={status} label={status} selected={statusFilter === status} onPress={() => setStatusFilter(status)} />)}</View>
