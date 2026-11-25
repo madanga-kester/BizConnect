@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Button, EmptyState, LocalNote, Page, SectionTitle, TopBar, styles } from "@/components/biz-ui";
@@ -11,6 +11,8 @@ import { colors } from "@/theme/tokens";
 import { formatDate } from "@/utils/kenya";
 import type { NotificationItem } from "@/types/domain";
 import { useThemeContext } from "@/lib/theme-provider";
+import { InboxActions, InboxShell } from "@/components/inbox-tabs";
+import { MessagesPane } from "@/components/messages-pane";
 
 const ICONS = {
   follow: "person-add-outline", like: "heart-outline", comment: "chatbubble-outline", reply: "return-down-forward-outline",
@@ -67,7 +69,7 @@ function NotificationRow({ item, apiMode, dateLabel, isLast, onOpen, onDismiss }
   </View>;
 }
 
-export default function NotificationsScreen() {
+function NotificationsPane() {
   useThemeContext();
   const app = useAppStore();
   const services = useMabizServices();
@@ -106,7 +108,7 @@ export default function NotificationsScreen() {
     if (mode === "api" && app.isAuthenticated && sync.eventVersion > 0) void loadRef.current(false);
   }, [app.isAuthenticated, mode, sync.eventVersion]);
 
-  if (!app.isAuthenticated) return <Page><TopBar title="Notifications" back /><EmptyState title="Sign in to see notifications" detail="Public business discovery is available without an account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
+  if (!app.isAuthenticated) return <EmptyState title="Sign in to see notifications" detail="Public business discovery is available without an account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} />;
 
   const apiMode = mode === "api";
   const localItems = app.notifications;
@@ -144,17 +146,19 @@ export default function NotificationsScreen() {
     } else say(errorText(result.error));
   };
 
-  return <Page>
-    <TopBar title="Notifications" back right={<View style={styles.row}>
-      {hasUnread ? <Button title="Mark all read" variant="quiet" small onPress={() => void markAllRead()} /> : null}
-      <Pressable accessibilityRole="button" accessibilityLabel="Notification settings" onPress={() => router.push(apiMode ? "/menu/activity/notification-settings" : "/menu")} style={styles.iconButton}><Ionicons name="options-outline" size={20} color={colors.ink} /></Pressable>
-    </View>} />
+  return <>
+    <InboxActions
+      showMarkAll={hasUnread}
+      onMarkAll={() => void markAllRead()}
+      onSettings={() => router.push(apiMode ? "/menu/activity/notification-settings" : "/menu")}
+      settingsLabel="Notification settings"
+    />
     <View style={styles.row}>
       <NotificationPill label="All" selected={filter === "all"} onPress={() => setFilter("all")} />
       <NotificationPill label={unreadTotal > 0 ? `Unread (${unreadTotal})` : "Unread"} selected={filter === "unread"} onPress={() => setFilter("unread")} />
     </View>
     {!apiMode ? <LocalNote text="Notification items are sample events stored locally." /> : null}
-    {loading && !displayedItems.length ? <View style={{ padding: 24, alignItems: "center", gap: 8 }}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>Loading notifications…</Text></View> : null}
+    {loading && !displayedItems.length ? <View style={{ padding: 24, alignItems: "center", gap: 8 }}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>{"Loading notifications\u2026"}</Text></View> : null}
     {error ? <View style={styles.actionTile}><Text style={{ color: colors.danger, flex: 1 }}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load(false)}><Text style={{ color: colors.emerald, fontWeight: "700" }}>Retry</Text></Pressable></View> : null}
     {groups.map((group) => <View key={group.title} style={{ gap: 10 }}>
       <SectionTitle title={group.title} />
@@ -162,8 +166,17 @@ export default function NotificationsScreen() {
         {group.items.map((item, index) => <NotificationRow key={item.id} item={item} apiMode={apiMode} dateLabel={formatDate(item.createdAt, app.settings.language)} isLast={index === group.items.length - 1} onOpen={() => void markReadAndOpen(item)} onDismiss={() => void dismiss(item)} />)}
       </View>
     </View>)}
-    {apiMode && nextCursor ? <Button title={loadingMore ? "Loading…" : "Load more"} variant="outline" disabled={loadingMore} onPress={() => void load(true)} /> : null}
+    {apiMode && nextCursor ? <Button title={loadingMore ? "Loading\u2026" : "Load more"} variant="outline" disabled={loadingMore} onPress={() => void load(true)} /> : null}
     {!loading && !error && !shownItems.length ? <EmptyState title={filter === "unread" && displayedItems.length ? "No unread notifications" : "You're all caught up"} detail={filter === "unread" && displayedItems.length ? "Switch to All to see earlier notifications." : "New follows, replies, messages and business activity will show here."} icon="notifications-outline" /> : null}
     <Pressable accessibilityRole="button" onPress={() => router.push(apiMode ? "/menu/activity/notification-settings" : "/menu")} style={{ padding: 10, alignItems: "center" }}><Text style={styles.link}>Manage notification preferences</Text></Pressable>
+  </>;
+}
+
+export default function NotificationsScreen() {
+  useThemeContext();
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  return <Page>
+    <TopBar title="Inbox" back />
+    <InboxShell initialTab={tab === "messages" ? "messages" : "alerts"} alerts={<NotificationsPane />} messages={<MessagesPane />} />
   </Page>;
 }

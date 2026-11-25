@@ -8,8 +8,9 @@ import { useMabizServices } from "@/lib/services/service-provider";
 import { useAppStore } from "@/hooks/use-app-store";
 import type { ChatMessage, Conversation } from "@/types/domain";
 import { colors } from "@/theme/tokens";
-import { useThemeContext } from "@/lib/theme-provider";
 
+import { useThemeContext } from "@/lib/theme-provider";
+import { InboxActions } from "@/components/inbox-tabs";
 function say(message: string) { if (Platform.OS === "web") window.alert(message); else Alert.alert("Messages", message); }
 function errorText(error: { code: string; message: string }) { return `${error.message} (${error.code})`; }
 function stamp(value: string): string { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : date.toLocaleString("en-KE", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); }
@@ -17,7 +18,7 @@ function timeOf(value: string): string { const date = new Date(value); return Nu
 function uniqueMessages(values: ChatMessage[]): ChatMessage[] { const map = new Map<string, ChatMessage>(); for (const value of values) map.set(value.id, value); return [...map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt)); }
 function clientId(): string { try { return globalThis.crypto.randomUUID(); } catch { return `${Date.now()}-${Math.random().toString(16).slice(2)}-4000-8000-${Math.random().toString(16).slice(2)}`; } }
 
-export function ApiMessagesScreen() {
+export function ApiMessagesPane() {
   useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
@@ -41,8 +42,17 @@ export function ApiMessagesScreen() {
     if (result.ok) setItems((current) => current.filter((item) => item.id !== conversationId)); else say(errorText(result.error));
     setBusyId(null);
   };
-  if (!app.isAuthenticated) return <Page><TopBar title="Messages" back /><EmptyState title="Sign in to see messages" detail="Private conversations require an authenticated account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} /></Page>;
-  return <Page><TopBar title="Messages" back />
+  const markAllRead = async () => {
+    const unreadItems = items.filter((item) => item.unread > 0);
+    if (!unreadItems.length) return;
+    const outcomes = await Promise.all(unreadItems.map(async (item) => ({ id: item.id, ok: (await services.messaging.markRead(item.id)).ok })));
+    const doneIds = new Set(outcomes.filter((outcome) => outcome.ok).map((outcome) => outcome.id));
+    setItems((current) => current.map((item) => (doneIds.has(item.id) ? { ...item, unread: 0 } : item)));
+    if (doneIds.size < unreadItems.length) say("Some conversations could not be marked as read.");
+  };
+  if (!app.isAuthenticated) return <EmptyState title="Sign in to see messages" detail="Private conversations require an authenticated account." icon="lock-closed-outline" action="Sign in" onAction={() => router.push("/auth/login")} />;
+  return <>
+    <InboxActions showMarkAll={items.some((item) => item.unread > 0)} onMarkAll={() => void markAllRead()} onSettings={() => router.push("/menu/privacy/messages-replies")} settingsLabel="Messages settings" />
     <View style={styles.inputWrap}><Ionicons name="search" size={17} color={colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search conversations" placeholderTextColor={colors.muted} style={{ flex: 1, padding: 10, color: colors.ink }} /></View>
     <SectionTitle title="Your conversations" />
     {loading ? <View style={{ padding: 24, alignItems: "center" }}><ActivityIndicator color={colors.emerald} /><Text style={styles.caption}>Loading conversations…</Text></View> : null}
@@ -58,8 +68,7 @@ export function ApiMessagesScreen() {
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Archive conversation" disabled={busyId === conversation.id} onPress={() => void archive(conversation.id)}><Ionicons name="archive-outline" size={18} color={colors.muted} /></Pressable>
     </View>) : null}
-    {!loading && !error && !visible.length ? <EmptyState title={query ? "No conversations found" : "No conversations yet"} detail={query ? "Try another search." : "Start an enquiry from a business or catalogue item. Your messages sync with the service when API mode is enabled."} icon="chatbubbles-outline" action={query ? "Clear search" : "Discover businesses"} onAction={() => query ? setQuery("") : router.push("/(tabs)/discover")} /> : null}
-  </Page>;
+    {!loading && !error && !visible.length ? <EmptyState title={query ? "No conversations found" : "No conversations yet"} detail={query ? "Try another search." : "Start an enquiry from a business or catalogue item. Your messages sync with the service when API mode is enabled."} icon="chatbubbles-outline" action={query ? "Clear search" : "Discover businesses"} onAction={() => query ? setQuery("") : router.push("/(tabs)/discover")} /> : null}  </>;
 }
 
 export function ApiChatScreen() {

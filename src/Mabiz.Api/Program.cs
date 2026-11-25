@@ -150,7 +150,16 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     await db.Database.MigrateAsync();
 }
 
+
 app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Mabiz API v1");
+    });
+}
+
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false,

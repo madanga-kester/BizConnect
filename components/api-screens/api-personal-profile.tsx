@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -62,6 +62,11 @@ export function ApiPersonalProfile() {
   const error = [profileError, postsError ? `Posts: ${postsError}` : ""].filter(Boolean).join("; ");
   const replaceApiBusinesses = app.replaceApiBusinesses;
 
+  const { switch: switchParam } = useLocalSearchParams<{ switch?: string }>();
+
+  useEffect(() => {
+    if (switchParam) setPickerOpen(true);
+  }, [switchParam]);
   const load = useCallback(async () => {
     loadSeq.current += 1;
     const seq = loadSeq.current;

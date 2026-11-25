@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   Avatar,
@@ -14,8 +13,8 @@ import {
   styles,
 } from "@/components/biz-ui";
 import { ApiPostCard } from "@/components/api-post-card";
+import { HomeFlyout } from "@/components/home-flyout";
 import { useAppStore } from "@/hooks/use-app-store";
-import { useNotificationSync } from "@/components/notification-sync";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { LIMIT, errorText } from "@/lib/api-helpers";
 import { colors, createThemedStyles } from "@/theme/tokens";
@@ -52,32 +51,6 @@ function FeedPill({
   );
 }
 
-function ComposerAction({
-  title,
-  icon,
-  onPress,
-}: {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-}) {
-  useThemeContext();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      onPress={onPress}
-      style={({ pressed }) => [
-        localStyles.composerAction,
-        pressed && { opacity: 0.6 },
-      ]}
-    >
-      <Ionicons name={icon} size={20} color={colors.ink} />
-      <Text style={localStyles.composerActionText}>{title}</Text>
-    </Pressable>
-  );
-}
-
 export function ApiHomeFeed() {
   useThemeContext();
   const services = useMabizServices();
@@ -89,45 +62,61 @@ export function ApiHomeFeed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [quickMenu, setQuickMenu] = useState(false);
-  const notificationSync = useNotificationSync();
-  const unreadCount = notificationSync.unreadCount;
-  const hasUnread = unreadCount > 0;
+  const [menuOpen, setMenuOpen] = useState(false);
+
+
+  const loadingMoreRef = useRef(false);
+  const cursorRef = useRef<string | undefined>(undefined);
+  cursorRef.current = cursor;
+
+
 
   const load = useCallback(
     async (refresh = false, next = false) => {
-      if (next && (!cursor || loadingMore)) return;
-      if (refresh) setRefreshing(true);
-      else if (next) setLoadingMore(true);
-      else setLoading(true);
+      const currentCursor = cursorRef.current;
+      if (next && (!currentCursor || loadingMoreRef.current)) return;
+
+      if (refresh) {
+        setRefreshing(true);
+      } else if (next) {
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
       setError("");
       const request: FeedFilters = {
         mode,
         limit: LIMIT,
-        ...(next && cursor ? { cursor } : {}),
+        ...(next && currentCursor ? { cursor: currentCursor } : {}),
       };
+
       const result = await services.feed.list(request);
-      if (!result.ok) setError(errorText(result.error));
-      else {
+      if (!result.ok) {
+        setError(errorText(result.error));
+      } else {
         setPosts((current) =>
           refresh || !next
             ? result.data.items
             : [...current, ...result.data.items]
         );
-        setCursor(result.ok ? result.data.nextCursor : undefined);
+        setCursor(result.data.nextCursor);
       }
+
       setLoading(false);
       setRefreshing(false);
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     },
-    [cursor, loadingMore, mode, services]
+    [mode, services]
   );
 
   useEffect(() => {
     setPosts([]);
     setCursor(undefined);
     void load(false, false);
-  }, [mode]);
+  }, [load]);
 
   const onScroll = (event: {
     nativeEvent: {
@@ -139,10 +128,11 @@ export function ApiHomeFeed() {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     if (
       contentSize.height - layoutMeasurement.height - contentOffset.y < 100 &&
-      cursor &&
-      !loadingMore
-    )
+      cursorRef.current &&
+      !loadingMoreRef.current
+    ) {
       void load(false, true);
+    }
   };
 
   const updates = useMemo(() => {
@@ -174,6 +164,7 @@ export function ApiHomeFeed() {
     return items;
   }, [posts, app.businesses]);
 
+
   return (
     <Page
       topColor={colors.surface}
@@ -183,40 +174,8 @@ export function ApiHomeFeed() {
     >
       <View style={localStyles.headerBlock}>
         <View style={styles.row}>
-          <Image
-            source={require("../../assets/images/splash-icon.png")}
-            style={localStyles.logo}
-            contentFit="contain"
-            accessibilityLabel="Mabiz logo"
-          />
           <Text style={localStyles.brandTitle}>Mabiz</Text>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              hasUnread
-                ? `Notifications, ${unreadCount} unread`
-                : "Notifications"
-            }
-            onPress={() => router.push("/menu/activity/notifications")}
-            style={localStyles.bellButton}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={24}
-              color={colors.ink}
-            />
-            {hasUnread ? (
-              <View style={localStyles.badge}>
-                <Text style={localStyles.badgeText}>
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </Text>
-              </View>
-            ) : null}
-          </Pressable>
-        </View>
-
-        <View style={styles.row}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Search businesses, people, topics"
@@ -225,20 +184,33 @@ export function ApiHomeFeed() {
           >
             <Ionicons name="search-outline" size={18} color={colors.muted} />
             <Text numberOfLines={1} style={localStyles.searchPlaceholder}>
-              Search businesses, people, topics
+              Search
             </Text>
           </Pressable>
+
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="More navigation options"
-            onPress={() => setQuickMenu((value) => !value)}
-            style={localStyles.filterButton}
+            accessibilityLabel="Open menu"
+            onPress={() => setMenuOpen(true)}
+            style={localStyles.menuButton}
           >
-            <Ionicons name="options-outline" size={20} color={colors.ink} />
+            <Ionicons name="menu-outline" size={26} color={colors.ink} />
           </Pressable>
+      
         </View>
 
         <View style={localStyles.feedTabRow}>
+                    <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Create a post"
+            onPress={() => router.push("/(tabs)/create")}
+            style={({ pressed }) => [
+              localStyles.createButton,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
+            <Ionicons name="add" size={30} color={colors.ink} />
+          </Pressable>
           <FeedPill
             label="For You"
             selected={mode === "for-you"}
@@ -252,19 +224,7 @@ export function ApiHomeFeed() {
         </View>
       </View>
 
-      {quickMenu ? (
-        <View style={[styles.row, { flexWrap: "wrap" }]}>
-          <Button
-            title="Messages"
-            small
-            variant="outline"
-            onPress={() => router.push("/messages")}
-          />
-          <Text style={styles.caption}>
-            {hasUnread ? "You have unread notifications" : ""}
-          </Text>
-        </View>
-      ) : null}
+  
 
       <View style={localStyles.updatesSection}>
         <SectionTitle
@@ -277,17 +237,6 @@ export function ApiHomeFeed() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 10 }}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add update"
-            onPress={() => router.push("/(tabs)/create")}
-            style={localStyles.addUpdateTile}
-          >
-            <View style={localStyles.addUpdateCircle}>
-              <Ionicons name="add" size={22} color={colors.ink} />
-            </View>
-            <Text style={localStyles.addUpdateLabel}>Add update</Text>
-          </Pressable>
 
           {updates.map((item) => (
             <Pressable
@@ -303,15 +252,7 @@ export function ApiHomeFeed() {
               style={localStyles.updateTile}
             >
               {item.cover ? (
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                  }}
-                >
+                <View style={StyleSheet.absoluteFillObject}>
                   <MediaImage uri={item.cover} height={124} label={item.name} />
                 </View>
               ) : null}
@@ -327,39 +268,7 @@ export function ApiHomeFeed() {
         </ScrollView>
       </View>
 
-      <View style={localStyles.composerBand}>
-        <View style={styles.row}>
-          <Avatar name={app.user.name} image={app.user.avatar} size={40} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Post an update, offer or product"
-            onPress={() => router.push("/(tabs)/create")}
-            style={localStyles.composerPrompt}
-          >
-            <Text numberOfLines={1} style={localStyles.composerPromptText}>
-              Post an update, offer or product
-            </Text>
-          </Pressable>
-        </View>
-        <View style={localStyles.composerActionsRow}>
-          <ComposerAction
-            title="Photo"
-            icon="image-outline"
-            onPress={() => router.push("/(tabs)/create")}
-          />
-          <ComposerAction
-            title="Video"
-            icon="videocam-outline"
-            onPress={() => router.push("/(tabs)/create")}
-          />
-          <ComposerAction
-            title="Offer"
-            icon="pricetag-outline"
-            onPress={() => router.push("/(tabs)/create")}
-          />
-        </View>
-      </View>
-
+     
       {error ? (
         <View
           accessibilityRole="alert"
@@ -399,8 +308,6 @@ export function ApiHomeFeed() {
               : "New posts will appear here as they are published."
           }
           icon="albums-outline"
-          action="Create a post"
-          onAction={() => router.push("/(tabs)/create")}
         />
       ) : null}
 
@@ -412,9 +319,11 @@ export function ApiHomeFeed() {
 
       {!loading && posts.length > 0 && !cursor && !loadingMore ? (
         <Text style={[styles.caption, { textAlign: "center" }]}>
-          You&apos;re all caught up.
+          You're all caught up.
         </Text>
       ) : null}
+
+      <HomeFlyout visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </Page>
   );
 }
@@ -432,40 +341,17 @@ const localStyles = createThemedStyles(() =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    logo: {
-      width: 32,
-      height: 32,
-      borderRadius: 9,
-    },
     brandTitle: {
-      flex: 1,
       fontSize: 22,
       fontWeight: "800",
       letterSpacing: -0.4,
       color: colors.ink,
     },
-    bellButton: {
+    menuButton: {
       width: 40,
       height: 40,
       alignItems: "center",
       justifyContent: "center",
-    },
-    badge: {
-      position: "absolute",
-      top: 2,
-      right: 2,
-      minWidth: 18,
-      height: 18,
-      paddingHorizontal: 4,
-      borderRadius: 9,
-      backgroundColor: colors.orange,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    badgeText: {
-      color: colors.white,
-      fontSize: 10,
-      fontWeight: "800",
     },
     searchBar: {
       flex: 1,
@@ -482,12 +368,7 @@ const localStyles = createThemedStyles(() =>
       color: colors.muted,
       fontSize: 14,
     },
-    filterButton: {
-      width: 40,
-      height: 40,
-      alignItems: "center",
-      justifyContent: "center",
-    },
+   
     feedTabRow: {
       flexDirection: "row",
       gap: 24,
@@ -510,6 +391,13 @@ const localStyles = createThemedStyles(() =>
       fontWeight: "700",
       color: colors.ink,
     },
+        createButton: {
+      width: 34,
+      height: 34,
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+    },
     updatesSection: {
       gap: 12,
       paddingBottom: 14,
@@ -518,31 +406,7 @@ const localStyles = createThemedStyles(() =>
       borderBottomWidth: 6,
       borderBottomColor: colors.canvas,
     },
-    addUpdateTile: {
-      width: 92,
-      height: 124,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderStyle: "dashed",
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-    },
-    addUpdateCircle: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
-      backgroundColor: colors.subtle,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    addUpdateLabel: {
-      color: colors.ink,
-      fontSize: 12,
-      fontWeight: "600",
-    },
+    
     updateTile: {
       width: 92,
       height: 124,
@@ -572,44 +436,6 @@ const localStyles = createThemedStyles(() =>
       fontSize: 12,
       fontWeight: "700",
     },
-    composerBand: {
-      marginHorizontal: -16,
-      paddingHorizontal: 16,
-      paddingBottom: 14,
-      gap: 12,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 6,
-      borderBottomColor: colors.canvas,
-    },
-    composerPrompt: {
-      flex: 1,
-      minHeight: 40,
-      justifyContent: "center",
-    },
-    composerPromptText: {
-      color: colors.muted,
-      fontSize: 14,
-    },
-    composerActionsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingTop: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
-    },
-    composerAction: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      paddingVertical: 4,
-    },
-    composerActionText: {
-      color: colors.ink,
-      fontSize: 13,
-      fontWeight: "600",
-    },
+    
   })
 );

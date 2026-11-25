@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
+import { Avatar } from "@/components/biz-ui";
 import { colors, getTabBarColors } from "@/theme/tokens";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
@@ -19,7 +20,7 @@ const TAB_ICONS: Record<string, IoniconName> = {
   create: "add-circle-outline",
   stories: "book-outline",
   notifications: "notifications-outline",
-  profile: "person-circle-outline",
+  profile: "person-outline",
 };
 
 const TAB_ICONS_FOCUSED: Record<string, IoniconName> = {
@@ -28,7 +29,7 @@ const TAB_ICONS_FOCUSED: Record<string, IoniconName> = {
   create: "add-circle",
   stories: "book",
   notifications: "notifications",
-  profile: "person-circle",
+  profile: "person",
 };
 
 const getTabIconName = (routeName: string, focused: boolean): IoniconName =>
@@ -51,9 +52,12 @@ export default function TabLayout() {
     tabBarLabelStyle: { fontSize: 10, fontWeight: "700", marginBottom: 1 },
     tabBarIcon: ({ color, focused }) => {
       const iconColor = typeof color === "string" ? color : focused ? colors.emerald : colors.muted;
-      if (route.name === "create") {
-        return <View style={{ width: 48, height: 34, borderRadius: 14, backgroundColor: colors.orange, alignItems: "center", justifyContent: "center", shadowColor: colors.orange, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
-          <Ionicons name="add" size={26} color={colors.white} />
+      if (route.name === "profile") {
+        const activeBusiness = app.businesses.find((item) => item.id === app.activeBusinessId);
+        return <View style={{ width: 52, height: 34, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ padding: 1.5, borderRadius: 18, borderWidth: 2, borderColor: iconColor }}>
+            <Avatar name={activeBusiness ? activeBusiness.name : app.user.name} image={activeBusiness ? activeBusiness.logo : app.user.avatar} size={26} />
+          </View>
         </View>;
       }
       return <View style={{ width: 52, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: focused ? colors.emeraldTint : "transparent" }}>
@@ -64,10 +68,10 @@ export default function TabLayout() {
     tabBarStyle: { paddingTop: 6, paddingBottom: bottomPadding, height: 58 + bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderTopColor: tabBarColors.borderTopColor, borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
   })}>
     <Tabs.Screen name="index" options={{ title: t("home", app.settings.language) }} />
-    <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language) }} />
-    <Tabs.Screen name="create" options={{ title: t("create", app.settings.language), tabBarActiveTintColor: colors.orange, tabBarLabel: () => null, tabBarAccessibilityLabel: t("create", app.settings.language) }} />
-    <Tabs.Screen name="stories" options={{ title: t("stories", app.settings.language) }} />
-    <Tabs.Screen name="notifications" options={{ title: "Alerts", href: null }} />
+    <Tabs.Screen name="notifications" options={{ title: "Inbox" }} />
     <Tabs.Screen name="profile" options={{ title: t("profile", app.settings.language) }} />
+    <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
+    <Tabs.Screen name="stories" options={{ title: t("stories", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
+    <Tabs.Screen name="create" options={{ title: t("create", app.settings.language), tabBarButton: () => null, tabBarItemStyle: { display: "none" } }} />
   </Tabs></View>;
 }
