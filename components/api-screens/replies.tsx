@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Avatar, styles } from "@/components/biz-ui";
+import { styles } from "@/components/biz-ui";
+import { CommentItem } from "./comment-item";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { pageRequest } from "@/lib/api-helpers";
 import { colors, createThemedStyles } from "@/theme/tokens";
@@ -52,6 +53,7 @@ export function Replies({
           pressed && { opacity: 0.6 },
         ]}
       >
+        <View style={localStyles.toggleLine} />
         <Text style={localStyles.toggleText}>
           {open
             ? "Hide replies"
@@ -77,15 +79,7 @@ export function Replies({
                   index === replies.length - 1 && localStyles.replyRowLast,
                 ]}
               >
-                <Avatar
-                  name={reply.userName}
-                  image={reply.userAvatar}
-                  size={28}
-                />
-                <View style={localStyles.replyContent}>
-                  <Text style={styles.cardTitle}>{reply.userName}</Text>
-                  <Text style={styles.body}>{reply.text}</Text>
-                </View>
+                <CommentItem comment={reply} compact />
               </View>
             ))
           )}
@@ -97,7 +91,17 @@ export function Replies({
 
 const localStyles = createThemedStyles(() =>
   StyleSheet.create({
-    toggle: { paddingVertical: 4 },
+    toggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 4,
+    },
+    toggleLine: {
+      width: 20,
+      borderTopWidth: 1.5,
+      borderTopColor: colors.border,
+    },
     toggleText: {
       fontSize: 12,
       fontWeight: "700",
@@ -106,7 +110,7 @@ const localStyles = createThemedStyles(() =>
     container: {
       marginLeft: 12,
       paddingLeft: 12,
-      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftWidth: 2,
       borderLeftColor: colors.border,
       backgroundColor: colors.surface,
     },

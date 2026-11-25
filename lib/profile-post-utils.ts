@@ -12,7 +12,12 @@ export const PROFILE_TABS: { key: ProfileTab; icon: ComponentProps<typeof Ionico
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LoosePost = Record<string, any>;
-export const mediaListOf = (p: LoosePost): LoosePost[] => p.mediaReferences ?? p.media ?? [];
+export const mediaListOf = (p: LoosePost): LoosePost[] => {
+  const list = p.mediaReferences ?? p.media;
+  if (Array.isArray(list)) return list;
+  if (typeof list === "string" && list) return [{ url: list }];
+  return [];
+};
 export const postIsVideo = (p: LoosePost) =>
   p.kind === "video" || p.mediaType === "video" || mediaListOf(p).some((m) => m.mediaType === "video");
 export const postIsReshared = (p: LoosePost) =>

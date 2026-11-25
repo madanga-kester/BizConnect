@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import type { ComponentProps } from "react";
 import { Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +18,7 @@ const TAB_ICONS: Record<string, IoniconName> = {
   index: "home-outline",
   discover: "compass-outline",
   create: "add-circle-outline",
+  compose: "add-circle-outline",
   stories: "book-outline",
   notifications: "notifications-outline",
   profile: "person-outline",
@@ -27,6 +28,7 @@ const TAB_ICONS_FOCUSED: Record<string, IoniconName> = {
   index: "home",
   discover: "compass",
   create: "add-circle",
+  compose: "add-circle",
   stories: "book",
   notifications: "notifications",
   profile: "person",
@@ -68,6 +70,17 @@ export default function TabLayout() {
     tabBarStyle: { paddingTop: 6, paddingBottom: bottomPadding, height: 58 + bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderTopColor: tabBarColors.borderTopColor, borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
   })}>
     <Tabs.Screen name="index" options={{ title: t("home", app.settings.language) }} />
+    <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language) }} />
+    <Tabs.Screen
+      name="compose"
+      options={{ title: "Create" }}
+      listeners={{
+        tabPress: (event) => {
+          event.preventDefault();
+          router.push("/create");
+        },
+      }}
+    />
     <Tabs.Screen name="notifications" options={{ title: "Inbox" }} />
     <Tabs.Screen name="profile" options={{ title: t("profile", app.settings.language) }} />
 

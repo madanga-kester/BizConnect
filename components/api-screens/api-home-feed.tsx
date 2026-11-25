@@ -1,15 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
-  Avatar,
   Button,
   EmptyState,
   LoadingState,
-  MediaImage,
   Page,
-  SectionTitle,
   styles,
 } from "@/components/biz-ui";
 import { ApiPostCard } from "@/components/api-post-card";
@@ -200,17 +197,6 @@ export function ApiHomeFeed() {
         </View>
 
         <View style={localStyles.feedTabRow}>
-                    <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Create a post"
-            onPress={() => router.push("/create")}
-            style={({ pressed }) => [
-              localStyles.createButton,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <Ionicons name="add" size={30} color={colors.ink} />
-          </Pressable>
           <FeedPill
             label="For You"
             selected={mode === "for-you"}
@@ -226,47 +212,7 @@ export function ApiHomeFeed() {
 
   
 
-      <View style={localStyles.updatesSection}>
-        <SectionTitle
-          title="Business updates"
-          action="View all"
-          onAction={() => router.push("/stories")}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10 }}
-        >
-
-          {updates.map((item) => (
-            <Pressable
-              key={item.businessId}
-              accessibilityRole="button"
-              accessibilityLabel={`Open update from ${item.name}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/post/[id]",
-                  params: { id: item.postId },
-                })
-              }
-              style={localStyles.updateTile}
-            >
-              {item.cover ? (
-                <View style={StyleSheet.absoluteFillObject}>
-                  <MediaImage uri={item.cover} height={124} label={item.name} />
-                </View>
-              ) : null}
-              <View pointerEvents="none" style={localStyles.updateScrim} />
-              <View style={localStyles.updateAvatarWrap}>
-                <Avatar name={item.name} image={item.logo} size={26} ring />
-              </View>
-              <Text numberOfLines={2} style={localStyles.updateTitle}>
-                {item.name}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
+      
 
      
       {error ? (
@@ -323,7 +269,11 @@ export function ApiHomeFeed() {
         </Text>
       ) : null}
 
-      <HomeFlyout visible={menuOpen} onClose={() => setMenuOpen(false)} />
+      <HomeFlyout
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        updates={updates}
+      />
     </Page>
   );
 }

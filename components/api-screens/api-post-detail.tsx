@@ -1,12 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Avatar,
-  Button,
   EmptyState,
-  Field,
   LoadingState,
   Page,
   SectionTitle,
@@ -21,6 +28,7 @@ import { colors, createThemedStyles } from "@/theme/tokens";
 import type { SocialApiComment } from "@/lib/api/feature-contracts";
 import type { Post } from "@/types/domain";
 import { Replies } from "./replies";
+import { CommentItem } from "./comment-item";
 import { InlineError } from "./inline-error";
 import { useThemeContext } from "@/lib/theme-provider";
 
@@ -28,6 +36,8 @@ export function ApiPostDetail({ postId }: { postId: string }) {
   useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
+  const insets = useSafeAreaInsets();
+  const inputRef = useRef<TextInput>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<SocialApiComment[]>([]);
   const [commentText, setCommentText] = useState("");
@@ -91,6 +101,8 @@ export function ApiPostDetail({ postId }: { postId: string }) {
     setCommentText("");
   };
 
+  const canSend = commentText.trim().length > 0 && !busy;
+
   const renderComposer = () => (
     <View style={localStyles.composer}>
       {replyTo ? (
@@ -98,33 +110,56 @@ export function ApiPostDetail({ postId }: { postId: string }) {
           <Text style={styles.caption}>Replying to {replyTo.userName}</Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Cancel reply"
             onPress={cancelReply}
-            hitSlop={6}
+            hitSlop={8}
             style={({ pressed }) => [pressed && { opacity: 0.6 }]}
           >
-            <Text style={localStyles.cancelReplyText}>Cancel</Text>
+            <Ionicons name="close" size={16} color={colors.muted} />
           </Pressable>
         </View>
       ) : null}
-      <Field
-        label={replyTo ? "Write a reply" : "Add a comment"}
-        value={commentText}
-        onChangeText={setCommentText}
-        multiline
-        placeholder="Share a helpful thought…"
-      />
-      <Button
-        title={busy ? "Sending…" : replyTo ? "Send reply" : "Comment"}
-        icon="paper-plane-outline"
-        disabled={busy}
-        onPress={() => void send()}
-      />
+      <View style={localStyles.composerRow}>
+        <Avatar
+          name={app.user?.name ?? "You"}
+          image={app.user?.avatar}
+          size={32}
+        />
+        <TextInput
+          ref={inputRef}
+          value={commentText}
+          onChangeText={setCommentText}
+          placeholder={replyTo ? "Add a reply" : "Add a comment"}
+          placeholderTextColor={colors.muted}
+          multiline
+          editable={!busy}
+          style={localStyles.composerInput}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={replyTo ? "Send reply" : "Send comment"}
+          disabled={!canSend}
+          onPress={() => void send()}
+          hitSlop={8}
+        >
+          <Ionicons
+            name="send"
+            size={22}
+            color={canSend ? colors.emerald : colors.muted}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 
   const commentsEnabled = post?.allowComments !== false;
+  const showComposer = Boolean(post) && commentsEnabled;
 
   return (
+    <KeyboardAvoidingView
+      style={localStyles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
     <Page
       topColor={colors.surface}
       onRefresh={() => void load()}
@@ -158,14 +193,10 @@ export function ApiPostDetail({ postId }: { postId: string }) {
               title={`Comments · ${post.commentCount ?? comments.length}`}
             />
 
-            {/* The composer sits right under the post so it never needs a
-                long scroll; when replying it moves under that comment. */}
             {!commentsEnabled ? (
               <Text style={styles.caption}>
                 Comments are turned off for this post.
               </Text>
-            ) : !replyTo ? (
-              renderComposer()
             ) : null}
 
             {commentError ? (
@@ -174,39 +205,18 @@ export function ApiPostDetail({ postId }: { postId: string }) {
 
             {comments.map((comment) => (
               <View key={comment.id} style={localStyles.commentThread}>
-                <View style={localStyles.commentRow}>
-                  <Avatar
-                    name={comment.userName}
-                    image={comment.userAvatar}
-                    size={36}
-                  />
-                  <View style={localStyles.commentBody}>
-                    <Text style={styles.cardTitle}>{comment.userName}</Text>
-                    <Text style={styles.body}>{comment.text}</Text>
-                  </View>
-                  {commentsEnabled ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Reply to ${comment.userName}`}
-                      onPress={() => {
-                        setReplyTo(comment);
-                        setCommentText("");
-                      }}
-                      hitSlop={6}
-                      style={({ pressed }) => [
-                        localStyles.replyButton,
-                        pressed && { opacity: 0.6 },
-                      ]}
-                    >
-                      <Ionicons
-                        name="arrow-undo-outline"
-                        size={16}
-                        color={colors.muted}
-                      />
-                      <Text style={localStyles.replyText}>Reply</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
+                <CommentItem
+                  comment={comment}
+                  onReply={
+                    commentsEnabled
+                      ? () => {
+                          setReplyTo(comment);
+                          setCommentText("");
+                          inputRef.current?.focus();
+                        }
+                      : undefined
+                  }
+                />
 
                 {comment.replyCount ? (
                   <View style={localStyles.nestedReplies}>
@@ -214,11 +224,7 @@ export function ApiPostDetail({ postId }: { postId: string }) {
                   </View>
                 ) : null}
 
-                {replyTo?.id === comment.id ? (
-                  <View style={localStyles.nestedReplies}>
-                    {renderComposer()}
-                  </View>
-                ) : null}
+             
               </View>
             ))}
 
@@ -233,6 +239,17 @@ export function ApiPostDetail({ postId }: { postId: string }) {
         </>
       ) : null}
     </Page>
+    {showComposer ? (
+      <View
+        style={[
+          localStyles.composerDock,
+          { paddingBottom: Math.max(insets.bottom, 8) },
+        ]}
+      >
+        {renderComposer()}
+      </View>
+    ) : null}
+    </KeyboardAvoidingView>
   );
 }
 
@@ -258,7 +275,27 @@ const localStyles = createThemedStyles(() =>
       paddingBottom: 14,
       backgroundColor: colors.surface,
     },
-    composer: { gap: 10, paddingTop: 4 },
+    screen: { flex: 1 },
+    composerDock: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      backgroundColor: colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    composer: { gap: 8 },
+    composerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    composerInput: {
+      flex: 1,
+      minHeight: 38,
+      maxHeight: 100,
+      borderRadius: 19,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      fontSize: 14,
+      color: colors.ink,
+      backgroundColor: colors.subtle,
+    },
     commentThread: {
       gap: 6,
       paddingBottom: 10,
