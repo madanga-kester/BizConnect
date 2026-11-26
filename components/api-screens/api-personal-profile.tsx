@@ -587,7 +587,7 @@ export function ApiPersonalProfile() {
               ) : tabPosts.length ? (
                 <View style={{ gap: 12 }}>
                   {tabPosts.map((post) => (
-                    <ApiPostCard key={post.id} post={post} />
+                    <ApiPostCard key={post.id} post={post} hideBusinessLink />
                   ))}
                 </View>
               ) : (

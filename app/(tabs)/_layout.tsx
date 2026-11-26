@@ -51,23 +51,32 @@ export default function TabLayout() {
     tabBarButton: HapticTab,
     tabBarActiveTintColor: colors.emerald,
     tabBarInactiveTintColor: colors.muted,
-    tabBarLabelStyle: { fontSize: 10, fontWeight: "700", marginBottom: 1 },
+    tabBarShowLabel: true,
+    tabBarLabelStyle: { fontSize: 11, fontWeight: "700", marginTop: 2 },
+    tabBarItemStyle: { justifyContent: "center", paddingVertical: 4 },
     tabBarIcon: ({ color, focused }) => {
       const iconColor = typeof color === "string" ? color : focused ? colors.emerald : colors.muted;
-      if (route.name === "profile") {
-        const activeBusiness = app.businesses.find((item) => item.id === app.activeBusinessId);
-        return <View style={{ width: 52, height: 34, alignItems: "center", justifyContent: "center" }}>
-          <View style={{ padding: 1.5, borderRadius: 18, borderWidth: 2, borderColor: iconColor }}>
-            <Avatar name={activeBusiness ? activeBusiness.name : app.user.name} image={activeBusiness ? activeBusiness.logo : app.user.avatar} size={26} />
+      if (route.name === "compose") {
+        return <View style={{ width: 56, height: 30, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.emerald, alignItems: "center", justifyContent: "center", transform: [{ translateY: -9 }] }}>
+            <Ionicons name="add" size={30} color={colors.white} />
           </View>
         </View>;
       }
-      return <View style={{ width: 52, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: focused ? colors.emeraldTint : "transparent" }}>
+      if (route.name === "profile") {
+        const activeBusiness = app.businesses.find((item) => item.id === app.activeBusinessId);
+        return <View style={{ width: 56, height: 30, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ padding: 1.5, borderRadius: 16, borderWidth: 2, borderColor: iconColor }}>
+            <Avatar name={activeBusiness ? activeBusiness.name : app.user.name} image={activeBusiness ? activeBusiness.logo : app.user.avatar} size={21} />
+          </View>
+        </View>;
+      }
+      return <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: focused ? colors.emeraldTint : "transparent" }}>
         <Ionicons name={getTabIconName(route.name, focused)} size={focused ? 23 : 21} color={iconColor} />
-        {route.name === "notifications" && unreadNotifications > 0 ? <View accessibilityLabel={`${unreadNotifications} unread notifications`} style={{ position: "absolute", top: -3, right: 2, minWidth: 15, height: 15, borderRadius: 8, paddingHorizontal: 3, backgroundColor: colors.orange, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: tabBarColors.backgroundColor }}><Text style={{ fontSize: 9, lineHeight: 11, color: colors.white, fontWeight: "800" }}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</Text></View> : null}
+        {route.name === "notifications" && unreadNotifications > 0 ? <View accessibilityLabel={`${unreadNotifications} unread notifications`} style={{ position: "absolute", top: -3, right: 6, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 3, backgroundColor: colors.danger, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: tabBarColors.backgroundColor }}><Text style={{ fontSize: 9, lineHeight: 11, color: colors.white, fontWeight: "800" }}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</Text></View> : null}
       </View>;
     },
-    tabBarStyle: { paddingTop: 6, paddingBottom: bottomPadding, height: 58 + bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderTopColor: tabBarColors.borderTopColor, borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
+    tabBarStyle: { paddingTop: 6, paddingBottom: 6, height: 66, marginHorizontal: 8, marginBottom: bottomPadding, backgroundColor: tabBarColors.backgroundColor, borderColor: tabBarColors.borderTopColor, borderWidth: 1, borderRadius: 30, shadowColor: "#000000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
   })}>
     <Tabs.Screen name="index" options={{ title: t("home", app.settings.language) }} />
     <Tabs.Screen name="discover" options={{ title: t("discover", app.settings.language) }} />

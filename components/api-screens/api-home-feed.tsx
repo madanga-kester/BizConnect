@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   Button,
   EmptyState,
@@ -11,6 +11,7 @@ import {
 } from "@/components/biz-ui";
 import { ApiPostCard } from "@/components/api-post-card";
 import { HomeFlyout } from "@/components/home-flyout";
+import { CommentsSheet } from "@/components/comments-sheet";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { LIMIT, errorText } from "@/lib/api-helpers";
@@ -19,14 +20,25 @@ import type { FeedFilters } from "@/lib/api/feature-contracts";
 import type { Post } from "@/types/domain";
 import { useThemeContext } from "@/lib/theme-provider";
 
+const TRENDING_TOPICS = [
+  "#SupportLocal",
+  "#NairobiBusiness",
+  "#MadeInKenya",
+  "#SmallBusiness",
+  "#WeekendDeals",
+  "#TechKenya",
+];
+
 function FeedPill({
   label,
   selected,
   onPress,
+  trending,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  trending?: boolean;
 }) {
   useThemeContext();
   return (
@@ -44,6 +56,9 @@ function FeedPill({
       >
         {label}
       </Text>
+      {trending ? (
+        <Ionicons name="trending-up" size={16} color={colors.emerald} />
+      ) : null}
     </Pressable>
   );
 }
@@ -52,7 +67,11 @@ export function ApiHomeFeed() {
   useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
-  const [mode, setMode] = useState<"for-you" | "following">("for-you");
+  const [tab, setTab] = useState<
+    "for-you" | "following" | "business" | "trending" | "polls" | "events"
+  >("for-you");
+  const mode: "for-you" | "following" =
+    tab === "following" ? "following" : "for-you";
   const [posts, setPosts] = useState<Post[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
@@ -60,13 +79,11 @@ export function ApiHomeFeed() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const [commentsPost, setCommentsPost] = useState<Post | null>(null);
 
   const loadingMoreRef = useRef(false);
   const cursorRef = useRef<string | undefined>(undefined);
   cursorRef.current = cursor;
-
-
 
   const load = useCallback(
     async (refresh = false, next = false) => {
@@ -161,6 +178,16 @@ export function ApiHomeFeed() {
     return items;
   }, [posts, app.businesses]);
 
+  const visiblePosts = useMemo(
+    () =>
+      posts.filter(
+        (post) =>
+          (tab !== "business" || post.identityKind === "business") &&
+          tab !== "polls" &&
+          tab !== "events"
+      ),
+    [posts, tab]
+  );
 
   return (
     <Page
@@ -181,7 +208,7 @@ export function ApiHomeFeed() {
           >
             <Ionicons name="search-outline" size={18} color={colors.muted} />
             <Text numberOfLines={1} style={localStyles.searchPlaceholder}>
-              Search
+              Search Mabiz...
             </Text>
           </Pressable>
 
@@ -193,28 +220,71 @@ export function ApiHomeFeed() {
           >
             <Ionicons name="menu-outline" size={26} color={colors.ink} />
           </Pressable>
-      
         </View>
 
-        <View style={localStyles.feedTabRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={localStyles.feedTabRow}
+        >
           <FeedPill
             label="For You"
-            selected={mode === "for-you"}
-            onPress={() => setMode("for-you")}
+            selected={tab === "for-you"}
+            onPress={() => setTab("for-you")}
           />
           <FeedPill
             label="Following"
-            selected={mode === "following"}
-            onPress={() => setMode("following")}
+            selected={tab === "following"}
+            onPress={() => setTab("following")}
           />
-        </View>
+          <FeedPill
+            label="Business"
+            selected={tab === "business"}
+            onPress={() => setTab("business")}
+          />
+          <FeedPill
+            label="Trending"
+            selected={tab === "trending"}
+            onPress={() => setTab("trending")}
+            trending
+          />
+          <FeedPill
+            label="Polls"
+            selected={tab === "polls"}
+            onPress={() => setTab("polls")}
+          />
+          <FeedPill
+            label="Events"
+            selected={tab === "events"}
+            onPress={() => setTab("events")}
+          />
+        </ScrollView>
       </View>
 
-  
+      {tab === "trending" ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={localStyles.trendRow}
+        >
+          {TRENDING_TOPICS.map((topic) => (
+            <Pressable
+              key={topic}
+              accessibilityRole="button"
+              accessibilityLabel={`Trending topic ${topic}`}
+              style={localStyles.trendChip}
+            >
+              <Ionicons
+                name="trending-up-outline"
+                size={14}
+                color={colors.emeraldDark}
+              />
+              <Text style={localStyles.trendText}>{topic}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : null}
 
-      
-
-     
       {error ? (
         <View
           accessibilityRole="alert"
@@ -241,7 +311,11 @@ export function ApiHomeFeed() {
 
       {loading ? <LoadingState label="Loading feed from the server" /> : null}
 
-      {!loading && !error && posts.length === 0 ? (
+      {!loading &&
+      !error &&
+      posts.length === 0 &&
+      tab !== "polls" &&
+      tab !== "events" ? (
         <EmptyState
           title={
             mode === "following"
@@ -257,9 +331,29 @@ export function ApiHomeFeed() {
         />
       ) : null}
 
-      {posts.map((post) => (
-        <ApiPostCard key={post.id} post={post} />
+      {visiblePosts.map((post) => (
+        <ApiPostCard
+          key={post.id}
+          post={post}
+          onOpenComments={() => setCommentsPost(post)}
+        />
       ))}
+
+      {!loading && tab === "polls" ? (
+        <EmptyState
+          title="No polls yet"
+          detail="Polls from people and businesses will appear here."
+          icon="bar-chart-outline"
+        />
+      ) : null}
+
+      {!loading && tab === "events" ? (
+        <EmptyState
+          title="No events yet"
+          detail="Upcoming events will appear here."
+          icon="calendar-outline"
+        />
+      ) : null}
 
       {loadingMore ? <LoadingState label="Loading more posts" /> : null}
 
@@ -273,6 +367,11 @@ export function ApiHomeFeed() {
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
         updates={updates}
+      />
+
+      <CommentsSheet
+        post={commentsPost}
+        onClose={() => setCommentsPost(null)}
       />
     </Page>
   );
@@ -292,10 +391,10 @@ const localStyles = createThemedStyles(() =>
       borderBottomColor: colors.border,
     },
     brandTitle: {
-      fontSize: 22,
-      fontWeight: "800",
-      letterSpacing: -0.4,
-      color: colors.ink,
+      fontSize: 31,
+      fontWeight: "900",
+      letterSpacing: -1.6,
+      color: colors.navy,
     },
     menuButton: {
       width: 40,
@@ -318,22 +417,24 @@ const localStyles = createThemedStyles(() =>
       color: colors.muted,
       fontSize: 14,
     },
-   
     feedTabRow: {
       flexDirection: "row",
-      gap: 24,
+      gap: 20,
       marginTop: 2,
     },
     feedTab: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
       paddingVertical: 10,
-      borderBottomWidth: 2,
+      borderBottomWidth: 3,
       borderBottomColor: "transparent",
     },
     feedTabSelected: {
-      borderBottomColor: colors.ink,
+      borderBottomColor: colors.emerald,
     },
     feedTabText: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: "600",
       color: colors.muted,
     },
@@ -341,7 +442,89 @@ const localStyles = createThemedStyles(() =>
       fontWeight: "700",
       color: colors.ink,
     },
-        createButton: {
+    chipRow: {
+      flexDirection: "row",
+      gap: 8,
+      paddingRight: 16,
+    },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: colors.subtle,
+    },
+    chipSelected: {
+      backgroundColor: colors.navy,
+    },
+    chipText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.ink,
+    },
+    chipTextSelected: {
+      color: colors.white,
+    },
+    storiesRow: {
+      flexDirection: "row",
+      gap: 10,
+      paddingVertical: 4,
+    },
+    createTile: {
+      backgroundColor: colors.subtle,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    createPlus: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.emerald,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    createLabel: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.ink,
+      textAlign: "center",
+    },
+    storyPlus: {
+      position: "absolute",
+      right: -2,
+      bottom: -2,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: colors.emerald,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: colors.white,
+    },
+    trendRow: {
+      flexDirection: "row",
+      gap: 8,
+      paddingRight: 16,
+    },
+    trendChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 999,
+      backgroundColor: colors.emeraldTint,
+    },
+    trendText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.emeraldDark,
+    },
+    createButton: {
       width: 34,
       height: 34,
       alignSelf: "center",
@@ -356,10 +539,9 @@ const localStyles = createThemedStyles(() =>
       borderBottomWidth: 6,
       borderBottomColor: colors.canvas,
     },
-    
     updateTile: {
-      width: 92,
-      height: 124,
+      width: 88,
+      height: 112,
       borderRadius: 14,
       overflow: "hidden",
       backgroundColor: colors.navy,
@@ -374,18 +556,20 @@ const localStyles = createThemedStyles(() =>
     },
     updateAvatarWrap: {
       position: "absolute",
-      top: 8,
-      left: 8,
+      top: 10,
+      left: 0,
+      right: 0,
+      alignItems: "center",
     },
     updateTitle: {
       position: "absolute",
-      left: 8,
-      right: 8,
+      left: 6,
+      right: 6,
       bottom: 8,
       color: colors.white,
       fontSize: 12,
       fontWeight: "700",
+      textAlign: "center",
     },
-    
   })
 );

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Avatar, VideoPreview } from "@/components/biz-ui";
+import { SquareAvatar } from "@/components/square-avatar";
 import { useAppStore } from "@/hooks/use-app-store";
 import { useMabizServices } from "@/lib/services/service-provider";
 import { colors } from "@/theme/tokens";
@@ -21,7 +22,30 @@ import { useThemeContext } from "@/lib/theme-provider";
 const errorText = (error: { message: string; code?: string }) =>
   `${error.message}${error.code ? ` (${error.code})` : ""}`;
 
-export function ApiPostCard({ post }: { post: Post }) {
+const relativeTime = (value: string | number | Date) => {
+  const diff = Date.now() - new Date(value).getTime();
+  if (!Number.isFinite(diff) || diff < 0) return "now";
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(value).toLocaleDateString();
+};
+
+export function ApiPostCard({
+  post,
+  hideBusinessLink = false,
+  currentProfileId,
+  onOpenComments,
+}: {
+  post: Post;
+  hideBusinessLink?: boolean;
+  currentProfileId?: string;
+  onOpenComments?: () => void;
+}) {
   useThemeContext();
 
   const services = useMabizServices();
@@ -39,6 +63,15 @@ export function ApiPostCard({ post }: { post: Post }) {
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const lastTapRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    },
+    []
+  );
 
   const media = post.mediaItems?.length
     ? post.mediaItems
@@ -94,10 +127,28 @@ export function ApiPostCard({ post }: { post: Post }) {
     });
 
   const openProfile = () => {
-    if (post.identityKind === "business" && post.businessId) {
+    if (post.identityKind === "business") {
+      const targetBusinessId = post.businessId ?? post.identityId;
+      if (targetBusinessId) {
+        router.push({
+          pathname: "/business/[id]",
+          params: { id: targetBusinessId },
+        });
+        return;
+      }
+    }
+
+    if (post.authorId) {
+      if (currentProfileId && post.authorId === currentProfileId) return;
+
+      if (app.user && post.authorId === app.user.id) {
+        router.push("/(tabs)/profile");
+        return;
+      }
+
       router.push({
-        pathname: "/business/[id]",
-        params: { id: post.businessId },
+        pathname: "/person/[id]",
+        params: { id: post.authorId },
       });
       return;
     }
@@ -159,6 +210,22 @@ export function ApiPostCard({ post }: { post: Post }) {
     } finally {
       setLikeBusy(false);
     }
+  };
+
+  const handleBodyPress = () => {
+    const now = Date.now();
+
+    if (now - lastTapRef.current < 280) {
+      lastTapRef.current = 0;
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
+      if (!liked) void toggleLike();
+      return;
+    }
+
+    lastTapRef.current = now;
   };
 
   const vote = async (optionId: string) => {
@@ -232,7 +299,7 @@ export function ApiPostCard({ post }: { post: Post }) {
     >
       <Ionicons
         name={icon}
-        size={21}
+        size={18}
         color={active ? colors.orange : colors.ink}
       />
 
@@ -240,7 +307,7 @@ export function ApiPostCard({ post }: { post: Post }) {
         <Text
           style={{
             color: active ? colors.orange : colors.ink,
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: active ? "700" : "600",
           }}
         >
@@ -301,7 +368,7 @@ export function ApiPostCard({ post }: { post: Post }) {
       style={{
         width: screenWidth,
         alignSelf: "center",
-        backgroundColor: "transparent",
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
       }}
@@ -318,15 +385,11 @@ export function ApiPostCard({ post }: { post: Post }) {
         }}
       >
         <Pressable onPress={openProfile}>
-          <Avatar
-            name={name}
-            image={
-              post.identityKind === "business"
-                ? post.identityAvatar
-                : post.authorAvatar
-            }
-            size={43}
-          />
+          {post.identityKind === "business" ? (
+            <SquareAvatar name={name} image={post.identityAvatar} size={43} />
+          ) : (
+            <Avatar name={name} image={post.authorAvatar} size={43} />
+          )}
         </Pressable>
 
         <Pressable
@@ -364,8 +427,8 @@ export function ApiPostCard({ post }: { post: Post }) {
             {post.identityKind === "business"
               ? "Business"
               : `@${post.authorUsername || "member"}`}
-            {" · "}
-            {new Date(post.createdAt).toLocaleDateString()}
+            {" \u00B7 "}
+            {relativeTime(post.createdAt)}
           </Text>
         </Pressable>
 
@@ -389,6 +452,11 @@ export function ApiPostCard({ post }: { post: Post }) {
         </Pressable>
       </View>
 
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open post"
+        onPress={handleBodyPress}
+      >
       {/* POST CAPTION */}
       {post.caption ? (
         <View
@@ -452,6 +520,33 @@ export function ApiPostCard({ post }: { post: Post }) {
                 onError={() => setImageAspectRatio(1)}
               />
             )}
+            {media.length > 1 && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingHorizontal: 9,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  backgroundColor: "rgba(0, 0, 0, 0.55)",
+                }}
+              >
+                <Ionicons name="images-outline" size={13} color={colors.white} />
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontSize: 12,
+                    fontWeight: "700",
+                  }}
+                >
+                  {activeImage + 1}/{media.length}
+                </Text>
+              </View>
+            )}
           </View>
 
           {media.length > 1 && (
@@ -492,11 +587,8 @@ export function ApiPostCard({ post }: { post: Post }) {
         <View
           style={{
             marginHorizontal: 15,
-            marginTop: 12,
+            marginTop: 4,
             marginBottom: 5,
-            padding: 13,
-            borderRadius: 13,
-            backgroundColor: colors.subtle,
             gap: 10,
           }}
         >
@@ -547,16 +639,27 @@ export function ApiPostCard({ post }: { post: Post }) {
                 }
                 onPress={() => void vote(option.id)}
                 style={{
-                  padding: 11,
-                  borderRadius: 11,
+                  paddingVertical: 11,
+                  paddingHorizontal: 12,
+                  borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: selected
-                    ? colors.emerald
-                    : colors.border,
-                  backgroundColor: colors.surface,
-                  gap: 8,
+                  borderColor: selected ? colors.emerald : "transparent",
+                  backgroundColor: colors.subtle,
+                  overflow: "hidden",
                 }}
               >
+                {(pollHasVoted || poll.isClosed) && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: `${percentage}%`,
+                      backgroundColor: colors.emeraldTint,
+                    }}
+                  />
+                )}
                 <View
                   style={{
                     flexDirection: "row",
@@ -589,25 +692,7 @@ export function ApiPostCard({ post }: { post: Post }) {
                   )}
                 </View>
 
-                {(pollHasVoted || poll.isClosed) && (
-                  <View
-                    style={{
-                      height: 5,
-                      borderRadius: 5,
-                      backgroundColor: colors.border,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <View
-                      style={{
-                        height: 5,
-                        width: `${percentage}%`,
-                        borderRadius: 5,
-                        backgroundColor: colors.emerald,
-                      }}
-                    />
-                  </View>
-                )}
+
               </Pressable>
             );
           })}
@@ -624,15 +709,65 @@ export function ApiPostCard({ post }: { post: Post }) {
         </View>
       )}
 
+
+
+      </Pressable>
+
+      {/* BUSINESS PROFILE LINK */}
+      {!hideBusinessLink && post.identityKind === "business" && post.businessId && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`View ${post.identityName ?? name} profile`}
+          onPress={openProfile}
+          style={({ pressed }) => ({
+            alignSelf: "flex-start",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 5,
+            marginLeft: 15,
+            marginTop: 2,
+            marginBottom: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: colors.emerald,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons
+            name="storefront-outline"
+            size={13}
+            color={colors.emerald}
+          />
+
+          <Text
+            style={{
+              color: colors.emerald,
+              fontSize: 12,
+              fontWeight: "700",
+            }}
+          >
+            View Profile
+          </Text>
+
+          <Ionicons
+            name="arrow-forward"
+            size={12}
+            color={colors.emerald}
+          />
+        </Pressable>
+      )}
+
       {/* UNIFIED ENGAGEMENT & ACTION BAR */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 15,
-          paddingTop: 10,
-          paddingBottom: post.businessId ? 4 : 12,
+          marginHorizontal: 15,
+          paddingTop: 6,
+          paddingBottom: 10,
         }}
       >
         {/* LEFT: Unified Like/Love + Conversation Actions */}
@@ -640,7 +775,7 @@ export function ApiPostCard({ post }: { post: Post }) {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 18,
+            gap: 22,
           }}
         >
           {/* Like & Love combined into one single interaction with count */}
@@ -658,13 +793,13 @@ export function ApiPostCard({ post }: { post: Post }) {
             style={{
               flexDirection: "row",
               alignItems: "center",
-              gap: 16,
+              gap: 22,
             }}
           >
             {actionButton(
               "chatbubble-outline",
               "Comments",
-              openDetail,
+              () => (onOpenComments ? onOpenComments() : openDetail()),
               post.commentCount ?? 0
             )}
 
@@ -685,11 +820,11 @@ export function ApiPostCard({ post }: { post: Post }) {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 16,
+            gap: 22,
           }}
         >
           {actionButton(
-            "paper-plane-outline",
+            "share-social-outline",
             "Share post",
             () => void sharePost()
           )}
@@ -704,43 +839,7 @@ export function ApiPostCard({ post }: { post: Post }) {
         </View>
       </View>
 
-      {/* SMALL BUSINESS LINK (LEFT AS IS) */}
-      {post.businessId && (
-        <Pressable
-          onPress={openProfile}
-          style={{
-            alignSelf: "flex-start",
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-            marginLeft: 15,
-            marginBottom: 12,
-            paddingVertical: 2,
-          }}
-        >
-          <Ionicons
-            name="storefront-outline"
-            size={14}
-            color={colors.emerald}
-          />
-
-          <Text
-            style={{
-              color: colors.emerald,
-              fontSize: 12,
-              fontWeight: "700",
-            }}
-          >
-            Visit business
-          </Text>
-
-          <Ionicons
-            name="chevron-forward"
-            size={12}
-            color={colors.emerald}
-          />
-        </Pressable>
-      )}
+      
 
       {/* ERROR */}
       {error ? (
