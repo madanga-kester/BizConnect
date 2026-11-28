@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   FlatList,
   Keyboard,
   Modal,
@@ -101,6 +102,8 @@ export function CommentsSheet({
     {}
   );
   const [loadingReplies, setLoadingReplies] = useState<Set<string>>(new Set());
+  const [sheetMounted, setSheetMounted] = useState(false);
+  const sheetProgress = useRef(new Animated.Value(0)).current;
 
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<FlatList<CommentItem>>(null);
@@ -145,7 +148,6 @@ export function CommentsSheet({
               duration: 180,
               useNativeDriver: true,
             }).start(() => {
-              dragY.setValue(0);
               onCloseRef.current();
             });
           } else {
@@ -159,6 +161,42 @@ export function CommentsSheet({
       }),
     [dragY, screenHeight]
   );
+
+  const isOpen = Boolean(post);
+
+  useEffect(() => {
+    if (isOpen) {
+      dragY.setValue(0);
+      setSheetMounted(true);
+      Animated.timing(sheetProgress, {
+        toValue: 1,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(sheetProgress, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) setSheetMounted(false);
+      });
+    }
+  }, [isOpen, sheetProgress, dragY]);
+
+  const scrimOpacity = sheetProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.4],
+  });
+
+  const sheetY = sheetProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [screenHeight, 0],
+  });
+
+  const sheetTranslate = Animated.add(dragY, sheetY);
 
   // ---------- helpers to patch state ----------
   const patchComment = (
@@ -206,6 +244,7 @@ export function CommentsSheet({
 
   useEffect(() => {
     loadRequestId.current++; // invalidate any in-flight request from previous post
+    if (!postId) return;
     setComments([]);
     setText("");
     setReplyTo(null);
@@ -214,7 +253,7 @@ export function CommentsSheet({
     setLoadingReplies(new Set());
     setError("");
     setSending(false);
-    if (postId) void load();
+    void load();
   }, [postId, load]);
 
   const loadReplies = async (id: string) => {
@@ -422,12 +461,21 @@ export function CommentsSheet({
 
   return (
     <Modal
-      visible={!!post}
-      animationType="slide"
+      visible={sheetMounted}
+      animationType="none"
       transparent
+      statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={s.backdrop}>
+      <View style={s.root}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            s.scrim,
+            { opacity: scrimOpacity },
+          ]}
+        />
         <Pressable style={{ flex: 1 }} onPress={onClose} />
         <Animated.View
           style={[
@@ -435,7 +483,7 @@ export function CommentsSheet({
             {
               height: sheetHeight,
               paddingBottom: keyboardHeight,
-              transform: [{ translateY: dragY }],
+              transform: [{ translateY: sheetTranslate }],
             },
           ]}
         >
@@ -580,10 +628,12 @@ export function CommentsSheet({
 
 const s = createThemedStyles(() =>
   StyleSheet.create({
-    backdrop: {
+    root: {
       flex: 1,
       justifyContent: "flex-end",
-      backgroundColor: "rgba(0,0,0,0.4)",
+    },
+    scrim: {
+      backgroundColor: "#000000",
     },
     sheet: {
       backgroundColor: colors.surface,

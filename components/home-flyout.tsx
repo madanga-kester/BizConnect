@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { Avatar, MediaImage } from "@/components/biz-ui";
 import { useAppStore } from "@/hooks/use-app-store";
 import { t } from "@/i18n/translations";
@@ -31,7 +32,8 @@ type FlyoutPath =
   | "/catalog-management"
   | "/analytics"
   | "/team"
-  | "/verification";
+  | "/verification"
+  | "/(tabs)/profile";
 
 type FlyoutLink = {
   icon: React.ComponentProps<typeof Ionicons>["name"];
@@ -40,17 +42,49 @@ type FlyoutLink = {
 };
 
 const YOUR_STUFF: FlyoutLink[] = [
-  { icon: "bookmark-outline", label: "Saved", path: "/menu/activity/saved" },
-  { icon: "document-text-outline", label: "Drafts", path: "/menu/activity/drafts" },
-  { icon: "people-outline", label: "Followers", path: "/menu/followers" },
+  {
+    icon: "bookmark-outline",
+    label: "Saved",
+    path: "/menu/activity/saved",
+  },
+  {
+    icon: "document-text-outline",
+    label: "Drafts",
+    path: "/menu/activity/drafts",
+  },
+  {
+    icon: "people-outline",
+    label: "Followers",
+    path: "/menu/followers",
+  },
 ];
 
 const BUSINESS_TOOLS: FlyoutLink[] = [
-  { icon: "storefront-outline", label: "Manage business", path: "/business-management" },
-  { icon: "cube-outline", label: "Catalog", path: "/catalog-management" },
-  { icon: "bar-chart-outline", label: "Analytics", path: "/analytics" },
-  { icon: "people-circle-outline", label: "Team", path: "/team" },
-  { icon: "shield-checkmark-outline", label: "Verification", path: "/verification" },
+  {
+    icon: "storefront-outline",
+    label: "Manage business",
+    path: "/business-management",
+  },
+  {
+    icon: "cube-outline",
+    label: "Catalog",
+    path: "/catalog-management",
+  },
+  {
+    icon: "bar-chart-outline",
+    label: "Analytics",
+    path: "/analytics",
+  },
+  {
+    icon: "people-circle-outline",
+    label: "Team",
+    path: "/team",
+  },
+  {
+    icon: "shield-checkmark-outline",
+    label: "Verification",
+    path: "/verification",
+  },
 ];
 
 export type HomeFlyoutUpdate = {
@@ -67,41 +101,66 @@ type HomeFlyoutProps = {
   updates?: HomeFlyoutUpdate[];
 };
 
-export function HomeFlyout({ visible, onClose, updates = [] }: HomeFlyoutProps) {
+export function HomeFlyout({
+  visible,
+  onClose,
+  updates = [],
+}: HomeFlyoutProps) {
   useThemeContext();
+
   const app = useAppStore();
+
   const ownsBusiness = app.user
     ? app.businesses.some(
         (business) =>
           business.ownerId === app.user.id ||
-          Boolean(business.team?.some((member) => member.userId === app.user.id))
+          Boolean(
+            business.team?.some(
+              (member) => member.userId === app.user.id
+            )
+          )
       )
     : false;
+
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const panelWidth = Math.min(width * 0.78, 320);
+  const { height, width } = useWindowDimensions();
+
   const progress = useRef(new Animated.Value(0)).current;
+
   const [mounted, setMounted] = useState(visible);
+
   const pendingPath = useRef<FlyoutPath | null>(null);
   const pendingPostId = useRef<string | null>(null);
 
   useEffect(() => {
     if (mounted) return;
+
     const postId = pendingPostId.current;
+
     if (postId) {
       pendingPostId.current = null;
-      router.push({ pathname: "/post/[id]", params: { id: postId } });
+
+      router.push({
+        pathname: "/post/[id]",
+        params: { id: postId },
+      });
+
       return;
     }
+
     const path = pendingPath.current;
+
     if (!path) return;
+
     pendingPath.current = null;
+
     router.push(path);
   }, [mounted]);
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
+
       Animated.timing(progress, {
         toValue: 1,
         duration: 220,
@@ -120,13 +179,19 @@ export function HomeFlyout({ visible, onClose, updates = [] }: HomeFlyoutProps) 
     }
   }, [visible, progress]);
 
-  const translateX = progress.interpolate({
+  const translateY = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [panelWidth, 0],
+    outputRange: [-height * 0.4, 0],
   });
+
+  const cardOpacity = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
   const scrimOpacity = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 0.45],
+    outputRange: [0, 0.5],
   });
 
   const goTo = (path: FlyoutPath) => {
@@ -139,22 +204,123 @@ export function HomeFlyout({ visible, onClose, updates = [] }: HomeFlyoutProps) 
     onClose();
   };
 
-  const renderLink = (link: FlyoutLink) => (
+  const lang = app.settings.language;
+  const user = app.user as any;
+
+  const userName: string = user?.name ?? "Guest";
+
+  const userSub: string =
+    user?.email ?? (user?.username ? `@${user.username}` : "");
+
+  const isDesktop = width >= 768;
+
+  const primaryLinks: FlyoutLink[] = [
+    {
+      icon: "compass-outline",
+      label: t("discover", lang),
+      path: "/discover",
+    },
+    {
+      icon: "book-outline",
+      label: t("stories", lang),
+      path: "/stories",
+    },
+  ];
+
+  
+
+  const renderShortcut = (link: FlyoutLink) => {
+    const highlighted = false;
+
+    return (
+      <Pressable
+        key={link.path}
+        accessibilityRole="button"
+        accessibilityLabel={link.label}
+        onPress={() => goTo(link.path)}
+        style={({ pressed }) => [
+          localStyles.shortcut,
+          highlighted && localStyles.shortcutHighlighted,
+          pressed && localStyles.shortcutPressed,
+        ]}
+      >
+        {({ pressed }) => {
+          const active = highlighted || pressed;
+
+          return (
+            <>
+              <View
+                style={[
+                  localStyles.shortcutIcon,
+                  active && localStyles.shortcutIconActive,
+                ]}
+              >
+                <Ionicons
+                  name={link.icon}
+                  size={23}
+                  color={
+                    active
+                      ? colors.emeraldDark
+                      : colors.muted
+                  }
+                />
+              </View>
+
+              <Text
+                numberOfLines={1}
+                style={[
+                  localStyles.shortcutLabel,
+                  active && localStyles.shortcutLabelActive,
+                ]}
+              >
+                {link.label}
+              </Text>
+            </>
+          );
+        }}
+      </Pressable>
+    );
+  };
+
+  const renderBusinessTool = (link: FlyoutLink) => (
     <Pressable
       key={link.path}
       accessibilityRole="button"
       accessibilityLabel={link.label}
       onPress={() => goTo(link.path)}
       style={({ pressed }) => [
-        localStyles.row,
-        pressed && { opacity: 0.6 },
+        localStyles.businessTool,
+        pressed && localStyles.businessToolPressed,
       ]}
     >
-      <View style={localStyles.rowIcon}>
-        <Ionicons name={link.icon} size={20} color={colors.emeraldDark} />
-      </View>
-      <Text style={localStyles.rowText}>{link.label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+      {({ pressed }) => (
+        <>
+          <View style={localStyles.businessToolIcon}>
+            <Ionicons
+              name={link.icon}
+              size={21}
+              color={
+                pressed
+                  ? colors.emeraldDark
+                  : colors.muted
+              }
+            />
+          </View>
+
+          <Text
+            numberOfLines={1}
+            style={localStyles.businessToolLabel}
+          >
+            {link.label}
+          </Text>
+
+          <Ionicons
+            name="chevron-forward"
+            size={15}
+            color={colors.muted}
+          />
+        </>
+      )}
     </Pressable>
   );
 
@@ -169,146 +335,365 @@ export function HomeFlyout({ visible, onClose, updates = [] }: HomeFlyoutProps) 
       <View style={localStyles.root}>
         <Animated.View
           pointerEvents="none"
-                style={[
+          style={[
             StyleSheet.absoluteFill,
             localStyles.scrim,
             { opacity: scrimOpacity },
           ]}
         />
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Close menu"
           onPress={onClose}
           style={StyleSheet.absoluteFill}
         />
+
         <Animated.View
           style={[
-            localStyles.panel,
+            localStyles.card,
             {
-              width: panelWidth,
+              width: isDesktop ? 520 : "100%",
+              alignSelf: isDesktop ? "center" : "stretch",
+              maxHeight: height * 0.7,
               paddingTop: insets.top + 12,
-              paddingBottom: Math.max(insets.bottom, 12),
-              transform: [{ translateX }],
+              opacity: cardOpacity,
+              transform: [{ translateY }],
             },
           ]}
         >
-          <View style={localStyles.panelHeader}>
-            <Text style={localStyles.panelTitle}>Menu</Text>
+          {/* HEADER (pinned) */}
+
+            <View style={localStyles.header}>
+              <View style={localStyles.headerTitleBlock}>
+                <Text style={localStyles.headerEyebrow}>
+                  MABIZ
+                </Text>
+
+                <Text style={localStyles.headerTitle}>
+                  Your space
+                </Text>
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close menu"
+                onPress={onClose}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  localStyles.closeButton,
+                  pressed && localStyles.closeButtonPressed,
+                ]}
+              >
+                <Ionicons
+                  name="close"
+                  size={21}
+                  color={colors.ink}
+                />
+              </Pressable>
+            </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={localStyles.content}
+          >
+            {/* PROFILE CARD */}
+
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Close menu"
-              onPress={onClose}
-              hitSlop={8}
-              style={localStyles.closeButton}
+              accessibilityLabel="Open my profile"
+              onPress={() => goTo("/(tabs)/profile")}
+              style={({ pressed }) => [
+                localStyles.profileCard,
+                pressed && localStyles.profileCardPressed,
+              ]}
             >
-              <Ionicons name="close" size={22} color={colors.ink} />
+              <Avatar
+                name={userName}
+                image={user?.avatar}
+                size={48}
+              />
+
+              <View style={localStyles.profileInfo}>
+                <Text
+                  numberOfLines={1}
+                  style={localStyles.userName}
+                >
+                  {userName}
+                </Text>
+
+                <Text
+                  numberOfLines={1}
+                  style={localStyles.userSub}
+                >
+                  {userSub || "View your profile"}
+                </Text>
+              </View>
+
+              <View style={localStyles.profileArrow}>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.muted}
+                />
+              </View>
             </Pressable>
-          </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("discover", app.settings.language)}
-            onPress={() => goTo("/discover")}
-            style={({ pressed }) => [
-              localStyles.row,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <View style={localStyles.rowIcon}>
-              <Ionicons
-                name="compass-outline"
-                size={20}
-                color={colors.emeraldDark}
-              />
+            {/* DISCOVER */}
+
+            <View style={localStyles.section}>
+              <View style={localStyles.sectionHeader}>
+                <Text style={localStyles.sectionTitle}>
+                  Discover
+                </Text>
+
+                <Text style={localStyles.sectionCaption}>
+                  Explore Mabiz
+                </Text>
+              </View>
+
+              <View style={localStyles.shortcutsGrid}>
+                {primaryLinks.map(renderShortcut)}
+              </View>
             </View>
-            <Text style={localStyles.rowText}>
-              {t("discover", app.settings.language)}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("stories", app.settings.language)}
-            onPress={() => goTo("/stories")}
-            style={({ pressed }) => [
-              localStyles.row,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <View style={localStyles.rowIcon}>
-              <Ionicons
-                name="book-outline"
-                size={20}
-                color={colors.emeraldDark}
-              />
-            </View>
-            <Text style={localStyles.rowText}>
-              {t("stories", app.settings.language)}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
+            {/* BUSINESS MANAGEMENT */}
 
-          {updates.length > 0 ? (
-            <View style={localStyles.updatesSection}>
-              <Text style={localStyles.sectionTitle}>Business updates</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 10 }}
-              >
-                {updates.map((item) => (
-                  <Pressable
-                    key={item.businessId}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open update from ${item.name}`}
-                    onPress={() => goToPost(item.postId)}
-                    style={localStyles.updateTile}
-                  >
-                    {item.cover ? (
-                      <View style={StyleSheet.absoluteFillObject}>
-                        <MediaImage uri={item.cover} height={124} label={item.name} />
-                      </View>
-                    ) : null}
-                    <View pointerEvents="none" style={localStyles.updateScrim} />
-                    <View style={localStyles.updateAvatarWrap}>
-                      <Avatar name={item.name} image={item.logo} size={26} ring />
+            {ownsBusiness ? (
+              <View style={localStyles.section}>
+                <View style={localStyles.sectionHeader}>
+                  <Text style={localStyles.sectionTitle}>
+                    Your business
+                  </Text>
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage business"
+                  onPress={() =>
+                    goTo("/business-management")
+                  }
+                  style={({ pressed }) => [
+                    localStyles.businessCard,
+                    pressed && localStyles.businessCardPressed,
+                  ]}
+                >
+                  <View style={localStyles.businessCardTop}>
+                    <View style={localStyles.businessCardIcon}>
+                      <Ionicons
+                        name="storefront-outline"
+                        size={24}
+                        color={colors.emeraldDark}
+                      />
                     </View>
-                    <Text numberOfLines={2} style={localStyles.updateTitle}>
-                      {item.name}
+
+                    <View style={localStyles.businessCardText}>
+                      <Text style={localStyles.businessCardTitle}>
+                        Manage business
+                      </Text>
+
+                      <Text
+                        style={localStyles.businessCardSubtitle}
+                      >
+                        Manage your business and grow your audience
+                      </Text>
+                    </View>
+
+                    <Ionicons
+                      name="arrow-up-forward"
+                      size={18}
+                      color={colors.emeraldDark}
+                    />
+                  </View>
+                </Pressable>
+
+                <View style={localStyles.businessToolsGrid}>
+                  {BUSINESS_TOOLS.slice(1).map(
+                    renderBusinessTool
+                  )}
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Create business"
+                onPress={() => goTo("/create-business")}
+                style={({ pressed }) => [
+                  localStyles.createBusinessCard,
+                  pressed && localStyles.createBusinessPressed,
+                ]}
+              >
+                <View style={localStyles.createBusinessIcon}>
+                  <Ionicons
+                    name="add"
+                    size={23}
+                    color={colors.emeraldDark}
+                  />
+                </View>
+
+                <View style={localStyles.createBusinessText}>
+                  <Text style={localStyles.createBusinessTitle}>
+                    Create your business
+                  </Text>
+
+                  <Text
+                    style={localStyles.createBusinessSubtitle}
+                  >
+                    Share your story and reach more customers
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.muted}
+                />
+              </Pressable>
+            )}
+
+            {/* YOUR ACTIVITY */}
+
+            <View style={localStyles.section}>
+              <View style={localStyles.sectionHeader}>
+                <Text style={localStyles.sectionTitle}>
+                  Your activity
+                </Text>
+              </View>
+
+              <View style={localStyles.activityCard}>
+                {YOUR_STUFF.map((link, index) => (
+                  <Pressable
+                    key={link.path}
+                    accessibilityRole="button"
+                    accessibilityLabel={link.label}
+                    onPress={() => goTo(link.path)}
+                    style={({ pressed }) => [
+                      localStyles.activityRow,
+                      index < YOUR_STUFF.length - 1 &&
+                        localStyles.activityRowBorder,
+                      pressed && localStyles.activityRowPressed,
+                    ]}
+                  >
+                    <View style={localStyles.activityIcon}>
+                      <Ionicons
+                        name={link.icon}
+                        size={20}
+                        color={colors.muted}
+                      />
+                    </View>
+
+                    <Text style={localStyles.activityLabel}>
+                      {link.label}
                     </Text>
+
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.muted}
+                    />
                   </Pressable>
                 ))}
-              </ScrollView>
+              </View>
             </View>
-          ) : null}
 
-          <View style={localStyles.section}>
-            <Text style={localStyles.sectionTitle}>Your stuff</Text>
-            {YOUR_STUFF.map(renderLink)}
-          </View>
+            {/* BUSINESS UPDATES */}
 
-          <View style={localStyles.section}>
-            <Text style={localStyles.sectionTitle}>Business tools</Text>
-            {ownsBusiness ? (
-              BUSINESS_TOOLS.map(renderLink)
-            ) : (
-              renderLink({
-                icon: "add-circle-outline",
-                label: "Create a business",
-                path: "/create-business",
-              })
-            )}
-          </View>
+            {updates.length > 0 ? (
+              <View style={localStyles.section}>
+                <View style={localStyles.sectionHeader}>
+                  <Text style={localStyles.sectionTitle}>
+                    Business updates
+                  </Text>
 
-          <View style={localStyles.section}>
-            {renderLink({
-              icon: "settings-outline",
-              label: "Settings and privacy",
-              path: "/menu",
-            })}
-          </View>
+                  <Text style={localStyles.sectionCaption}>
+                    Latest stories
+                  </Text>
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={localStyles.updatesList}
+                >
+                  {updates.map((item) => (
+                    <Pressable
+                      key={item.businessId}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open update from ${item.name}`}
+                      onPress={() => goToPost(item.postId)}
+                      style={({ pressed }) => [
+                        localStyles.updateTile,
+                        pressed && localStyles.updateTilePressed,
+                      ]}
+                    >
+                      {item.cover ? (
+                        <View
+                          style={StyleSheet.absoluteFillObject}
+                        >
+                          <MediaImage
+                            uri={item.cover}
+                            height={132}
+                            label={item.name}
+                          />
+                        </View>
+                      ) : null}
+
+                      <View
+                        pointerEvents="none"
+                        style={localStyles.updateScrim}
+                      />
+
+                      <View style={localStyles.updateAvatarWrap}>
+                        <Avatar
+                          name={item.name}
+                          image={item.logo}
+                          size={30}
+                          ring
+                        />
+                      </View>
+
+                      <Text
+                        numberOfLines={2}
+                        style={localStyles.updateTitle}
+                      >
+                        {item.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            {/* SETTINGS AND LOGOUT */}
+
+            <View style={localStyles.footer}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                onPress={() => goTo("/menu")}
+                style={({ pressed }) => [
+                  localStyles.footerRow,
+                  pressed && localStyles.footerRowPressed,
+                ]}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={20}
+                  color={colors.muted}
+                />
+
+                <Text style={localStyles.footerLabel}>
+                  Settings
+                </Text>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={colors.muted}
+                />
+              </Pressable>
+
+            </View>
           </ScrollView>
         </Animated.View>
       </View>
@@ -320,111 +705,426 @@ const localStyles = createThemedStyles(() =>
   StyleSheet.create({
     root: {
       flex: 1,
-      flexDirection: "row",
-      justifyContent: "flex-end",
     },
+
     scrim: {
       backgroundColor: "#000000",
     },
-    panel: {
-      height: "100%",
-      paddingHorizontal: 16,
+
+    card: {
+      paddingHorizontal: 20,
+      paddingBottom: 18,
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
       backgroundColor: colors.surface,
-      borderTopLeftRadius: 22,
-      borderBottomLeftRadius: 22,
       shadowColor: "#000000",
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
-      shadowOffset: { width: -4, height: 0 },
+      shadowOpacity: 0.18,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 8 },
       elevation: 16,
+      overflow: "hidden",
     },
-    panelHeader: {
+
+    content: {
+      paddingBottom: 12,
+    },
+
+    header: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingBottom: 12,
-      marginBottom: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
+      marginBottom: 18,
     },
-    panelTitle: {
-      fontSize: 20,
+
+    headerTitleBlock: {
+      gap: 3,
+    },
+
+    headerEyebrow: {
+      fontSize: 10,
       fontWeight: "800",
-      letterSpacing: -0.3,
+      letterSpacing: 1.8,
+      color: colors.emeraldDark,
+    },
+
+    headerTitle: {
+      fontSize: 23,
+      fontWeight: "800",
       color: colors.ink,
     },
+
     closeButton: {
-      width: 36,
-      height: 36,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
-    row: {
+
+    closeButtonPressed: {
+      backgroundColor: colors.emeraldTint,
+    },
+
+    profileCard: {
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-      paddingVertical: 12,
+      padding: 14,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 22,
     },
-    rowIcon: {
-      width: 38,
-      height: 38,
-      borderRadius: 13,
+
+    profileCardPressed: {
+      backgroundColor: colors.emeraldTint,
+    },
+
+    profileInfo: {
+      flex: 1,
+      minWidth: 0,
+      gap: 4,
+    },
+
+    userName: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: colors.ink,
+    },
+
+    userSub: {
+      fontSize: 12,
+      color: colors.muted,
+    },
+
+    profileArrow: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+
+    section: {
+      marginBottom: 22,
+    },
+
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: colors.ink,
+    },
+
+    sectionCaption: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: colors.muted,
+    },
+
+    shortcutsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+
+    shortcut: {
+      width: "31.5%",
+      flexGrow: 1,
+      minWidth: 80,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 14,
+      paddingHorizontal: 6,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      gap: 9,
+    },
+
+    shortcutHighlighted: {
+      backgroundColor: colors.emeraldTint,
+      borderColor: colors.emeraldTint,
+    },
+
+    shortcutPressed: {
+      backgroundColor: colors.emeraldTint,
+      borderColor: colors.emeraldTint,
+    },
+
+    shortcutIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+
+    shortcutIconActive: {
+      backgroundColor: colors.surface,
+    },
+
+    shortcutLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.muted,
+      textAlign: "center",
+    },
+
+    shortcutLabelActive: {
+      color: colors.emeraldDark,
+    },
+
+    businessCard: {
+      padding: 15,
+      borderRadius: 20,
+      backgroundColor: colors.emeraldTint,
+      borderWidth: 1,
+      borderColor: colors.emeraldTint,
+      marginBottom: 10,
+    },
+
+    businessCardPressed: {
+      opacity: 0.8,
+    },
+
+    businessCardTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+
+    businessCardIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 15,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+
+    businessCardText: {
+      flex: 1,
+      minWidth: 0,
+      gap: 4,
+    },
+
+    businessCardTitle: {
+      fontSize: 14,
+      fontWeight: "800",
+      color: colors.emeraldDark,
+    },
+
+    businessCardSubtitle: {
+      fontSize: 11,
+      lineHeight: 16,
+      color: colors.muted,
+    },
+
+    businessToolsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+
+    businessTool: {
+      width: "48%",
+      flexGrow: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+
+    businessToolPressed: {
+      backgroundColor: colors.emeraldTint,
+      borderColor: colors.emeraldTint,
+    },
+
+    businessToolIcon: {
+      width: 28,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    businessToolLabel: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.ink,
+    },
+
+    createBusinessCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      padding: 14,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      marginBottom: 22,
+    },
+
+    createBusinessPressed: {
+      backgroundColor: colors.emeraldTint,
+    },
+
+    createBusinessIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.emeraldTint,
     },
-    rowText: {
+
+    createBusinessText: {
       flex: 1,
-      fontSize: 15,
-      fontWeight: "700",
-      color: colors.ink,
+      minWidth: 0,
+      gap: 4,
     },
-    updatesSection: {
-      marginTop: 12,
-      paddingTop: 14,
-      gap: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
-    },
-    sectionTitle: {
-      fontSize: 15,
+
+    createBusinessTitle: {
+      fontSize: 14,
       fontWeight: "800",
       color: colors.ink,
     },
-    section: {
-      marginTop: 12,
-      paddingTop: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
+
+    createBusinessSubtitle: {
+      fontSize: 11,
+      lineHeight: 16,
+      color: colors.muted,
     },
+
+    activityCard: {
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: "hidden",
+      backgroundColor: colors.surface,
+    },
+
+    activityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 13,
+      paddingHorizontal: 14,
+    },
+
+    activityRowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+
+    activityRowPressed: {
+      backgroundColor: colors.emeraldTint,
+    },
+
+    activityIcon: {
+      width: 30,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    activityLabel: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.ink,
+    },
+
+    updatesList: {
+      gap: 10,
+      paddingTop: 2,
+      paddingBottom: 4,
+    },
+
     updateTile: {
-      width: 92,
-      height: 124,
-      borderRadius: 14,
+      width: 100,
+      height: 132,
+      borderRadius: 16,
       overflow: "hidden",
       backgroundColor: colors.navy,
     },
+
+    updateTilePressed: {
+      opacity: 0.8,
+    },
+
     updateScrim: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      height: 64,
-      backgroundColor: "rgba(0,0,0,0.45)",
+      height: 70,
+      backgroundColor: "rgba(0,0,0,0.48)",
     },
+
     updateAvatarWrap: {
       position: "absolute",
-      top: 8,
-      left: 8,
+      top: 9,
+      left: 9,
     },
+
     updateTitle: {
       position: "absolute",
-      left: 8,
-      right: 8,
-      bottom: 8,
+      left: 9,
+      right: 9,
+      bottom: 9,
       color: colors.white,
       fontSize: 12,
       fontWeight: "700",
+      lineHeight: 16,
     },
+
+    footer: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      paddingTop: 8,
+      marginTop: 2,
+    },
+
+    footerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 13,
+      paddingHorizontal: 8,
+      borderRadius: 12,
+    },
+
+    footerRowPressed: {
+      backgroundColor: colors.emeraldTint,
+    },
+
+    footerLabel: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.ink,
+    },
+
+    
   })
 );

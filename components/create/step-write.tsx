@@ -1,10 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { Avatar, Button, Field } from "@/components/biz-ui";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Avatar, Button, Field, MediaImage, VideoPreview } from "@/components/biz-ui";
 import { alertUser } from "@/components/create/create-helpers";
 import type { PostComposer } from "@/components/create/use-post-composer";
 import { colors } from "@/theme/tokens";
 import { useThemeContext } from "@/lib/theme-provider";
+
+const FORMAT_OPTIONS = [
+  { label: "Standard", value: "text", icon: "document-text-outline" },
+  { label: "Question", value: "question", icon: "help-circle-outline" },
+  { label: "Poll", value: "poll", icon: "bar-chart-outline" },
+  { label: "Update", value: "announcement", icon: "megaphone-outline" },
+] as const;
 
 export function StepWrite({ composer }: { composer: PostComposer }) {
   useThemeContext();
@@ -17,6 +25,8 @@ export function StepWrite({ composer }: { composer: PostComposer }) {
     kind,
     setKind,
     media,
+    setMedia,
+    setMediaItems,
     pollQuestion,
     setPollQuestion,
     pollOptions,
@@ -24,73 +34,236 @@ export function StepWrite({ composer }: { composer: PostComposer }) {
     selectMediaFiles,
     setActivePicker,
     setStep,
+    handleSaveDraft,
   } = composer;
 
+  const [formatDrawerOpen, setFormatDrawerOpen] = useState(false);
+
+  const activeFormat =
+    FORMAT_OPTIONS.find(
+      (f) => f.value === kind || (f.value === "text" && (kind === "image" || kind === "video"))
+    ) ?? FORMAT_OPTIONS[0];
+
+  const canAdvance = caption.trim().length >= 2 || Boolean(media);
+
+  const handleNext = () => {
+    if (!canAdvance) {
+      alertUser("Content required", "Write something or attach media before proceeding.");
+      return;
+    }
+    setStep(2);
+  };
+
   return (
-    <View style={{ gap: 14, paddingTop: 4 }}>
-      <Pressable onPress={cycleIdentity} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Avatar name={identity?.name ?? app.user.name} image={identity?.logo ?? app.user.avatar} size={42} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.navy, fontSize: 15, fontWeight: "800" }}>
-            {identity?.name ?? app.user.name}
-          </Text>
-          <View
-            style={{
-              alignSelf: "flex-start",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 2,
-              paddingHorizontal: 10,
-              paddingVertical: 3,
-              borderRadius: 12,
-              backgroundColor: colors.subtle,
-            }}
-          >
-            <Text style={{ color: colors.muted, fontSize: 12, fontWeight: "600" }}>
-              {identity ? "Posting to your business" : "Posting to your profile"}
+    <View style={styles.container}>
+      {/* Step Header & Identity Context */}
+      <View style={styles.topRow}>
+        <Pressable
+          onPress={cycleIdentity}
+          accessibilityRole="button"
+          accessibilityLabel="Switch posting identity"
+          style={styles.identityPill}
+        >
+          <Avatar name={identity?.name ?? app.user.name} image={identity?.logo ?? app.user.avatar} size={28} />
+          <View style={styles.identityTextGroup}>
+            <Text style={styles.identityName} numberOfLines={1}>
+              {identity?.name ?? app.user.name}
             </Text>
-            <Ionicons name="chevron-down" size={12} color={colors.muted} />
+            <Text style={styles.identityScope}>
+              {identity ? "Business page" : "Personal profile"}
+            </Text>
           </View>
+          <Ionicons name="swap-horizontal-outline" size={14} color={colors.muted} />
+        </Pressable>
+
+        <Pressable onPress={handleSaveDraft} style={styles.draftButton}>
+          <Text style={styles.draftButtonText}>Save draft</Text>
+        </Pressable>
+      </View>
+
+      {/* Primary Distraction-Free Writing Surface */}
+      <View style={styles.editorCard}>
+        {/* Minimal Format Selector Trigger (Progressive Disclosure) */}
+        <View style={styles.editorHeader}>
+          <Pressable
+            onPress={() => setFormatDrawerOpen((prev) => !prev)}
+            style={styles.formatSelector}
+          >
+            <Ionicons name={activeFormat.icon} size={14} color={colors.navy} />
+            <Text style={styles.formatSelectorText}>{activeFormat.label}</Text>
+            <Ionicons
+              name={formatDrawerOpen ? "chevron-up" : "chevron-down"}
+              size={13}
+              color={colors.muted}
+            />
+          </Pressable>
+
+          <Text style={styles.charCounter}>{caption.length}/1000</Text>
         </View>
-      </Pressable>
 
-      <TextInput
-        style={{
-          color: colors.navy,
-          fontSize: 16,
-          minHeight: 170,
-          textAlignVertical: "top",
-          paddingTop: 4,
-        }}
-        placeholder="What would you like to share?"
-        placeholderTextColor={colors.muted}
-        multiline
-        maxLength={1000}
-        value={caption}
-        onChangeText={setCaption}
-      />
+        {formatDrawerOpen ? (
+          <View style={styles.formatGrid}>
+            {FORMAT_OPTIONS.map((item) => {
+              const isSelected = activeFormat.value === item.value;
+              return (
+                <Pressable
+                  key={item.value}
+                  onPress={() => {
+                    setKind(item.value);
+                    setFormatDrawerOpen(false);
+                  }}
+                  style={[styles.formatOption, isSelected && styles.formatOptionActive]}
+                >
+                  <Ionicons
+                    name={item.icon}
+                    size={15}
+                    color={isSelected ? colors.white : colors.navy}
+                  />
+                  <Text
+                    style={[
+                      styles.formatOptionText,
+                      isSelected && styles.formatOptionTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
+        <TextInput
+          style={styles.captionInput}
+          placeholder={
+            kind === "question"
+              ? "Ask the community a clear question..."
+              : kind === "announcement"
+              ? "Share a business update or milestone..."
+              : "Write your post..."
+          }
+          placeholderTextColor={colors.muted}
+          multiline
+          maxLength={1000}
+          value={caption}
+          onChangeText={setCaption}
+        />
+
+        {/* Inline Media Preview if Attached */}
+        {media ? (
+          <View style={styles.mediaPreviewWrapper}>
+            {kind === "video" ? (
+              <VideoPreview uri={media} height={140} />
+            ) : (
+              <MediaImage uri={media} height={140} label="Selected media" />
+            )}
+            <Pressable
+              onPress={() => {
+                setMedia(undefined);
+                setMediaItems([]);
+              }}
+              accessibilityLabel="Remove media"
+              style={styles.removeMediaBtn}
+            >
+              <Ionicons name="close" size={14} color={colors.white} />
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* Quiet Attachment Strip */}
+        <View style={styles.attachmentBar}>
+          <Pressable
+            onPress={() => void selectMediaFiles("images")}
+            style={styles.attachmentAction}
+          >
+            <Ionicons name="image-outline" size={16} color={colors.navy} />
+            <Text style={styles.attachmentLabel}>Photo</Text>
+          </Pressable>
+
+          <View style={styles.attachmentDivider} />
+
+          <Pressable
+            onPress={() => void selectMediaFiles("videos")}
+            style={styles.attachmentAction}
+          >
+            <Ionicons name="videocam-outline" size={16} color={colors.navy} />
+            <Text style={styles.attachmentLabel}>Video</Text>
+          </Pressable>
+
+          <View style={styles.attachmentDivider} />
+
+          <Pressable
+            onPress={() => {
+              setActivePicker("tag");
+              setStep(2);
+            }}
+            style={styles.attachmentAction}
+          >
+            <Ionicons name="at-outline" size={16} color={colors.navy} />
+            <Text style={styles.attachmentLabel}>Tag</Text>
+          </Pressable>
+
+          <View style={styles.attachmentDivider} />
+
+          <Pressable
+            onPress={() => {
+              setActivePicker("location");
+              setStep(2);
+            }}
+            style={styles.attachmentAction}
+          >
+            <Ionicons name="location-outline" size={16} color={colors.navy} />
+            <Text style={styles.attachmentLabel}>Place</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Poll Builder: Only Revealed When Poll Format Is Active */}
       {kind === "poll" ? (
-        <View style={{ gap: 8, padding: 12, borderRadius: 14, backgroundColor: colors.subtle }}>
+        <View style={styles.pollCard}>
+          <View style={styles.pollHeader}>
+            <Text style={styles.pollTitle}>Poll configuration</Text>
+            <Text style={styles.pollSubtitle}>{pollOptions.length} of 4 options</Text>
+          </View>
+
           <Field
             label="Poll question"
-            placeholder="Ask a question..."
+            placeholder="Ask a specific question..."
             value={pollQuestion}
             onChangeText={setPollQuestion}
           />
-          {pollOptions.map((opt, i) => (
-            <Field
-              key={i}
-              label={`Option ${i + 1}`}
-              placeholder={`Option ${i + 1}`}
-              value={opt}
-              onChangeText={(val) => setPollOptions((prev) => prev.map((item, idx) => (idx === i ? val : item)))}
-            />
-          ))}
+
+          <View style={styles.pollOptionsList}>
+            {pollOptions.map((opt, i) => (
+              <View key={i} style={styles.pollOptionRow}>
+                <View style={styles.pollOptionInput}>
+                  <Field
+                    label={`Option ${i + 1}`}
+                    placeholder={`Choice ${i + 1}`}
+                    value={opt}
+                    onChangeText={(val) =>
+                      setPollOptions((prev) => prev.map((item, idx) => (idx === i ? val : item)))
+                    }
+                  />
+                </View>
+                {pollOptions.length > 2 ? (
+                  <Pressable
+                    onPress={() =>
+                      setPollOptions((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    accessibilityLabel={`Remove option ${i + 1}`}
+                    style={styles.removeOptionBtn}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={colors.muted} />
+                  </Pressable>
+                ) : null}
+              </View>
+            ))}
+          </View>
+
           {pollOptions.length < 4 ? (
             <Button
-              title="Add option"
+              title="Add another option"
               small
               variant="outline"
               onPress={() => setPollOptions((prev) => [...prev, ""])}
@@ -99,107 +272,226 @@ export function StepWrite({ composer }: { composer: PostComposer }) {
         </View>
       ) : null}
 
-      <View style={{ alignItems: "flex-end" }}>
-        <Text style={{ color: colors.muted, fontSize: 11, fontVariant: ["tabular-nums"] }}>
-          {caption.length}/1000
-        </Text>
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
-        {(
-          [
-            { label: "Post", value: "text", icon: "create-outline" },
-            { label: "Question", value: "question", icon: "help-circle-outline" },
-            { label: "Poll", value: "poll", icon: "stats-chart-outline" },
-            { label: "Business update", value: "announcement", icon: "business-outline" },
-          ] as const
-        ).map((item) => {
-          const active = kind === item.value || (item.value === "text" && (kind === "image" || kind === "video"));
-          return (
-            <Pressable
-              key={item.value}
-              onPress={() => setKind(item.value)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 20,
-                backgroundColor: active ? colors.emerald : colors.subtle,
-              }}
-            >
-              <Ionicons name={item.icon} size={15} color={active ? colors.white : colors.navy} />
-              <Text style={{ color: active ? colors.white : colors.navy, fontSize: 13, fontWeight: "700" }}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingVertical: 12,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        }}
-      >
-        {[
-          { label: "Photo", icon: "image-outline" as const, onPress: () => void selectMediaFiles("images") },
-          { label: "Video", icon: "videocam-outline" as const, onPress: () => void selectMediaFiles("videos") },
-          {
-            label: "Tag",
-            icon: "person-add-outline" as const,
-            onPress: () => {
-              setActivePicker("tag");
-              setStep(2);
-            },
-          },
-          {
-            label: "Location",
-            icon: "location-outline" as const,
-            onPress: () => {
-              setActivePicker("location");
-              setStep(2);
-            },
-          },
-        ].map((tool) => (
-          <Pressable
-            key={tool.label}
-            onPress={tool.onPress}
-            style={{
-              alignItems: "center",
-              gap: 4,
-              flex: 1,
-              paddingVertical: 8,
-              borderRadius: 12,
-              backgroundColor: colors.subtle,
-              marginHorizontal: 4,
-            }}
-          >
-            <Ionicons name={tool.icon} size={20} color={colors.navy} />
-            <Text style={{ color: colors.navy, fontSize: 11, fontWeight: "600" }}>{tool.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={{ marginTop: 12 }}>
-        <Button
-          title="Next"
-          onPress={() => {
-            if (caption.trim().length < 2 && !media) {
-              alertUser("Content required", "Write something or attach media before proceeding.");
-              return;
-            }
-            setStep(2);
-          }}
-        />
+      {/* Primary Step Action */}
+      <View style={styles.footer}>
+        <Button title="Continue to details" onPress={handleNext} />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+    paddingTop: 4,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  identityPill: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  identityTextGroup: {
+    flex: 1,
+  },
+  identityName: {
+    color: colors.navy,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  identityScope: {
+    color: colors.muted,
+    fontSize: 11,
+  },
+  draftButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  draftButtonText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  editorCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  editorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.subtle,
+  },
+  formatSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  formatSelectorText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  charCounter: {
+    color: colors.muted,
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
+  },
+  formatGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    padding: 12,
+    backgroundColor: colors.subtle,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  formatOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  formatOptionActive: {
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
+  },
+  formatOptionText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  formatOptionTextActive: {
+    color: colors.white,
+  },
+  captionInput: {
+    color: colors.navy,
+    fontSize: 16,
+    lineHeight: 24,
+    minHeight: 190,
+    textAlignVertical: "top",
+    padding: 16,
+  },
+  mediaPreviewWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 14,
+    position: "relative",
+    alignSelf: "flex-start",
+  },
+  removeMediaBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.navy,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  attachmentBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.subtle,
+    paddingVertical: 10,
+  },
+  attachmentAction: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 4,
+  },
+  attachmentLabel: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  attachmentDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: colors.border,
+  },
+  pollCard: {
+    gap: 10,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pollHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pollTitle: {
+    color: colors.navy,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  pollSubtitle: {
+    color: colors.muted,
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
+  },
+  pollOptionsList: {
+    gap: 8,
+  },
+  pollOptionRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  pollOptionInput: {
+    flex: 1,
+  },
+  removeOptionBtn: {
+    padding: 10,
+    marginBottom: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.subtle,
+  },
+  footer: {
+    marginTop: 4,
+  },
+});

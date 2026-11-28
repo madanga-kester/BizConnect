@@ -1,7 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ListRenderItem,
+} from "react-native";
 import {
   Button,
   EmptyState,
@@ -28,6 +37,14 @@ const TRENDING_TOPICS = [
   "#WeekendDeals",
   "#TechKenya",
 ];
+
+type FeedTab =
+  | "for-you"
+  | "following"
+  | "business"
+  | "trending"
+  | "polls"
+  | "events";
 
 function FeedPill({
   label,
@@ -67,9 +84,7 @@ export function ApiHomeFeed() {
   useThemeContext();
   const services = useMabizServices();
   const app = useAppStore();
-  const [tab, setTab] = useState<
-    "for-you" | "following" | "business" | "trending" | "polls" | "events"
-  >("for-you");
+  const [tab, setTab] = useState<FeedTab>("for-you");
   const mode: "for-you" | "following" =
     tab === "following" ? "following" : "for-you";
   const [posts, setPosts] = useState<Post[]>([]);
@@ -80,6 +95,7 @@ export function ApiHomeFeed() {
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [commentsPost, setCommentsPost] = useState<Post | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
   const loadingMoreRef = useRef(false);
   const cursorRef = useRef<string | undefined>(undefined);
@@ -132,22 +148,33 @@ export function ApiHomeFeed() {
     void load(false, false);
   }, [load]);
 
-  const onScroll = (event: {
-    nativeEvent: {
-      layoutMeasurement: { height: number };
-      contentOffset: { y: number };
-      contentSize: { height: number };
-    };
-  }) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    if (
-      contentSize.height - layoutMeasurement.height - contentOffset.y < 100 &&
-      cursorRef.current &&
-      !loadingMoreRef.current
-    ) {
-      void load(false, true);
-    }
-  };
+  // ---- stable callbacks: these keep React.memo on ApiPostCard effective ----
+  const openComments = useCallback((post: Post) => setCommentsPost(post), []);
+
+  const hidePost = useCallback((postId: string) => {
+    setHiddenIds((current) => new Set(current).add(postId));
+  }, []);
+
+  const keyExtractor = useCallback((post: Post) => post.id, []);
+
+  const renderItem = useCallback<ListRenderItem<Post>>(
+    ({ item }) => (
+      <ApiPostCard
+        post={item}
+        onOpenComments={openComments}
+        onHide={hidePost}
+      />
+    ),
+    [openComments, hidePost]
+  );
+
+  const onEndReached = useCallback(() => {
+    void load(false, true);
+  }, [load]);
+
+  const onRefresh = useCallback(() => {
+    void load(true, false);
+  }, [load]);
 
   const updates = useMemo(() => {
     const seen = new Set<string>();
@@ -182,20 +209,17 @@ export function ApiHomeFeed() {
     () =>
       posts.filter(
         (post) =>
+          !hiddenIds.has(post.id) &&
           (tab !== "business" || post.identityKind === "business") &&
           tab !== "polls" &&
           tab !== "events"
       ),
-    [posts, tab]
+    [posts, tab, hiddenIds]
   );
 
-  return (
-    <Page
-      topColor={colors.surface}
-      onRefresh={() => void load(true, false)}
-      refreshing={refreshing}
-      onScroll={onScroll}
-    >
+  // ---- list pieces (passed as elements, not components, so they never remount) ----
+  const listHeader = (
+    <View>
       <View style={localStyles.headerBlock}>
         <View style={styles.row}>
           <Text style={localStyles.brandTitle}>Mabiz</Text>
@@ -288,14 +312,7 @@ export function ApiHomeFeed() {
       {error ? (
         <View
           accessibilityRole="alert"
-          style={[
-            styles.rowBetween,
-            {
-              paddingVertical: 10,
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              borderBottomColor: colors.border,
-            },
-          ]}
+          style={[styles.rowBetween, localStyles.errorBar]}
         >
           <Text style={[styles.body, { flex: 1, color: colors.danger }]}>
             Feed error: {error}
@@ -308,14 +325,32 @@ export function ApiHomeFeed() {
           />
         </View>
       ) : null}
+    </View>
+  );
 
-      {loading ? <LoadingState label="Loading feed from the server" /> : null}
-
-      {!loading &&
-      !error &&
-      posts.length === 0 &&
-      tab !== "polls" &&
-      tab !== "events" ? (
+  const listEmpty = (
+    <View style={localStyles.pad}>
+      {loading ? (
+        <LoadingState label="Loading feed from the server" />
+      ) : tab === "polls" ? (
+        <EmptyState
+          title="No polls yet"
+          detail="Polls from people and businesses will appear here."
+          icon="bar-chart-outline"
+        />
+      ) : tab === "events" ? (
+        <EmptyState
+          title="No events yet"
+          detail="Upcoming events will appear here."
+          icon="calendar-outline"
+        />
+      ) : posts.length > 0 ? (
+        <EmptyState
+          title="Nothing here yet"
+          detail="There are no business posts in your feed right now."
+          icon="storefront-outline"
+        />
+      ) : error ? null : (
         <EmptyState
           title={
             mode === "following"
@@ -329,39 +364,46 @@ export function ApiHomeFeed() {
           }
           icon="albums-outline"
         />
-      ) : null}
+      )}
+    </View>
+  );
 
-      {visiblePosts.map((post) => (
-        <ApiPostCard
-          key={post.id}
-          post={post}
-          onOpenComments={() => setCommentsPost(post)}
-        />
-      ))}
-
-      {!loading && tab === "polls" ? (
-        <EmptyState
-          title="No polls yet"
-          detail="Polls from people and businesses will appear here."
-          icon="bar-chart-outline"
-        />
-      ) : null}
-
-      {!loading && tab === "events" ? (
-        <EmptyState
-          title="No events yet"
-          detail="Upcoming events will appear here."
-          icon="calendar-outline"
-        />
-      ) : null}
-
+  const listFooter = (
+    <View style={localStyles.footer}>
       {loadingMore ? <LoadingState label="Loading more posts" /> : null}
-
-      {!loading && posts.length > 0 && !cursor && !loadingMore ? (
+      {!loading && visiblePosts.length > 0 && !cursor && !loadingMore ? (
         <Text style={[styles.caption, { textAlign: "center" }]}>
           You're all caught up.
         </Text>
       ) : null}
+    </View>
+  );
+
+  return (
+    <Page
+      scroll={false}
+      topColor={colors.surface}
+      style={localStyles.pageReset}
+    >
+      <FlatList
+        style={{ flex: 1 }}
+        data={visiblePosts}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ListFooterComponent={listFooter}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.6}
+        initialNumToRender={3}
+        maxToRenderPerBatch={4}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === "android"}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
 
       <HomeFlyout
         visible={menuOpen}
@@ -379,9 +421,28 @@ export function ApiHomeFeed() {
 
 const localStyles = createThemedStyles(() =>
   StyleSheet.create({
+    // Page normally pads and gaps its children; the list manages its own spacing
+    pageReset: {
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      gap: 0,
+    },
+    pad: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    footer: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    errorBar: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
     headerBlock: {
-      marginHorizontal: -16,
-      marginTop: -10,
       paddingHorizontal: 16,
       paddingTop: 10,
       paddingBottom: 0,
@@ -442,73 +503,11 @@ const localStyles = createThemedStyles(() =>
       fontWeight: "700",
       color: colors.ink,
     },
-    chipRow: {
-      flexDirection: "row",
-      gap: 8,
-      paddingRight: 16,
-    },
-    chip: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 12,
-      backgroundColor: colors.subtle,
-    },
-    chipSelected: {
-      backgroundColor: colors.navy,
-    },
-    chipText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: colors.ink,
-    },
-    chipTextSelected: {
-      color: colors.white,
-    },
-    storiesRow: {
-      flexDirection: "row",
-      gap: 10,
-      paddingVertical: 4,
-    },
-    createTile: {
-      backgroundColor: colors.subtle,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-    },
-    createPlus: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.emerald,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    createLabel: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: colors.ink,
-      textAlign: "center",
-    },
-    storyPlus: {
-      position: "absolute",
-      right: -2,
-      bottom: -2,
-      width: 22,
-      height: 22,
-      borderRadius: 11,
-      backgroundColor: colors.emerald,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 2,
-      borderColor: colors.white,
-    },
     trendRow: {
       flexDirection: "row",
       gap: 8,
-      paddingRight: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
     },
     trendChip: {
       flexDirection: "row",
@@ -523,53 +522,6 @@ const localStyles = createThemedStyles(() =>
       fontSize: 12,
       fontWeight: "700",
       color: colors.emeraldDark,
-    },
-    createButton: {
-      width: 34,
-      height: 34,
-      alignSelf: "center",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    updatesSection: {
-      gap: 12,
-      paddingBottom: 14,
-      marginHorizontal: -16,
-      paddingHorizontal: 16,
-      borderBottomWidth: 6,
-      borderBottomColor: colors.canvas,
-    },
-    updateTile: {
-      width: 88,
-      height: 112,
-      borderRadius: 14,
-      overflow: "hidden",
-      backgroundColor: colors.navy,
-    },
-    updateScrim: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: 64,
-      backgroundColor: "rgba(0,0,0,0.45)",
-    },
-    updateAvatarWrap: {
-      position: "absolute",
-      top: 10,
-      left: 0,
-      right: 0,
-      alignItems: "center",
-    },
-    updateTitle: {
-      position: "absolute",
-      left: 6,
-      right: 6,
-      bottom: 8,
-      color: colors.white,
-      fontSize: 12,
-      fontWeight: "700",
-      textAlign: "center",
     },
   })
 );

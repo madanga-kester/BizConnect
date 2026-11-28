@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Avatar, Button, MediaImage, VideoPreview } from "@/components/biz-ui";
 import type { PostComposer } from "@/components/create/use-post-composer";
 import { colors } from "@/theme/tokens";
@@ -13,6 +13,11 @@ export function StepReview({ composer }: { composer: PostComposer }) {
     kind,
     media,
     caption,
+    location,
+    taggedBusinesses,
+    selectedProduct,
+    pollQuestion,
+    pollOptions,
     audience,
     setAudience,
     commentsOn,
@@ -20,42 +25,55 @@ export function StepReview({ composer }: { composer: PostComposer }) {
     sharingOn,
     setSharingOn,
     loading,
+    setStep,
     setShowPublishConfirm,
     setShowScheduleConfirm,
   } = composer;
 
-  return (
-    <View style={{ gap: 14, paddingTop: 4 }}>
-      <Text style={{ color: colors.navy, fontSize: 18, fontWeight: "800" }}>Review post</Text>
+  const cleanPollOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
 
-      <View
-        style={{
-          padding: 14,
-          borderRadius: 16,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          gap: 10,
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Avatar name={identity?.name ?? app.user.name} image={identity?.logo ?? app.user.avatar} size={36} />
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Final review</Text>
+        <Text style={styles.subtitle}>
+          Verify your preview and distribution rules before publishing.
+        </Text>
+      </View>
+
+      {/* Feed Card Simulation */}
+      <View style={styles.previewCard}>
+        <View style={styles.previewTopRow}>
+          <View style={styles.authorBlock}>
+            <Avatar
+              name={identity?.name ?? app.user.name}
+              image={identity?.logo ?? app.user.avatar}
+              size={38}
+            />
             <View>
-              <Text style={{ color: colors.navy, fontSize: 14, fontWeight: "800" }}>
-                {identity?.name ?? app.user.name}
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Ionicons name="globe-outline" size={11} color={colors.muted} />
-                <Text style={{ color: colors.muted, fontSize: 11 }}>
+              <Text style={styles.authorName}>{identity?.name ?? app.user.name}</Text>
+              <View style={styles.metaLine}>
+                <Text style={styles.metaText}>
                   {audience === "public" ? "Public" : "Followers"}
                 </Text>
-                <Ionicons name="chevron-down" size={10} color={colors.muted} />
+                {location ? (
+                  <>
+                    <Text style={styles.metaDot}>·</Text>
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {location}
+                    </Text>
+                  </>
+                ) : null}
               </View>
             </View>
           </View>
-          <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
+
+          <Pressable onPress={() => setStep(1)} style={styles.editLink}>
+            <Text style={styles.editLinkText}>Edit text</Text>
+          </Pressable>
         </View>
+
+        <Text style={styles.captionPreview}>{caption || "No caption provided."}</Text>
 
         {media ? (
           kind === "video" ? (
@@ -65,96 +83,292 @@ export function StepReview({ composer }: { composer: PostComposer }) {
           )
         ) : null}
 
-        <Text style={{ color: colors.navy, fontSize: 14, lineHeight: 20 }}>
-          {caption || "No caption provided."}
-        </Text>
+        {kind === "poll" && cleanPollOptions.length >= 2 ? (
+          <View style={styles.pollPreviewBox}>
+            <Text style={styles.pollPreviewQuestion}>
+              {pollQuestion.trim() || caption.trim()}
+            </Text>
+            {cleanPollOptions.map((opt, idx) => (
+              <View key={idx} style={styles.pollPreviewOption}>
+                <Text style={styles.pollPreviewOptionText}>{opt}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {(selectedProduct || taggedBusinesses.length > 0) ? (
+          <View style={styles.attachmentSummaryRow}>
+            {selectedProduct ? (
+              <View style={styles.badge}>
+                <Ionicons name="pricetag-outline" size={12} color={colors.navy} />
+                <Text style={styles.badgeText}>{selectedProduct.name}</Text>
+              </View>
+            ) : null}
+            {taggedBusinesses.length > 0 ? (
+              <View style={styles.badge}>
+                <Ionicons name="people-outline" size={12} color={colors.navy} />
+                <Text style={styles.badgeText}>{taggedBusinesses.length} tagged</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
       </View>
 
-      <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 16, overflow: "hidden" }}>
+      {/* Compact Distribution & Interaction Controls */}
+      <View style={styles.settingsCard}>
+        <View style={styles.settingsHeader}>
+          <Text style={styles.settingsHeading}>Distribution controls</Text>
+          <Pressable onPress={() => setStep(2)}>
+            <Text style={styles.editLinkText}>Edit details</Text>
+          </Pressable>
+        </View>
+
         <Pressable
           onPress={() => setAudience(audience === "public" ? "followers" : "public")}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 14,
-            backgroundColor: colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          }}
+          style={[styles.settingRow, styles.settingRowBorder]}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="globe-outline" size={18} color={colors.navy} />
-            <Text style={{ color: colors.navy, fontSize: 14, fontWeight: "600" }}>Audience</Text>
+          <View style={styles.settingLeft}>
+            <Ionicons name="globe-outline" size={17} color={colors.navy} />
+            <Text style={styles.settingLabel}>Audience</Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Text style={{ color: colors.muted, fontSize: 14, fontWeight: "600" }}>
+          <View style={styles.settingRight}>
+            <Text style={styles.settingValue}>
               {audience === "public" ? "Public" : "Followers"}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            <Ionicons name="swap-vertical-outline" size={14} color={colors.muted} />
           </View>
         </Pressable>
 
         <Pressable
           onPress={() => setCommentsOn((v) => !v)}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 14,
-            backgroundColor: colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          }}
+          style={[styles.settingRow, styles.settingRowBorder]}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="chatbubble-outline" size={18} color={colors.navy} />
-            <Text style={{ color: colors.navy, fontSize: 14, fontWeight: "600" }}>Comments</Text>
+          <View style={styles.settingLeft}>
+            <Ionicons name="chatbubble-outline" size={17} color={colors.navy} />
+            <Text style={styles.settingLabel}>Comments</Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Text style={{ color: colors.muted, fontSize: 14, fontWeight: "600" }}>
-              {commentsOn ? "On" : "Off"}
-            </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.muted} />
-          </View>
+          <Text style={styles.settingValue}>{commentsOn ? "Enabled" : "Disabled"}</Text>
         </Pressable>
 
-        <Pressable
-          onPress={() => setSharingOn((v) => !v)}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 14,
-            backgroundColor: colors.surface,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="arrow-redo-outline" size={18} color={colors.navy} />
-            <Text style={{ color: colors.navy, fontSize: 14, fontWeight: "600" }}>Sharing</Text>
+        <Pressable onPress={() => setSharingOn((v) => !v)} style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <Ionicons name="arrow-redo-outline" size={17} color={colors.navy} />
+            <Text style={styles.settingLabel}>Resharing</Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Text style={{ color: colors.muted, fontSize: 14, fontWeight: "600" }}>
-              {sharingOn ? "On" : "Off"}
-            </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.muted} />
-          </View>
+          <Text style={styles.settingValue}>{sharingOn ? "Enabled" : "Disabled"}</Text>
         </Pressable>
       </View>
 
-      <View style={{ gap: 8, marginTop: 8 }}>
+      {/* Action Buttons */}
+      <View style={styles.actionsStack}>
         <Button
-          title={loading ? "Sharing..." : "Share post"}
+          title={loading ? "Publishing..." : "Publish now"}
           disabled={loading}
           onPress={() => setShowPublishConfirm(true)}
         />
-        <Button
-          title="Schedule"
-          icon="time-outline"
-          variant="outline"
-          onPress={() => setShowScheduleConfirm(true)}
-        />
+        <View style={styles.secondaryActionsRow}>
+          <View style={styles.halfBtn}>
+            <Button title="Back" variant="outline" onPress={() => setStep(2)} />
+          </View>
+          <View style={styles.halfBtn}>
+            <Button
+              title="Schedule"
+              icon="time-outline"
+              variant="outline"
+              disabled={loading}
+              onPress={() => setShowScheduleConfirm(true)}
+            />
+          </View>
+        </View>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+    paddingTop: 4,
+  },
+  header: {
+    gap: 4,
+  },
+  title: {
+    color: colors.navy,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 13,
+  },
+  previewCard: {
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 12,
+  },
+  previewTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  authorBlock: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  authorName: {
+    color: colors.navy,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  metaLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 1,
+  },
+  metaText: {
+    color: colors.muted,
+    fontSize: 11,
+  },
+  metaDot: {
+    color: colors.muted,
+    fontSize: 11,
+  },
+  editLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  editLinkText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  captionPreview: {
+    color: colors.navy,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  pollPreviewBox: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.subtle,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 6,
+  },
+  pollPreviewQuestion: {
+    color: colors.navy,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  pollPreviewOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pollPreviewOptionText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  attachmentSummaryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingTop: 4,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: colors.subtle,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  badgeText: {
+    color: colors.navy,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  settingsCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  settingsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: colors.subtle,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  settingsHeading: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
+  settingRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  settingLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  settingLabel: {
+    color: colors.navy,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  settingRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  settingValue: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  actionsStack: {
+    gap: 10,
+    marginTop: 4,
+  },
+  secondaryActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  halfBtn: {
+    flex: 1,
+  },
+});
