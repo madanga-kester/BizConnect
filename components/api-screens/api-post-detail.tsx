@@ -37,7 +37,7 @@ export function ApiPostDetail({ postId }: { postId: string }) {
   const services = useMabizServices();
   const app = useAppStore();
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<SocialApiComment[]>([]);
   const [commentText, setCommentText] = useState("");

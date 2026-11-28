@@ -500,7 +500,7 @@ export function HomeFlyout({
                     </View>
 
                     <Ionicons
-                      name="arrow-up-forward"
+                      name="arrow-forward"
                       size={18}
                       color={colors.emeraldDark}
                     />
@@ -628,7 +628,7 @@ export function HomeFlyout({
                     >
                       {item.cover ? (
                         <View
-                          style={StyleSheet.absoluteFillObject}
+                          style={StyleSheet.absoluteFill}
                         >
                           <MediaImage
                             uri={item.cover}

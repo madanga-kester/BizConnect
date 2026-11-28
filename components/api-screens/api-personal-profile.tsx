@@ -643,7 +643,7 @@ const localStyles = createThemedStyles(() =>
       backgroundColor: colors.emeraldTint,
     },
     coverScrim: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(0, 0, 0, 0.16)",
     },
     menuButtonOverlay: {

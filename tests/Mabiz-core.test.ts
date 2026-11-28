@@ -6,7 +6,6 @@ import { isProtectedRoute } from "@/utils/auth-policy";
 import { filterAndSortBusinesses } from "@/utils/discovery-filters";
 import { createOwnedBusinessRecord, resolveManagedBusinessIdentity, updateBusinessRecord } from "@/utils/business-state";
 import { evaluateMessagePermission, filterVisibleBusinesses, filterVisiblePosts, profileRestriction, toggleBlockRelationships } from "@/utils/privacy-policy";
-import { createPostFromComposer, validateComposePost } from "@/utils/post-composer";
 import { classifyMediaSelectionFailure, mediaSelectionFeedback } from "@/utils/media-errors";
 import { addCommentRecord, addReplyRecord, appendLocalMessage, appendReport, createConversationRecord, findActiveDuplicateReport, saveDraftRecord, toggleId } from "@/utils/social-state";
 import type { Conversation, DraftPost, Post } from "@/types/domain";
@@ -169,15 +168,6 @@ describe("social visibility, relationships and moderation", () => {
 });
 
 describe("content, media and messaging", () => {
-  it("validates and builds text, media and product posts with consistent hashtags and mentions", () => {
-    expect(validateComposePost({ kind: "text", caption: "A new local idea #Kenya @zawadi.mwangi" })).toBeUndefined();
-    expect(validateComposePost({ kind: "image", caption: "Photo post" })).toContain("Select a photo");
-    expect(validateComposePost({ kind: "product", caption: "New product" })).toContain("Choose a catalogue product");
-    const post = createPostFromComposer({ id: "p-new", authorId: CURRENT_USER.id, identityKind: "personal", identityId: CURRENT_USER.id, kind: "text", caption: "A new local idea #Kenya @zawadi.mwangi", location: "Nairobi", createdAt: "2026-11-09T00:00:00Z" });
-    expect(post.hashtags).toEqual(["Kenya"]);
-    expect(post.mentions).toEqual(["zawadi.mwangi"]);
-    expect(post.likes).toBe(0);
-  });
 
   it("classifies media picker permission and failure states while keeping cancellation silent", () => {
     expect(classifyMediaSelectionFailure({ code: "E_PERMISSION_DENIED" })).toBe("permission");

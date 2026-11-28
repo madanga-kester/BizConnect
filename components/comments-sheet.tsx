@@ -105,7 +105,7 @@ export function CommentsSheet({
   const [sheetMounted, setSheetMounted] = useState(false);
   const sheetProgress = useRef(new Animated.Value(0)).current;
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const listRef = useRef<FlatList<CommentItem>>(null);
   const loadRequestId = useRef(0);
   const onCloseRef = useRef(onClose);

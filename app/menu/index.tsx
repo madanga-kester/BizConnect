@@ -134,7 +134,7 @@ export default function MenuScreen() {
         {
           title: "Subscriptions & Mabiz Pro",
           detail: "Manage creator and business verification plans",
-          icon: "checkmark-seal-outline",
+          icon: "checkmark-outline",
           tone: "orange",
           route: "/menu/subscriptions",
         },
