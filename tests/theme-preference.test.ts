@@ -57,15 +57,15 @@ describe("theme preference", () => {
     const styles = createThemedStyles(() => ({ surface: colors.surface, foreground: colors.ink }));
     const lightSurface = styles.surface;
 
-    expect(getTabBarColors("light")).toEqual({ backgroundColor: "#FFFFFF", borderTopColor: "#E5E9E6" });
+    expect(getTabBarColors("light")).toEqual({ backgroundColor: "#FFFFFF", borderTopColor: "#EFEFEF" });
     setMabizColorScheme("dark");
     expect(colors.emeraldFill).toBe("#0C8366");
-    expect(colors.canvas).toBe("#000000");
+    expect(colors.canvas).toBe("#141414");
     expect(colors.subtle).toBe("#141414");
     expect(styles.surface).not.toBe(lightSurface);
-    expect(styles.surface).toBe("#0A0A0A");
+    expect(styles.surface).toBe("#000000");
     expect(styles.foreground).toBe("#F5F5F5");
-    expect(getTabBarColors("dark")).toEqual({ backgroundColor: "#000000", borderTopColor: "#262626" });
+    expect(getTabBarColors("dark")).toEqual({ backgroundColor: "#000000", borderTopColor: "#222222" });
 
     setMabizColorScheme("light");
     expect(styles.surface).toBe("#FFFFFF");
