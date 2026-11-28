@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { ConfirmModal, EmptyState, LoadingState, Page, TopBar } from "@/components/biz-ui";
-import { ApiPostComposer } from "@/components/api-screens";
+import { ApiPostComposer } from "@/components/create/api-post-composer";
 import { StepDetails } from "@/components/create/step-details";
 import { StepReview } from "@/components/create/step-review";
 import { StepWrite } from "@/components/create/step-write";
