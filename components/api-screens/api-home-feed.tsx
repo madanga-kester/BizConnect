@@ -1,3 +1,4 @@
+import { BrandWordmark } from "@/components/brand-wordmark";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -222,7 +223,7 @@ export function ApiHomeFeed() {
     <View>
       <View style={localStyles.headerBlock}>
         <View style={styles.row}>
-          <Text style={localStyles.brandTitle}>Mabiz</Text>
+          <BrandWordmark style={localStyles.brandTitle} />
 
           <Pressable
             accessibilityRole="button"
@@ -455,7 +456,7 @@ const localStyles = createThemedStyles(() =>
       fontSize: 31,
       fontWeight: "900",
       letterSpacing: -1.6,
-      color: colors.navy,
+      color: colors.emerald,
     },
     menuButton: {
       width: 40,

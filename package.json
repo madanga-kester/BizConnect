@@ -20,6 +20,7 @@
     "desktop:preview": "vite preview --config desktop/vite.config.ts"
   },
   "dependencies": {
+    "@expo-google-fonts/grand-hotel": "^0.4.1",
     "@expo/dom-webview": "~58.0.2",
     "@expo/metro-runtime": "~58.0.17",
     "@expo/vector-icons": "^15.0.2",
