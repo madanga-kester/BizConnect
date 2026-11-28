@@ -60,12 +60,12 @@ describe("theme preference", () => {
     expect(getTabBarColors("light")).toEqual({ backgroundColor: "#FFFFFF", borderTopColor: "#EFEFEF" });
     setMabizColorScheme("dark");
     expect(colors.emeraldFill).toBe("#0C8366");
-    expect(colors.canvas).toBe("#141414");
-    expect(colors.subtle).toBe("#141414");
+    expect(colors.canvas).toBe("#0F0F0F");
+    expect(colors.subtle).toBe("#222222");
     expect(styles.surface).not.toBe(lightSurface);
-    expect(styles.surface).toBe("#000000");
+    expect(styles.surface).toBe("#1A1A1A");
     expect(styles.foreground).toBe("#F5F5F5");
-    expect(getTabBarColors("dark")).toEqual({ backgroundColor: "#000000", borderTopColor: "#222222" });
+    expect(getTabBarColors("dark")).toEqual({ backgroundColor: "#1A1A1A", borderTopColor: "#2A2A2A" });
 
     setMabizColorScheme("light");
     expect(styles.surface).toBe("#FFFFFF");
