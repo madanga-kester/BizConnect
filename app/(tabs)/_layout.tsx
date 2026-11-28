@@ -46,7 +46,7 @@ export default function TabLayout() {
   const unreadNotifications = mode === "api" ? notificationSync.unreadCount : app.notifications.filter((item) => !item.read).length;
   const tabBarColors = getTabBarColors(colorScheme);
   const bottomPadding = Platform.OS === "web" ? 10 : Math.max(insets.bottom, 8);
-  return <View style={{ flex: 1, backgroundColor: colors.canvas }}><Tabs screenOptions={({ route }) => ({
+  return <View style={{ flex: 1, backgroundColor: colors.surface }}><Tabs screenOptions={({ route }) => ({
     headerShown: false,
     tabBarButton: HapticTab,
     tabBarActiveTintColor: colors.emerald,
