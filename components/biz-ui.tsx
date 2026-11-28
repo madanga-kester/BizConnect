@@ -1534,7 +1534,8 @@ export const styles = createThemedStyles(() =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    tileIcon: {
+    themeOption: { flex: 1, minHeight: 44, paddingHorizontal: 12, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
+  tileIcon: {
       width: 38,
       height: 38,
       borderRadius: 13,

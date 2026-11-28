@@ -257,7 +257,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
           onPress={() => router.back()}
           style={localStyles.floatingBackBtn}
         >
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <Ionicons name="arrow-back" size={20} color={colors.ink} />
         </Pressable>
       </View>
 
@@ -315,7 +315,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
                   <Ionicons
                     name="share-outline"
                     size={20}
-                    color={colors.text}
+                    color={colors.ink}
                   />
                 </Pressable>
 
@@ -384,7 +384,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
                 <Ionicons
                   name="arrow-forward"
                   size={18}
-                  color={colors.text}
+                  color={colors.ink}
                 />
               </Pressable>
             )}
@@ -459,7 +459,7 @@ export function ApiPersonProfile({ personId }: { personId: string }) {
                     <Ionicons
                       name={active ? t.activeIcon : t.icon}
                       size={17}
-                      color={active ? colors.text : colors.muted}
+                      color={active ? colors.ink : colors.muted}
                     />
                     <Text
                       style={[
@@ -644,7 +644,7 @@ function BusinessRow({
             <Ionicons
               name="checkmark-circle"
               size={15}
-              color={colors.primary}
+              color={colors.emerald}
             />
           ) : null}
         </View>
@@ -682,7 +682,7 @@ const localStyles = createThemedStyles(() =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: "center",
@@ -715,7 +715,7 @@ const localStyles = createThemedStyles(() =>
       height: 88,
       borderRadius: 44,
       padding: 3,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
     },
     avatarImg: {
       width: "100%",
@@ -733,7 +733,7 @@ const localStyles = createThemedStyles(() =>
     avatarInitials: {
       fontSize: 22,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.ink,
     },
     topActions: {
       flexDirection: "row",
@@ -758,7 +758,7 @@ const localStyles = createThemedStyles(() =>
     displayName: {
       fontSize: 22,
       fontWeight: "800",
-      color: colors.text,
+      color: colors.ink,
       letterSpacing: -0.3,
     },
     handleText: {
@@ -769,7 +769,7 @@ const localStyles = createThemedStyles(() =>
       marginTop: 10,
       fontSize: 14,
       lineHeight: 20,
-      color: colors.text,
+      color: colors.ink,
     },
     workSummaryBar: {
       marginTop: 14,
@@ -796,7 +796,7 @@ const localStyles = createThemedStyles(() =>
     workSummaryTitle: {
       fontSize: 14,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.ink,
     },
     statsRow: {
       flexDirection: "row",
@@ -812,7 +812,7 @@ const localStyles = createThemedStyles(() =>
     statValue: {
       fontSize: 15,
       fontWeight: "800",
-      color: colors.text,
+      color: colors.ink,
     },
     statLabel: {
       fontSize: 13,
@@ -840,7 +840,7 @@ const localStyles = createThemedStyles(() =>
       borderBottomColor: "transparent",
     },
     tabBtnActive: {
-      borderBottomColor: colors.text,
+      borderBottomColor: colors.ink,
     },
     tabText: {
       fontSize: 14,
@@ -848,7 +848,7 @@ const localStyles = createThemedStyles(() =>
       color: colors.muted,
     },
     tabTextActive: {
-      color: colors.text,
+      color: colors.ink,
       fontWeight: "700",
     },
     sectionBody: {
@@ -865,7 +865,7 @@ const localStyles = createThemedStyles(() =>
     sectionHeading: {
       fontSize: 16,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.ink,
     },
     sectionDivider: {
       height: 1,
@@ -896,7 +896,7 @@ const localStyles = createThemedStyles(() =>
     bizLogoInitial: {
       fontSize: 18,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.ink,
     },
     bizInfo: {
       flex: 1,
@@ -910,7 +910,7 @@ const localStyles = createThemedStyles(() =>
     bizName: {
       fontSize: 15,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.ink,
       flexShrink: 1,
     },
     bizSub: {
@@ -935,7 +935,7 @@ const localStyles = createThemedStyles(() =>
     },
     detailValue: {
       fontSize: 15,
-      color: colors.text,
+      color: colors.ink,
       lineHeight: 21,
     },
   })

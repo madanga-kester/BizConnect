@@ -43,6 +43,8 @@ export interface UserProfile {
   privateProfile: boolean;
   followers: number;
   following: number;
+    cover?: string;
+      usernameChangedAt?: string;
 }
 
 export interface BusinessTeamMember {
